@@ -3,252 +3,184 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f0e8">
+  <meta name="theme-color" content="#edf5ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Lifestyle Companion">
-  <title>Lifestyle Companion — Founder's Trial Alpha 1</title>
+  <title>Lifestyle Companion — Founder’s Trial Alpha 1.1</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app" class="app-shell">
-    <section id="welcome-screen" class="screen active">
-      <div class="welcome-card">
-        <div class="trial-badge">Founder’s Trial Edition · Alpha 1</div>
-        <h1>Welcome to Lifestyle Companion</h1>
-        <p>This early trial is being shaped by a small group of invited testers. Your feedback will help build something supportive, useful and enjoyable.</p>
-        <button class="primary large" id="begin-setup">Begin setup</button>
-        <button class="secondary" id="returning-user">I already have a profile on this device</button>
-      </div>
-    </section>
-
-    <section id="profile-picker" class="screen">
-      <header class="simple-header">
-        <button class="icon-button" data-nav="welcome-screen" aria-label="Back">←</button>
-        <div>
-          <h2>Choose your profile</h2>
-          <p>Up to 10 trial profiles can be stored on this device.</p>
-        </div>
-      </header>
-      <div id="profile-list" class="profile-grid"></div>
-      <button id="add-profile" class="primary wide">＋ Add another tester</button>
-      <p class="notice">This Sprint 1 build stores profiles locally on each device. Secure account sign-in and cross-device cloud sync are the next infrastructure step.</p>
-    </section>
-
-    <section id="setup-screen" class="screen">
-      <header class="simple-header">
-        <button class="icon-button" data-nav="profile-picker" aria-label="Back">←</button>
-        <div>
-          <h2>Create your Companion</h2>
-          <p>Name, character and style can be changed later.</p>
-        </div>
-      </header>
-
-      <div class="step-card">
-        <label for="tester-name">Your name</label>
-        <input id="tester-name" autocomplete="name" placeholder="For example, Tracey">
-
-        <label for="companion-name">Companion name</label>
-        <input id="companion-name" placeholder="For example, Stanley">
-
-        <label>Choose a Companion</label>
-        <div id="character-grid" class="character-grid"></div>
-
-        <div class="two-column">
-          <div>
-            <label for="voice-select">Voice</label>
-            <select id="voice-select"></select>
-          </div>
-          <div>
-            <label for="personality-select">Personality</label>
-            <select id="personality-select">
-              <option value="cheerful">Cheerful</option>
-              <option value="calm">Calm</option>
-              <option value="funny">Funny</option>
-              <option value="encouraging">Encouraging</option>
-              <option value="minimal">Quiet and minimal</option>
-            </select>
-          </div>
-        </div>
-
-        <label for="theme-select">Colour theme</label>
-        <select id="theme-select">
-          <option value="forest">Forest green</option>
-          <option value="ocean">Ocean blue</option>
-          <option value="sunset">Warm sunset</option>
-          <option value="plum">Soft plum</option>
-          <option value="charcoal">Charcoal</option>
-        </select>
-
-        <button id="save-profile" class="primary large">Create my Companion</button>
-      </div>
-    </section>
-
-    <section id="home-screen" class="screen home-screen">
-      <header class="home-welcome">
-        <button id="profile-button" class="profile-chip" aria-label="Profile and settings"></button>
-        <h1 id="home-greeting"></h1>
-        <p id="home-subtitle">I hope you’re doing well. Where shall we go today?</p>
-      </header>
-
-      <main class="home-main">
-        <div class="circle-stage" id="home-circle">
-          <div class="orbit"></div>
-          <button class="room room-1" data-room="planner" style="--room:#3978cf"><span>📅</span><b>Planner</b></button>
-          <button class="room room-2 active-room" data-room="food" style="--room:#e97b2c"><span>🥗</span><b>Food & Nutrition</b></button>
-          <button class="room room-3" data-room="exercise" style="--room:#3b8d48"><span>👟</span><b>Exercise</b></button>
-          <button class="room room-4" data-room="journal" style="--room:#7c5bc7"><span>📖</span><b>Journal</b></button>
-          <button class="room room-5" data-room="family" style="--room:#d94f64"><span>👨‍👩‍👧</span><b>Family</b></button>
-          <button class="room room-6" data-room="budget" style="--room:#17999b"><span>💰</span><b>Budget</b></button>
-          <button class="room room-7" data-room="mylife" style="--room:#ce5c83"><span>❤️</span><b>My Life</b></button>
-
-          <button id="companion-centre" class="companion-centre" aria-label="Talk to your Companion">
-            <span id="home-character" class="companion-character"></span>
-            <strong id="home-companion-name"></strong>
-            <small>Tap to talk</small>
-            <span class="mic-badge">🎤</span>
-          </button>
-        </div>
-
-        <div class="thought-card">
-          <div>
-            <small id="thought-label">A thought from your Companion</small>
-            <p id="thought-text"></p>
-          </div>
-          <button id="another-thought" class="icon-button" aria-label="Another thought">↻</button>
-        </div>
-      </main>
-    </section>
-
-    <section id="food-room" class="screen themed-room">
-      <header class="room-header">
-        <button class="icon-button" data-nav="home-screen" aria-label="Home">⌂</button>
-        <div>
-          <h1>Food & Nutrition</h1>
-          <p id="kitchen-note"></p>
-        </div>
-        <button class="profile-chip compact" id="food-profile-button" aria-label="Profile"></button>
-      </header>
-
-      <main class="room-main">
-        <div class="circle-stage room-circle">
-          <div class="orbit"></div>
-          <button class="room room-1" data-subroom="settings" style="--room:#5d7eaa"><span>⚙️</span><b>Preferences</b></button>
-          <button class="room room-2" data-subroom="plan" style="--room:#e97b2c"><span>🍽️</span><b>Food Plan</b></button>
-          <button class="room room-3" data-subroom="fasting" style="--room:#6f62a8"><span>🌙</span><b>Fasting</b></button>
-          <button class="room room-4" data-subroom="weight" style="--room:#448a75"><span>⚖️</span><b>Weight Check-in</b></button>
-          <button class="room room-5" data-subroom="summary" style="--room:#cf6c48"><span>📊</span><b>Summary</b></button>
-          <button class="room room-6" data-subroom="recipes" style="--room:#bd8146"><span>📒</span><b>Recipes</b></button>
-          <button class="room room-7" data-subroom="water" style="--room:#3f91c6"><span>💧</span><b>Water</b></button>
-
-          <button id="food-companion-centre" class="companion-centre chef-centre" aria-label="Talk to your Companion">
-            <span class="costume">👨‍🍳</span>
-            <span id="food-character" class="companion-character"></span>
-            <strong id="food-companion-name"></strong>
-            <small>Kitchen mode</small>
-            <span class="mic-badge">🎤</span>
-          </button>
-        </div>
-      </main>
-    </section>
-
-    <section id="settings-room" class="screen content-screen">
-      <header class="simple-header sticky">
-        <button class="icon-button leave-check" data-nav="food-room" aria-label="Back">←</button>
-        <div><h2>Preferences & Settings</h2><p>Health goals and Companion preferences.</p></div>
-      </header>
-      <form id="settings-form" class="content-stack">
-        <div class="panel">
-          <h3>Health goals</h3>
-          <label for="activity-level">Activity level</label>
-          <select id="activity-level">
-            <option value="sedentary">Mostly sitting</option>
-            <option value="light">Lightly active</option>
-            <option value="moderate">Moderately active</option>
-            <option value="very">Very active</option>
-            <option value="industrial">Heavy physical work</option>
-          </select>
-
-          <label for="weight-goal">Weight goal</label>
-          <select id="weight-goal">
-            <option value="maintain">Maintain weight</option>
-            <option value="gradual">Gradual weight loss</option>
-            <option value="moderate">Moderate weight loss</option>
-            <option value="gain">Gradual weight gain</option>
-          </select>
-
-          <label for="fasting-plan">Fasting preference</label>
-          <select id="fasting-plan">
-            <option value="none">No fasting plan</option>
-            <option value="5-2">5:2 fasting</option>
-            <option value="custom">Custom fasting days</option>
-          </select>
-        </div>
-
-        <div class="panel">
-          <h3>My Companion</h3>
-          <label for="settings-companion-name">Companion name</label>
-          <input id="settings-companion-name">
-          <label>Companion character</label>
-          <div id="settings-character-grid" class="character-grid compact-grid"></div>
-          <label for="settings-personality">Personality</label>
-          <select id="settings-personality">
-            <option value="cheerful">Cheerful</option>
-            <option value="calm">Calm</option>
-            <option value="funny">Funny</option>
-            <option value="encouraging">Encouraging</option>
-            <option value="minimal">Quiet and minimal</option>
-          </select>
-        </div>
-
-        <button class="primary large" type="submit">Save changes</button>
-      </form>
-    </section>
-
-    <section id="placeholder-room" class="screen content-screen">
-      <header class="simple-header">
-        <button class="icon-button" id="placeholder-back" aria-label="Back">←</button>
-        <div><h2 id="placeholder-title"></h2><p>Founder’s Trial Alpha 1 foundation.</p></div>
-      </header>
-      <div class="panel placeholder-panel">
-        <div id="placeholder-icon" class="large-icon"></div>
-        <h3 id="placeholder-heading"></h3>
-        <p id="placeholder-copy"></p>
-      </div>
-    </section>
-  </div>
-
-  <div id="voice-sheet" class="sheet" aria-hidden="true">
-    <div class="sheet-card">
-      <button id="close-voice" class="icon-button sheet-close">✕</button>
-      <div id="voice-avatar" class="voice-avatar"></div>
-      <h2 id="voice-title">Speak to your Companion</h2>
-      <p id="voice-status">Tap the microphone and speak naturally.</p>
-      <div id="voice-transcript" class="transcript">Try: “Open Food and Nutrition”, “Open settings”, or “Tell me a joke”.</div>
-      <button id="start-listening" class="voice-button">🎤</button>
-      <div class="quick-commands">
-        <button data-command="open food and nutrition">Open Food & Nutrition</button>
-        <button data-command="open settings">Open Settings</button>
-        <button data-command="tell me a joke">Tell me a joke</button>
-      </div>
+<div id="app" class="app-shell">
+  <section id="welcome-screen" class="screen active welcome-screen">
+    <div class="welcome-card glass-card">
+      <div class="trial-badge">Founder’s Trial Edition · Alpha 1.1</div>
+      <div class="welcome-mark">🌿</div>
+      <h1>Welcome to Lifestyle Companion</h1>
+      <p>A supportive companion for the parts of life you choose to manage. Set up only what matters to you today; the other Rooms will remain ready whenever you need them.</p>
+      <button class="primary large" id="begin-setup">Begin setup</button>
+      <button class="secondary" id="returning-user">I already have a profile on this device</button>
     </div>
-  </div>
+  </section>
 
-  <div id="confirm-sheet" class="sheet" aria-hidden="true">
-    <div class="sheet-card compact-sheet">
-      <div class="voice-avatar">💾</div>
-      <h2>Save your changes?</h2>
-      <p>You have unsaved changes. What would you like to do?</p>
-      <div class="button-row">
-        <button id="save-and-leave" class="primary">Save</button>
-        <button id="discard-and-leave" class="danger">Don’t save</button>
-        <button id="cancel-leave" class="secondary">Cancel</button>
+  <section id="profile-picker" class="screen content-screen">
+    <header class="simple-header">
+      <button class="icon-button" data-nav="welcome-screen" aria-label="Back">←</button>
+      <div><h2>Choose your profile</h2><p>Up to 10 trial profiles can be stored on this device.</p></div>
+    </header>
+    <div id="profile-list" class="profile-grid"></div>
+    <button id="add-profile" class="primary wide">＋ Add another tester</button>
+    <p class="notice">Profiles remain local to this device in Alpha 1.1. Secure sign-in and cloud synchronisation are still the next infrastructure milestone.</p>
+  </section>
+
+  <section id="setup-screen" class="screen content-screen onboarding-screen">
+    <header class="simple-header sticky">
+      <button class="icon-button" id="setup-back" aria-label="Back">←</button>
+      <div class="setup-heading"><h2 id="setup-title">About you</h2><p id="setup-subtitle">We only ask once, then reuse relevant details in each Room.</p></div>
+      <div id="setup-progress" class="progress-pill">1 of 5</div>
+    </header>
+
+    <main class="onboarding-main">
+      <section class="wizard-step active" data-step="1">
+        <div class="panel intro-panel">
+          <h3>Tell your Companion who you are</h3>
+          <p>Required fields are marked with an asterisk. Optional information can be added later.</p>
+          <div class="form-grid">
+            <label>Full name *<input id="full-name" autocomplete="name" placeholder="Malcolm West"></label>
+            <label>Preferred name *<input id="preferred-name" placeholder="Mal"></label>
+            <label>Date of birth<input id="date-of-birth" type="date"></label>
+            <label>Email address<input id="email-address" type="email" autocomplete="email" placeholder="name@example.com"></label>
+            <label>Phone (optional)<input id="phone-number" type="tel" autocomplete="tel"></label>
+            <label class="span-2">Address (optional)<textarea id="postal-address" rows="2" autocomplete="street-address"></textarea></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-step" data-step="2">
+        <div class="panel">
+          <h3>Choose your Companion</h3>
+          <label>Companion name *<input id="companion-name" placeholder="For example, Hymie or Stanley"></label>
+          <label>Choose a character</label>
+          <div id="character-grid" class="character-grid"></div>
+          <div class="form-grid">
+            <label>Voice
+              <select id="voice-select"></select>
+              <small class="field-help">Tap or select a voice to hear an immediate sample.</small>
+            </label>
+            <label>Personality
+              <select id="personality-select">
+                <option value="cheerful">Cheerful</option><option value="calm">Calm</option><option value="funny">Funny</option><option value="encouraging">Encouraging</option><option value="minimal">Quiet and minimal</option>
+              </select>
+            </label>
+            <label>Colour theme
+              <select id="theme-select"><option value="forest">Forest green</option><option value="ocean">Ocean blue</option><option value="sunset">Warm sunset</option><option value="plum">Soft plum</option><option value="charcoal">Charcoal</option></select>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="wizard-step" data-step="3">
+        <div class="panel">
+          <h3>Which Rooms would you like to start using?</h3>
+          <p>Every Room will still appear on your Home Circle. Unticked Rooms will remain available and your Companion can set them up later.</p>
+          <div id="room-choice-grid" class="room-choice-grid"></div>
+        </div>
+      </section>
+
+      <section class="wizard-step" data-step="4">
+        <div id="food-setup-panel" class="panel">
+          <h3>Set up Food & Nutrition</h3>
+          <p id="food-setup-intro">To personalise this Room, your Companion needs a few health and lifestyle details.</p>
+          <div class="form-grid">
+            <label>Current weight<input id="current-weight" type="number" min="1" step="0.1" inputmode="decimal" placeholder="kg"></label>
+            <label>Height<input id="height-cm" type="number" min="50" max="260" step="0.1" inputmode="decimal" placeholder="cm"></label>
+            <label>Activity level<select id="activity-level"><option value="sedentary">Mostly sitting</option><option value="light">Lightly active</option><option value="moderate">Moderately active</option><option value="very">Very active</option><option value="industrial">Heavy physical work</option></select></label>
+            <label>Weight goal<select id="weight-goal"><option value="maintain">Maintain weight</option><option value="gradual">Gradual weight loss</option><option value="moderate">Moderate weight loss</option><option value="gain">Gradual weight gain</option></select></label>
+            <label>Goal weight (optional)<input id="goal-weight" type="number" min="1" step="0.1" inputmode="decimal" placeholder="kg"></label>
+            <label>Fasting preference<select id="fasting-plan"><option value="none">No fasting plan</option><option value="5-2">5:2 fasting</option><option value="custom">Custom fasting days</option></select></label>
+            <label>Daily water target (optional)<input id="water-target" type="number" min="0" step="100" inputmode="numeric" placeholder="mL"></label>
+            <label class="span-2">Dietary needs or foods to avoid (optional)<textarea id="dietary-notes" rows="3" placeholder="Allergies, intolerances, foods you dislike, cultural preferences…"></textarea></label>
+          </div>
+        </div>
+        <div id="food-skipped-panel" class="panel soft-panel hidden">
+          <h3>Food & Nutrition will wait for you</h3>
+          <p>You did not select this Room, so no health information is required now. Tap Food & Nutrition on the Home Circle later and your Companion will guide you through setup.</p>
+        </div>
+      </section>
+
+      <section class="wizard-step" data-step="5">
+        <div class="panel review-panel"><div class="review-avatar" id="review-avatar">🐵</div><h3 id="review-heading">You’re ready</h3><p id="review-copy"></p><div id="review-rooms" class="review-rooms"></div></div>
+      </section>
+
+      <div class="wizard-actions"><button id="wizard-previous" class="secondary">Back</button><button id="wizard-next" class="primary">Continue</button></div>
+    </main>
+  </section>
+
+  <section id="home-screen" class="screen home-screen">
+    <header class="home-welcome"><button id="profile-button" class="profile-chip" aria-label="Profiles"></button><div><h1 id="home-greeting"></h1><p>I hope you’re doing well. Where shall we go today?</p></div></header>
+    <main class="home-main">
+      <div class="circle-stage" id="home-circle">
+        <div class="orbit"></div>
+        <button class="room room-1" data-room="planner" style="--room:#3978cf"><span>📅</span><b>Planner</b><i class="status-badge"></i></button>
+        <button class="room room-2" data-room="food" style="--room:#e97b2c"><span>🥗</span><b>Food & Nutrition</b><i class="status-badge"></i></button>
+        <button class="room room-3" data-room="exercise" style="--room:#3b8d48"><span>👟</span><b>Exercise</b><i class="status-badge"></i></button>
+        <button class="room room-4" data-room="journal" style="--room:#7c5bc7"><span>📖</span><b>Journal</b><i class="status-badge"></i></button>
+        <button class="room room-5" data-room="family" style="--room:#d94f64"><span>👨‍👩‍👧</span><b>Family</b><i class="status-badge"></i></button>
+        <button class="room room-6" data-room="budget" style="--room:#17999b"><span>💰</span><b>Budget</b><i class="status-badge"></i></button>
+        <button class="room room-7" data-room="mylife" style="--room:#ce5c83"><span>❤️</span><b>My Life</b><i class="status-badge"></i></button>
+        <button id="companion-centre" class="companion-centre" aria-label="Talk to your Companion"><span id="home-character" class="companion-character"></span><strong id="home-companion-name"></strong><small>Tap to talk</small><span class="mic-badge">🎤</span></button>
       </div>
-    </div>
-  </div>
+      <div class="thought-card glass-card"><div><small id="thought-label"></small><p id="thought-text"></p></div><button id="another-thought" class="icon-button" aria-label="Another thought">↻</button></div>
+    </main>
+  </section>
 
-  <div id="toast" class="toast" role="status"></div>
-  <script src="app.js"></script>
+  <section id="food-room" class="screen themed-room food-theme">
+    <header class="room-header"><button class="icon-button" data-nav="home-screen" aria-label="Home">⌂</button><div><h1>Food & Nutrition</h1><p id="kitchen-note"></p></div><button class="profile-chip compact" id="food-profile-button" aria-label="Profiles"></button></header>
+    <main class="room-main">
+      <div class="circle-stage room-circle">
+        <div class="orbit"></div>
+        <button class="room room-1" data-subroom="settings" style="--room:#5d7eaa"><span>⚙️</span><b>Preferences</b></button>
+        <button class="room room-2" data-subroom="plan" style="--room:#e97b2c"><span>🍽️</span><b>Food Plan</b></button>
+        <button class="room room-3" data-subroom="fasting" style="--room:#6f62a8"><span>🌙</span><b>Fasting</b></button>
+        <button class="room room-4" data-subroom="weight" style="--room:#448a75"><span>⚖️</span><b>Weight</b></button>
+        <button class="room room-5" data-subroom="summary" style="--room:#cf6c48"><span>📊</span><b>Summary</b></button>
+        <button class="room room-6" data-subroom="recipes" style="--room:#bd8146"><span>📒</span><b>Recipes</b></button>
+        <button class="room room-7" data-subroom="water" style="--room:#3f91c6"><span>💧</span><b>Water</b></button>
+        <button id="food-companion-centre" class="companion-centre chef-centre" aria-label="Talk to your Companion"><span class="costume">👨‍🍳</span><span id="food-character" class="companion-character"></span><strong id="food-companion-name"></strong><small>Kitchen mode</small><span class="mic-badge">🎤</span></button>
+      </div>
+    </main>
+  </section>
+
+  <section id="settings-room" class="screen content-screen settings-theme">
+    <header class="simple-header sticky"><button class="icon-button leave-check" data-nav="food-room" aria-label="Back">←</button><div><h2>Food & Nutrition Preferences</h2><p>Profile details are reused automatically. Add or update only the information this Room needs.</p></div></header>
+    <form id="settings-form" class="content-stack">
+      <div class="panel"><h3>About you</h3><div id="profile-summary" class="profile-summary"></div></div>
+      <div class="panel"><h3>Health and nutrition setup</h3><div class="form-grid">
+        <label>Current weight<input id="settings-current-weight" type="number" min="1" step="0.1" inputmode="decimal"></label>
+        <label>Height<input id="settings-height-cm" type="number" min="50" max="260" step="0.1" inputmode="decimal"></label>
+        <label>Activity level<select id="settings-activity-level"><option value="sedentary">Mostly sitting</option><option value="light">Lightly active</option><option value="moderate">Moderately active</option><option value="very">Very active</option><option value="industrial">Heavy physical work</option></select></label>
+        <label>Weight goal<select id="settings-weight-goal"><option value="maintain">Maintain weight</option><option value="gradual">Gradual weight loss</option><option value="moderate">Moderate weight loss</option><option value="gain">Gradual weight gain</option></select></label>
+        <label>Goal weight<input id="settings-goal-weight" type="number" min="1" step="0.1" inputmode="decimal"></label>
+        <label>Fasting preference<select id="settings-fasting-plan"><option value="none">No fasting plan</option><option value="5-2">5:2 fasting</option><option value="custom">Custom fasting days</option></select></label>
+        <label>Water target<input id="settings-water-target" type="number" min="0" step="100" inputmode="numeric"></label>
+        <label class="span-2">Dietary notes<textarea id="settings-dietary-notes" rows="3"></textarea></label>
+      </div></div>
+      <div class="panel compact-action-panel"><div><h3>Companion settings</h3><p>Your Companion is already set up. Edit it only when you want a change.</p></div><button id="edit-companion" type="button" class="secondary">Edit my Companion</button></div>
+      <button class="primary large" type="submit">Save changes</button>
+    </form>
+  </section>
+
+  <section id="placeholder-room" class="screen content-screen">
+    <header class="simple-header"><button class="icon-button" id="placeholder-back" aria-label="Back">←</button><div><h2 id="placeholder-title"></h2><p id="placeholder-kicker">Founder’s Trial Alpha 1.1</p></div></header>
+    <div class="panel placeholder-panel"><div id="placeholder-icon" class="large-icon"></div><h3 id="placeholder-heading"></h3><p id="placeholder-copy"></p><button id="placeholder-action" class="primary hidden"></button></div>
+  </section>
+</div>
+
+<div id="voice-sheet" class="sheet" aria-hidden="true"><div class="sheet-card"><button id="close-voice" class="icon-button sheet-close">✕</button><div id="voice-avatar" class="voice-avatar"></div><h2 id="voice-title">Speak to your Companion</h2><p id="voice-status">Speak or type a command below.</p><textarea id="voice-input" class="command-input" rows="3" placeholder="Type a command here…"></textarea><div class="voice-actions"><button id="start-listening" class="voice-button" aria-label="Start listening">🎤</button><button id="send-command" class="primary">Send typed command</button></div><div class="quick-commands"><button data-command="open food and nutrition">Open Food & Nutrition</button><button data-command="open settings">Open Settings</button><button data-command="tell me a joke">Tell me a joke</button></div></div></div>
+
+<div id="confirm-sheet" class="sheet" aria-hidden="true"><div class="sheet-card compact-sheet"><div class="voice-avatar">💾</div><h2>Save your changes?</h2><p>You have unsaved changes. What would you like to do?</p><div class="button-row"><button id="save-and-leave" class="primary">Save</button><button id="discard-and-leave" class="danger">Don’t save</button><button id="cancel-leave" class="secondary">Cancel</button></div></div></div>
+<div id="toast" class="toast" role="status"></div>
+<script src="app.js"></script>
 </body>
 </html>

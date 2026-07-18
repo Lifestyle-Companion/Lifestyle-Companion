@@ -1,0 +1,9 @@
+KNOWN ISSUES — ALPHA 1.1
+
+- Profiles and analytics remain local to each browser/device. iPhone and iPad do not yet synchronise.
+- Available voice names and quality depend on the operating system and browser.
+- Safari may require a direct tap before allowing speech playback. The voice selector itself provides that tap.
+- Browser speech recognition support varies. Typed commands remain available.
+- Only Food & Nutrition has an activation/setup pathway in this release.
+- Food logging, food database, weight graphs, fasting workflows, water logging, recipes and daily summaries are planned for Sprint 2.
+- Coming-soon interest data is local only and cannot yet be viewed in Founder Mode or combined across testers.

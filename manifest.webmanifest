@@ -1,11 +1,1 @@
-{
-  "name": "Lifestyle Companion — Founder's Trial",
-  "short_name": "Lifestyle Companion",
-  "description": "Founder’s Trial Edition Alpha 1 foundation.",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#f4f0e8",
-  "theme_color": "#185c43",
-  "lang": "en-AU",
-  "icons": []
-}
+{"name":"Lifestyle Companion — Founder’s Trial","short_name":"Lifestyle Companion","start_url":"./","display":"standalone","background_color":"#edf5ef","theme_color":"#185c43","description":"Founder’s Trial Alpha 1.1"}

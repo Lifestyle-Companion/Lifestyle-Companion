@@ -1,406 +1,50 @@
 (() => {
-  'use strict';
-
-  const STORAGE_KEY = 'lifestyleCompanionAlpha1';
-  const MAX_PROFILES = 10;
-  const characters = [
-    ['chimp','🐵','Chimpanzee'],['horse','🐴','Horse'],['dog','🐶','Dog'],['cow','🐮','Cow'],
-    ['cat','🐱','Cat'],['koala','🐨','Koala'],['kangaroo','🦘','Kangaroo'],['owl','🦉','Owl'],
-    ['panda','🐼','Panda'],['penguin','🐧','Penguin'],['frog','🐸','Frog'],['bear','🐻','Bear']
-  ];
-  const thoughts = {
-    cheerful: [
-      'Small steps count. Let’s make today a good one.',
-      'You don’t have to do everything today — just the next helpful thing.',
-      'Welcome back. I’m glad you’re here.'
-    ],
-    calm: [
-      'Take a breath. We can work through today one step at a time.',
-      'There is no rush. Choose the Room that feels most useful.',
-      'A steady day is still a successful day.'
-    ],
-    funny: [
-      'I’m ready when you are — unless the kettle boils first.',
-      'Today’s exercise: opening the right Room on the first try.',
-      'I tried to organise my thoughts. They requested annual leave.'
-    ],
-    encouraging: [
-      'You’ve already done the hardest part: showing up.',
-      'Progress does not need to be perfect to be worthwhile.',
-      'We’ll adjust the plan to fit your life, not the other way around.'
-    ],
-    minimal: ['Ready when you are.', 'What shall we do?', 'Welcome back.']
-  };
-  const kitchenThoughts = [
-    'The kitchen is open. Let’s make the plan fit real life.',
-    'A balanced day can still include food you genuinely enjoy.',
-    'I’m wearing the chef’s hat, but you’re still in charge of the menu.',
-    'Barbecue rule number one: someone has to supervise the onions.'
-  ];
-
-  const state = loadState();
-  let selectedCharacter = 'chimp';
-  let settingsDirty = false;
-  let pendingNavigation = null;
-  let voices = [];
-
-  const $ = id => document.getElementById(id);
-  const screens = [...document.querySelectorAll('.screen')];
-
-  function loadState() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (parsed && Array.isArray(parsed.profiles)) return parsed;
-    } catch (_) {}
-    return { profiles: [], activeProfileId: null, seenWelcome: false };
-  }
-
-  function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
-
-  function activeProfile() {
-    return state.profiles.find(p => p.id === state.activeProfileId) || null;
-  }
-
-  function show(screenId) {
-    screens.forEach(s => s.classList.toggle('active', s.id === screenId));
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    if (screenId === 'home-screen') renderHome();
-    if (screenId === 'food-room') renderFoodRoom();
-    if (screenId === 'profile-picker') renderProfiles();
-    if (screenId === 'settings-room') renderSettings();
-  }
-
-  function toast(message) {
-    const el = $('toast');
-    el.textContent = message;
-    el.classList.add('show');
-    clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => el.classList.remove('show'), 2400);
-  }
-
-  function profileEmoji(profile) {
-    return characters.find(c => c[0] === profile.character)?.[1] || '🙂';
-  }
-
-  function greetingPart() {
-    const h = new Date().getHours();
-    return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
-  }
-
-  function renderCharacterGrid(containerId, current, onSelect) {
-    const el = $(containerId);
-    el.innerHTML = characters.map(([id, emoji, label]) => `
-      <button type="button" class="character-choice ${id === current ? 'selected' : ''}" data-character="${id}">
-        <span>${emoji}</span><small>${label}</small>
-      </button>`).join('');
-    el.querySelectorAll('[data-character]').forEach(btn => btn.addEventListener('click', () => {
-      onSelect(btn.dataset.character);
-      renderCharacterGrid(containerId, btn.dataset.character, onSelect);
-    }));
-  }
-
-  function renderProfiles() {
-    const list = $('profile-list');
-    list.innerHTML = state.profiles.map(p => `
-      <button class="profile-card" data-profile-id="${p.id}">
-        <div class="big-character">${profileEmoji(p)}</div>
-        <strong>${escapeHtml(p.userName)}</strong>
-        <small>${escapeHtml(p.companionName)}</small>
-      </button>`).join('');
-    if (state.profiles.length < MAX_PROFILES) {
-      list.insertAdjacentHTML('beforeend', `<button class="profile-card add-card" id="inline-add"><div class="big-character">＋</div><strong>Add tester</strong><small>${MAX_PROFILES - state.profiles.length} places remaining</small></button>`);
-      $('inline-add').addEventListener('click', startNewProfile);
-    }
-    list.querySelectorAll('[data-profile-id]').forEach(btn => btn.addEventListener('click', () => {
-      state.activeProfileId = btn.dataset.profileId;
-      saveState();
-      applyTheme(activeProfile()?.theme || 'forest');
-      show('home-screen');
-    }));
-  }
-
-  function startNewProfile() {
-    if (state.profiles.length >= MAX_PROFILES) return toast('This trial build supports up to 10 profiles on this device.');
-    $('tester-name').value = '';
-    $('companion-name').value = '';
-    $('personality-select').value = 'cheerful';
-    $('theme-select').value = 'forest';
-    selectedCharacter = 'chimp';
-    renderCharacterGrid('character-grid', selectedCharacter, id => selectedCharacter = id);
-    populateVoiceOptions();
-    show('setup-screen');
-  }
-
-  function createProfile() {
-    const userName = $('tester-name').value.trim();
-    const companionName = $('companion-name').value.trim();
-    if (!userName || !companionName) return toast('Please enter both your name and your Companion’s name.');
-    const profile = {
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      userName,
-      companionName,
-      character: selectedCharacter,
-      voiceURI: $('voice-select').value || '',
-      personality: $('personality-select').value,
-      theme: $('theme-select').value,
-      activityLevel: 'moderate',
-      weightGoal: 'gradual',
-      fastingPlan: 'none',
-      createdAt: new Date().toISOString()
-    };
-    state.profiles.push(profile);
-    state.activeProfileId = profile.id;
-    state.seenWelcome = true;
-    saveState();
-    applyTheme(profile.theme);
-    show('home-screen');
-    speak(`Hello ${userName}. I’m ${companionName}. I’ll be your Lifestyle Companion.`);
-  }
-
-  function renderHome() {
-    const p = activeProfile();
-    if (!p) return show('profile-picker');
-    $('home-greeting').textContent = `Good ${greetingPart()}, ${p.userName}`;
-    $('home-character').textContent = profileEmoji(p);
-    $('home-companion-name').textContent = p.companionName;
-    $('profile-button').textContent = profileEmoji(p);
-    setThought();
-  }
-
-  function setThought() {
-    const p = activeProfile();
-    if (!p) return;
-    const options = thoughts[p.personality] || thoughts.cheerful;
-    $('thought-label').textContent = `A thought from ${p.companionName}`;
-    $('thought-text').textContent = options[Math.floor(Math.random() * options.length)];
-  }
-
-  function renderFoodRoom() {
-    const p = activeProfile();
-    if (!p) return;
-    $('food-character').textContent = profileEmoji(p);
-    $('food-companion-name').textContent = p.companionName;
-    $('food-profile-button').textContent = profileEmoji(p);
-    $('kitchen-note').textContent = kitchenThoughts[Math.floor(Math.random() * kitchenThoughts.length)];
-  }
-
-  function renderSettings() {
-    const p = activeProfile();
-    if (!p) return;
-    $('activity-level').value = p.activityLevel || 'moderate';
-    $('weight-goal').value = p.weightGoal || 'gradual';
-    $('fasting-plan').value = p.fastingPlan || 'none';
-    $('settings-companion-name').value = p.companionName;
-    $('settings-personality').value = p.personality;
-    selectedCharacter = p.character;
-    renderCharacterGrid('settings-character-grid', selectedCharacter, id => {
-      selectedCharacter = id;
-      settingsDirty = true;
-    });
-    settingsDirty = false;
-  }
-
-  function saveSettings() {
-    const p = activeProfile();
-    if (!p) return;
-    p.activityLevel = $('activity-level').value;
-    p.weightGoal = $('weight-goal').value;
-    p.fastingPlan = $('fasting-plan').value;
-    p.companionName = $('settings-companion-name').value.trim() || p.companionName;
-    p.character = selectedCharacter;
-    p.personality = $('settings-personality').value;
-    saveState();
-    settingsDirty = false;
-    toast('Preferences saved');
-    renderHome();
-  }
-
-  function applyTheme(theme) {
-    const themes = {
-      forest:['#185c43','#e7f1eb'],ocean:['#276a93','#e6f1f8'],sunset:['#a95d2b','#f8eadf'],plum:['#6d4e7d','#f0e8f3'],charcoal:['#394744','#e9edec']
-    };
-    const [accent, soft] = themes[theme] || themes.forest;
-    document.documentElement.style.setProperty('--accent', accent);
-    document.documentElement.style.setProperty('--accent-soft', soft);
-  }
-
-  function openPlaceholder(title, icon, copy, back='home-screen') {
-    $('placeholder-title').textContent = title;
-    $('placeholder-icon').textContent = icon;
-    $('placeholder-heading').textContent = `${title} is planned for a later Alpha sprint`;
-    $('placeholder-copy').textContent = copy;
-    $('placeholder-back').dataset.target = back;
-    show('placeholder-room');
-  }
-
-  function openVoice() {
-    const p = activeProfile();
-    if (!p) return;
-    $('voice-avatar').textContent = profileEmoji(p);
-    $('voice-title').textContent = `Speak to ${p.companionName}`;
-    $('voice-status').textContent = 'Tap the microphone and speak naturally.';
-    $('voice-sheet').classList.add('open');
-    $('voice-sheet').setAttribute('aria-hidden','false');
-  }
-
-  function closeVoice() {
-    $('voice-sheet').classList.remove('open');
-    $('voice-sheet').setAttribute('aria-hidden','true');
-  }
-
-  function populateVoiceOptions() {
-    voices = window.speechSynthesis?.getVoices?.() || [];
-    const select = $('voice-select');
-    const english = voices.filter(v => /^en(-|_)/i.test(v.lang));
-    const usable = english.length ? english : voices;
-    select.innerHTML = `<option value="">Device default voice</option>` + usable.map(v => `<option value="${escapeHtml(v.voiceURI)}">${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('');
-  }
-
-  function speak(text) {
-    const p = activeProfile();
-    if (!('speechSynthesis' in window) || !p) return;
-    speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    const chosen = voices.find(v => v.voiceURI === p.voiceURI);
-    if (chosen) utter.voice = chosen;
-    utter.rate = p.personality === 'calm' ? 0.9 : p.personality === 'funny' ? 1.05 : 0.98;
-    speechSynthesis.speak(utter);
-  }
-
-  function handleCommand(raw) {
-    const command = raw.toLowerCase().trim();
-    const p = activeProfile();
-    let response = '';
-    if (/food|nutrition|kitchen/.test(command) && /open|go|enter|take/.test(command)) {
-      closeVoice(); show('food-room'); response = 'Certainly. Let’s head into Food and Nutrition.';
-    } else if (/setting|preference/.test(command) && /open|go|enter|take/.test(command)) {
-      closeVoice(); show('settings-room'); response = 'Opening Preferences and Settings.';
-    } else if (/joke|funny/.test(command)) {
-      const joke = thoughts.funny[Math.floor(Math.random()*thoughts.funny.length)];
-      $('voice-transcript').textContent = joke; response = joke;
-    } else if (/home/.test(command) && /open|go|take/.test(command)) {
-      closeVoice(); show('home-screen'); response = 'Taking you home.';
-    } else if (/fast/.test(command)) {
-      response = p.fastingPlan === 'none' ? 'Fasting is not currently enabled in your preferences.' : `Your fasting preference is set to ${p.fastingPlan === '5-2' ? 'five two fasting' : 'a custom fasting plan'}.`;
-      $('voice-transcript').textContent = response;
-    } else {
-      response = 'I heard you, but this Alpha foundation only understands a small set of navigation commands so far.';
-      $('voice-transcript').textContent = response;
-    }
-    speak(response);
-  }
-
-  function startListening() {
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) {
-      $('voice-status').textContent = 'Speech recognition is not available in this browser. The quick command buttons still work.';
-      return toast('Voice recognition is not supported by this browser.');
-    }
-    const rec = new Recognition();
-    rec.lang = 'en-AU';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    $('start-listening').classList.add('listening');
-    $('voice-status').textContent = 'Listening…';
-    rec.onresult = e => {
-      const transcript = e.results[0][0].transcript;
-      $('voice-transcript').textContent = `You said: “${transcript}”`;
-      handleCommand(transcript);
-    };
-    rec.onerror = () => $('voice-status').textContent = 'I could not hear that clearly. Please try again.';
-    rec.onend = () => {
-      $('start-listening').classList.remove('listening');
-      $('voice-status').textContent = 'Tap the microphone to speak again.';
-    };
-    rec.start();
-  }
-
-  function askBeforeLeaving(target) {
-    if (!settingsDirty) return show(target);
-    pendingNavigation = target;
-    $('confirm-sheet').classList.add('open');
-    $('confirm-sheet').setAttribute('aria-hidden','false');
-  }
-
-  function closeConfirm() {
-    $('confirm-sheet').classList.remove('open');
-    $('confirm-sheet').setAttribute('aria-hidden','true');
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
-  }
-
-  // Setup and navigation
-  $('begin-setup').addEventListener('click', startNewProfile);
-  $('returning-user').addEventListener('click', () => show('profile-picker'));
-  $('add-profile').addEventListener('click', startNewProfile);
-  $('save-profile').addEventListener('click', createProfile);
-  document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => {
-    const target = btn.dataset.nav;
-    btn.classList.contains('leave-check') ? askBeforeLeaving(target) : show(target);
-  }));
-
-  document.querySelectorAll('[data-room]').forEach(btn => btn.addEventListener('click', () => {
-    const room = btn.dataset.room;
-    if (room === 'food') return show('food-room');
-    const map = {
-      planner:['Planner','📅','Planning, reminders and calendars will arrive in a future Alpha sprint.'],
-      exercise:['Exercise & Activity','👟','Exercise logging and adaptive activity plans will arrive in a future Alpha sprint.'],
-      journal:['Journal','📖','Diary, reflection and mood support will arrive in a future Alpha sprint.'],
-      family:['Family & Friends','👨‍👩‍👧','Optional sharing will be private by default and added later.'],
-      budget:['Money & Budget','💰','Budgeting and savings goals will be added after the healthy-living foundation.'],
-      mylife:['My Life','❤️','Long-term life planning will grow here over time.']
-    };
-    openPlaceholder(...map[room]);
-  }));
-
-  document.querySelectorAll('[data-subroom]').forEach(btn => btn.addEventListener('click', () => {
-    const room = btn.dataset.subroom;
-    if (room === 'settings') return show('settings-room');
-    const map = {
-      plan:['Food Plan','🍽️','Daily food logging, backdating and a professional food database are scheduled for the daily-use sprint.'],
-      fasting:['Fasting Planner','🌙','The 5:2 and custom fasting workflows are part of the next daily-use sprint.'],
-      weight:['Weight Check-in','⚖️','Weight backdating, trend graphs and time-range views are part of the next daily-use sprint.'],
-      summary:['Daily Summary','📊','Planned-versus-target summaries will be included with daily food logging.'],
-      recipes:['Recipes','📒','Personal recipes and family meals will connect to the food database later.'],
-      water:['Water','💧','Water logging will be included in the daily-use sprint.']
-    };
-    openPlaceholder(...map[room], 'food-room');
-  }));
-
-  $('placeholder-back').addEventListener('click', e => show(e.currentTarget.dataset.target || 'home-screen'));
-  $('profile-button').addEventListener('click', () => show('profile-picker'));
-  $('food-profile-button').addEventListener('click', () => show('profile-picker'));
-  $('companion-centre').addEventListener('click', openVoice);
-  $('food-companion-centre').addEventListener('click', openVoice);
-  $('another-thought').addEventListener('click', setThought);
-  $('close-voice').addEventListener('click', closeVoice);
-  $('start-listening').addEventListener('click', startListening);
-  document.querySelectorAll('[data-command]').forEach(btn => btn.addEventListener('click', () => handleCommand(btn.dataset.command)));
-
-  $('settings-form').addEventListener('input', () => settingsDirty = true);
-  $('settings-form').addEventListener('change', () => settingsDirty = true);
-  $('settings-form').addEventListener('submit', e => { e.preventDefault(); saveSettings(); });
-  $('save-and-leave').addEventListener('click', () => { saveSettings(); closeConfirm(); show(pendingNavigation || 'food-room'); pendingNavigation = null; });
-  $('discard-and-leave').addEventListener('click', () => { settingsDirty = false; closeConfirm(); show(pendingNavigation || 'food-room'); pendingNavigation = null; });
-  $('cancel-leave').addEventListener('click', () => { closeConfirm(); pendingNavigation = null; });
-
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(() => {});
-  if ('speechSynthesis' in window) {
-    populateVoiceOptions();
-    speechSynthesis.onvoiceschanged = populateVoiceOptions;
-  }
-
-  renderCharacterGrid('character-grid', selectedCharacter, id => selectedCharacter = id);
-  if (state.activeProfileId && activeProfile()) {
-    applyTheme(activeProfile().theme || 'forest');
-    show('home-screen');
-  } else if (state.profiles.length) {
-    show('profile-picker');
-  } else {
-    show('welcome-screen');
-  }
+'use strict';
+const STORAGE_KEY='lifestyleCompanionAlpha1'; const MAX_PROFILES=10;
+const characters=[['chimp','🐵','Chimpanzee'],['horse','🐴','Horse'],['dog','🐶','Dog'],['cow','🐮','Cow'],['cat','🐱','Cat'],['koala','🐨','Koala'],['kangaroo','🦘','Kangaroo'],['owl','🦉','Owl'],['panda','🐼','Panda'],['penguin','🐧','Penguin'],['frog','🐸','Frog'],['bear','🐻','Bear']];
+const rooms={planner:{icon:'📅',label:'Planner',description:'Plans, calendars and reminders',status:'coming-soon'},food:{icon:'🥗',label:'Food & Nutrition',description:'Food, fasting, water and weight',status:'available'},exercise:{icon:'👟',label:'Exercise',description:'Movement and activity goals',status:'coming-soon'},journal:{icon:'📖',label:'Journal',description:'Diary, reflection and mood',status:'coming-soon'},family:{icon:'👨‍👩‍👧',label:'Family',description:'Optional shared plans',status:'coming-soon'},budget:{icon:'💰',label:'Budget',description:'Money and savings goals',status:'coming-soon'},mylife:{icon:'❤️',label:'My Life',description:'Long-term life planning',status:'coming-soon'}};
+const thoughts={cheerful:['Small steps count. Let’s make today a good one.','You don’t have to do everything today — just the next helpful thing.','Welcome back. I’m glad you’re here.'],calm:['Take a breath. We can work through today one step at a time.','There is no rush. Choose the Room that feels most useful.','A steady day is still a successful day.'],funny:['I’m ready when you are — unless the kettle boils first.','Today’s exercise: opening the right Room on the first try.','I tried to organise my thoughts. They requested annual leave.'],encouraging:['You’ve already done the hardest part: showing up.','Progress does not need to be perfect to be worthwhile.','We’ll adjust the plan to fit your life, not the other way around.'],minimal:['Ready when you are.','What shall we do?','Welcome back.']};
+const kitchenThoughts=['The kitchen is open. Let’s make the plan fit real life.','A balanced day can still include food you genuinely enjoy.','I’m wearing the chef’s hat, but you’re still in charge of the menu.','Barbecue rule number one: someone has to supervise the onions.'];
+const state=loadState(); let selectedCharacter='chimp',settingsDirty=false,pendingNavigation=null,voices=[],wizardStep=1,setupMode='new',editingProfileId=null,placeholderAction=null;
+const $=id=>document.getElementById(id); const screens=[...document.querySelectorAll('.screen')];
+function loadState(){try{const p=JSON.parse(localStorage.getItem(STORAGE_KEY));if(p&&Array.isArray(p.profiles)){p.analytics=p.analytics||{roomTaps:{},setupStarts:{},setupCompletions:{}};p.profiles=p.profiles.map(migrateProfile);return p}}catch(e){}return{profiles:[],activeProfileId:null,seenWelcome:false,analytics:{roomTaps:{},setupStarts:{},setupCompletions:{}}}}
+function migrateProfile(p){return{...p,fullName:p.fullName||p.userName||'',preferredName:p.preferredName||p.userName||'',userName:p.preferredName||p.userName||'',dateOfBirth:p.dateOfBirth||'',email:p.email||'',phone:p.phone||'',address:p.address||'',enabledRooms:p.enabledRooms||['food'],nutrition:p.nutrition||{currentWeight:p.currentWeight||'',heightCm:p.heightCm||'',activityLevel:p.activityLevel||'moderate',weightGoal:p.weightGoal||'gradual',goalWeight:p.goalWeight||'',fastingPlan:p.fastingPlan||'none',waterTarget:p.waterTarget||'',dietaryNotes:p.dietaryNotes||''}}}
+function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))} function activeProfile(){return state.profiles.find(p=>p.id===state.activeProfileId)||null}
+function show(id){screens.forEach(s=>s.classList.toggle('active',s.id===id));scrollTo(0,0);if(id==='home-screen')renderHome();if(id==='food-room')renderFoodRoom();if(id==='profile-picker')renderProfiles();if(id==='settings-room')renderSettings()}
+function toast(msg){const e=$('toast');e.textContent=msg;e.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove('show'),2400)}
+function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))} function profileEmoji(p){return characters.find(c=>c[0]===p.character)?.[1]||'🙂'}
+function greetingPart(){const h=new Date().getHours();return h<12?'morning':h<18?'afternoon':'evening'}
+function renderCharacterGrid(id,current,onSelect){const e=$(id);e.innerHTML=characters.map(([key,emoji,label])=>`<button type="button" class="character-choice ${key===current?'selected':''}" data-character="${key}"><span>${emoji}</span><small>${label}</small></button>`).join('');e.querySelectorAll('[data-character]').forEach(b=>b.onclick=()=>{onSelect(b.dataset.character);renderCharacterGrid(id,b.dataset.character,onSelect)})}
+function applyTheme(theme){const t={forest:['#185c43','#e7f1eb'],ocean:['#276a93','#e6f1f8'],sunset:['#a95d2b','#f8eadf'],plum:['#6d4e7d','#f0e8f3'],charcoal:['#394744','#e9edec']}[theme]||['#185c43','#e7f1eb'];document.documentElement.style.setProperty('--accent',t[0]);document.documentElement.style.setProperty('--accent-soft',t[1])}
+function renderProfiles(){const list=$('profile-list');list.innerHTML=state.profiles.map(p=>`<button class="profile-card" data-profile-id="${p.id}"><div class="big-character">${profileEmoji(p)}</div><strong>${escapeHtml(p.preferredName)}</strong><small>${escapeHtml(p.companionName)}</small></button>`).join('');if(state.profiles.length<MAX_PROFILES)list.insertAdjacentHTML('beforeend',`<button class="profile-card add-card" id="inline-add"><div class="big-character">＋</div><strong>Add tester</strong><small>${MAX_PROFILES-state.profiles.length} places remaining</small></button>`);$('inline-add')?.addEventListener('click',startNewProfile);list.querySelectorAll('[data-profile-id]').forEach(b=>b.onclick=()=>{state.activeProfileId=b.dataset.profileId;saveState();applyTheme(activeProfile().theme);show('home-screen')})}
+function populateVoiceOptions(){voices=speechSynthesis?.getVoices?.()||[];const usable=voices.filter(v=>/^en(-|_)/i.test(v.lang));const list=usable.length?usable:voices;$('voice-select').innerHTML=`<option value="">Device default voice</option>`+list.map(v=>`<option value="${escapeHtml(v.voiceURI)}">${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('')}
+function previewVoice(){const name=$('companion-name').value.trim()||'your Companion';const person=$('preferred-name').value.trim()||'there';speakWithVoice(`Hello ${person}. I’m ${name}. It’s lovely to meet you.`,$('voice-select').value,$('personality-select').value)}
+function speakWithVoice(text,uri='',personality='cheerful'){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const chosen=voices.find(v=>v.voiceURI===uri);if(chosen)u.voice=chosen;u.rate=personality==='calm'?.9:personality==='funny'?1.05:.98;speechSynthesis.speak(u)}
+function speak(text){const p=activeProfile();if(p)speakWithVoice(text,p.voiceURI,p.personality)}
+function startNewProfile(){if(state.profiles.length>=MAX_PROFILES)return toast('This trial supports up to 10 profiles on this device.');setupMode='new';editingProfileId=null;wizardStep=1;clearSetup();show('setup-screen');renderWizard()}
+function clearSetup(){['full-name','preferred-name','date-of-birth','email-address','phone-number','postal-address','companion-name','current-weight','height-cm','goal-weight','water-target','dietary-notes'].forEach(id=>$(id).value='');$('personality-select').value='cheerful';$('theme-select').value='forest';$('activity-level').value='moderate';$('weight-goal').value='gradual';$('fasting-plan').value='none';selectedCharacter='chimp';renderCharacterGrid('character-grid',selectedCharacter,id=>selectedCharacter=id);renderRoomChoices(['food']);populateVoiceOptions()}
+function renderRoomChoices(enabled=[]){$('room-choice-grid').innerHTML=Object.entries(rooms).map(([id,r])=>`<label class="room-choice"><input type="checkbox" data-room-choice="${id}" ${enabled.includes(id)?'checked':''}><span class="room-icon">${r.icon}</span><div><strong>${r.label}</strong><small>${r.description}${r.status==='coming-soon'?' · Coming soon':''}</small></div></label>`).join('')}
+function selectedRooms(){return[...document.querySelectorAll('[data-room-choice]:checked')].map(x=>x.dataset.roomChoice)}
+function renderWizard(){document.querySelectorAll('.wizard-step').forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===wizardStep));const titles=[['About you','We only ask once, then reuse relevant details in each Room.'],['Your Companion','Tap different voices to hear each one immediately.'],['Choose your Rooms','Start only with the features you want now.'],['Room setup','Extra questions appear only for selected Rooms.'],['Ready to begin','Review your starting setup.']];$('setup-title').textContent=titles[wizardStep-1][0];$('setup-subtitle').textContent=titles[wizardStep-1][1];$('setup-progress').textContent=`${wizardStep} of 5`;$('wizard-previous').style.visibility=wizardStep===1?'hidden':'visible';$('wizard-next').textContent=wizardStep===5?(setupMode==='edit'?'Save Companion':'Create profile'):'Continue';if(wizardStep===4){const food=selectedRooms().includes('food');$('food-setup-panel').classList.toggle('hidden',!food);$('food-skipped-panel').classList.toggle('hidden',food)}if(wizardStep===5)renderReview()}
+function validateStep(){if(wizardStep===1&&!$('full-name').value.trim())return toast('Please enter your full name.'),false;if(wizardStep===1&&!$('preferred-name').value.trim())return toast('Please enter your preferred name.'),false;if(wizardStep===2&&!$('companion-name').value.trim())return toast('Please name your Companion.'),false;return true}
+function renderReview(){const enabled=selectedRooms();$('review-avatar').textContent=characters.find(c=>c[0]===selectedCharacter)?.[1]||'🙂';$('review-heading').textContent=`${$('preferred-name').value.trim()}, you and ${$('companion-name').value.trim()} are ready`;$('review-copy').textContent=enabled.length?`You have chosen ${enabled.length} Room${enabled.length===1?'':'s'} to begin with. All other Rooms will remain visible and ready for later setup.`:'You have not activated a Room yet. That is fine — every Room will remain visible and ready when you choose it.';$('review-rooms').innerHTML=enabled.map(id=>`<span>${rooms[id].icon} ${rooms[id].label}</span>`).join('')||'<span>Explore at your own pace</span>'}
+function finishSetup(){const enabled=selectedRooms();const base={fullName:$('full-name').value.trim(),preferredName:$('preferred-name').value.trim(),userName:$('preferred-name').value.trim(),dateOfBirth:$('date-of-birth').value,email:$('email-address').value.trim(),phone:$('phone-number').value.trim(),address:$('postal-address').value.trim(),companionName:$('companion-name').value.trim(),character:selectedCharacter,voiceURI:$('voice-select').value||'',personality:$('personality-select').value,theme:$('theme-select').value,enabledRooms:enabled,nutrition:{currentWeight:$('current-weight').value,heightCm:$('height-cm').value,activityLevel:$('activity-level').value,weightGoal:$('weight-goal').value,goalWeight:$('goal-weight').value,fastingPlan:$('fasting-plan').value,waterTarget:$('water-target').value,dietaryNotes:$('dietary-notes').value.trim()}};if(setupMode==='edit'){Object.assign(activeProfile(),base);saveState();applyTheme(base.theme);show('settings-room');return toast('Companion updated')}const p={id:crypto.randomUUID?.()||String(Date.now()),...base,createdAt:new Date().toISOString()};state.profiles.push(p);state.activeProfileId=p.id;state.seenWelcome=true;enabled.forEach(r=>state.analytics.setupCompletions[r]=(state.analytics.setupCompletions[r]||0)+1);saveState();applyTheme(p.theme);show('home-screen');speak(`Hello ${p.preferredName}. I’m ${p.companionName}. I’ll be your Lifestyle Companion.`)}
+function editCompanion(){const p=activeProfile();if(!p)return;setupMode='edit';editingProfileId=p.id;wizardStep=2;$('full-name').value=p.fullName;$('preferred-name').value=p.preferredName;$('date-of-birth').value=p.dateOfBirth;$('email-address').value=p.email;$('phone-number').value=p.phone;$('postal-address').value=p.address;$('companion-name').value=p.companionName;$('personality-select').value=p.personality;$('theme-select').value=p.theme;selectedCharacter=p.character;renderCharacterGrid('character-grid',selectedCharacter,id=>selectedCharacter=id);renderRoomChoices(p.enabledRooms);const n=p.nutrition||{};$('current-weight').value=n.currentWeight||'';$('height-cm').value=n.heightCm||'';$('activity-level').value=n.activityLevel||'moderate';$('weight-goal').value=n.weightGoal||'gradual';$('goal-weight').value=n.goalWeight||'';$('fasting-plan').value=n.fastingPlan||'none';$('water-target').value=n.waterTarget||'';$('dietary-notes').value=n.dietaryNotes||'';populateVoiceOptions();setTimeout(()=>{$('voice-select').value=p.voiceURI||''},20);show('setup-screen');renderWizard()}
+function renderHome(){const p=activeProfile();if(!p)return show('profile-picker');$('home-greeting').textContent=`Good ${greetingPart()}, ${p.preferredName}`;$('home-character').textContent=profileEmoji(p);$('home-companion-name').textContent=p.companionName;$('profile-button').textContent=profileEmoji(p);document.querySelectorAll('[data-room]').forEach(b=>{const id=b.dataset.room;b.classList.remove('configured','unconfigured','coming-soon');b.classList.add(rooms[id].status==='coming-soon'?'coming-soon':p.enabledRooms.includes(id)?'configured':'unconfigured')});setThought()}
+function setThought(){const p=activeProfile();const a=thoughts[p?.personality]||thoughts.cheerful;$('thought-label').textContent=`A thought from ${p.companionName}`;$('thought-text').textContent=a[Math.floor(Math.random()*a.length)]}
+function renderFoodRoom(){const p=activeProfile();$('food-character').textContent=profileEmoji(p);$('food-companion-name').textContent=p.companionName;$('food-profile-button').textContent=profileEmoji(p);$('kitchen-note').textContent=kitchenThoughts[Math.floor(Math.random()*kitchenThoughts.length)]}
+function record(map,id){state.analytics[map][id]=(state.analytics[map][id]||0)+1;saveState()}
+function openRoom(id){const p=activeProfile();record('roomTaps',id);if(rooms[id].status==='coming-soon')return openPlaceholder(rooms[id].label,rooms[id].icon,`${rooms[id].label} is planned for a future release. Your visit has been recorded locally as an expression of interest, helping the Founder understand which Room testers want next.`,'home-screen','I’m interested',()=>{record('setupStarts',id);toast(`Interest in ${rooms[id].label} recorded`)});if(!p.enabledRooms.includes(id))return openPlaceholder(rooms[id].label,rooms[id].icon,`${p.companionName} can set up ${rooms[id].label} with you now. Only information relevant to this Room will be requested.`,'home-screen','Set up this Room',()=>startRoomSetup(id));if(id==='food')show('food-room')}
+function startRoomSetup(id){record('setupStarts',id);if(id==='food'){const p=activeProfile();p.enabledRooms=[...new Set([...p.enabledRooms,'food'])];saveState();show('settings-room');toast(`${p.companionName} will help you finish Food & Nutrition setup here.`)}}
+function renderSettings(){const p=activeProfile(),n=p.nutrition||{};$('profile-summary').innerHTML=[['Preferred name',p.preferredName],['Full name',p.fullName],['Date of birth',p.dateOfBirth||'Not supplied'],['Email',p.email||'Not supplied']].map(([k,v])=>`<div class="summary-item"><small>${k}</small><strong>${escapeHtml(v)}</strong></div>`).join('');$('settings-current-weight').value=n.currentWeight||'';$('settings-height-cm').value=n.heightCm||'';$('settings-activity-level').value=n.activityLevel||'moderate';$('settings-weight-goal').value=n.weightGoal||'gradual';$('settings-goal-weight').value=n.goalWeight||'';$('settings-fasting-plan').value=n.fastingPlan||'none';$('settings-water-target').value=n.waterTarget||'';$('settings-dietary-notes').value=n.dietaryNotes||'';settingsDirty=false}
+function saveSettings(){const p=activeProfile();p.nutrition={currentWeight:$('settings-current-weight').value,heightCm:$('settings-height-cm').value,activityLevel:$('settings-activity-level').value,weightGoal:$('settings-weight-goal').value,goalWeight:$('settings-goal-weight').value,fastingPlan:$('settings-fasting-plan').value,waterTarget:$('settings-water-target').value,dietaryNotes:$('settings-dietary-notes').value.trim()};if(!p.enabledRooms.includes('food'))p.enabledRooms.push('food');saveState();settingsDirty=false;toast('Food & Nutrition preferences saved')}
+function openPlaceholder(title,icon,copy,back='home-screen',actionLabel='',action=null){$('placeholder-title').textContent=title;$('placeholder-icon').textContent=icon;$('placeholder-heading').textContent=rooms[Object.keys(rooms).find(k=>rooms[k].label===title)]?.status==='coming-soon'?`${title} is coming soon`:`Set up ${title}`;$('placeholder-copy').textContent=copy;$('placeholder-back').dataset.target=back;placeholderAction=action;$('placeholder-action').textContent=actionLabel;$('placeholder-action').classList.toggle('hidden',!actionLabel);show('placeholder-room')}
+function openVoice(){const p=activeProfile();$('voice-avatar').textContent=profileEmoji(p);$('voice-title').textContent=`Speak to ${p.companionName}`;$('voice-status').textContent='Speak or type a command below.';$('voice-input').value='';$('voice-sheet').classList.add('open');$('voice-sheet').setAttribute('aria-hidden','false');setTimeout(()=>$('voice-input').focus(),180)} function closeVoice(){$('voice-sheet').classList.remove('open');$('voice-sheet').setAttribute('aria-hidden','true')}
+function handleCommand(raw){const c=raw.toLowerCase().trim();if(!c)return toast('Please speak or type a command.');let response;if(/food|nutrition|kitchen/.test(c)&&/open|go|enter|take/.test(c)){closeVoice();openRoom('food');response='Certainly. Let’s head into Food and Nutrition.'}else if(/setting|preference/.test(c)&&/open|go|enter|take/.test(c)){closeVoice();show('settings-room');response='Opening Food and Nutrition Preferences.'}else if(/joke|funny/.test(c)){response=thoughts.funny[Math.floor(Math.random()*thoughts.funny.length)];$('voice-input').value=response}else if(/home/.test(c)&&/open|go|take/.test(c)){closeVoice();show('home-screen');response='Taking you home.'}else{response='I heard you, but this Alpha foundation only understands a small set of navigation commands so far.';$('voice-input').value=response}speak(response)}
+function startListening(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){$('voice-status').textContent='Speech recognition is not available in this browser. You can type your command instead.';return}const r=new R();r.lang='en-AU';r.interimResults=false;$('start-listening').classList.add('listening');$('voice-status').textContent='Listening…';r.onresult=e=>{$('voice-input').value=e.results[0][0].transcript;handleCommand($('voice-input').value)};r.onerror=()=>$('voice-status').textContent='I could not hear that clearly. Please try again or type your command.';r.onend=()=>{$('start-listening').classList.remove('listening');$('voice-status').textContent='Speak or type another command.'};r.start()}
+function askBeforeLeaving(target){if(!settingsDirty)return show(target);pendingNavigation=target;$('confirm-sheet').classList.add('open')} function closeConfirm(){$('confirm-sheet').classList.remove('open')}
+$('begin-setup').onclick=startNewProfile;$('returning-user').onclick=()=>show('profile-picker');$('add-profile').onclick=startNewProfile;$('setup-back').onclick=()=>{if(wizardStep>1){wizardStep--;renderWizard()}else show(state.profiles.length?'profile-picker':'welcome-screen')};$('wizard-previous').onclick=()=>{if(wizardStep>1){wizardStep--;renderWizard()}};$('wizard-next').onclick=()=>{if(!validateStep())return;if(wizardStep<5){wizardStep++;renderWizard()}else finishSetup()};$('voice-select').addEventListener('change',previewVoice);$('voice-select').addEventListener('click',()=>{if($('voice-select').value)previewVoice()});
+document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>b.classList.contains('leave-check')?askBeforeLeaving(b.dataset.nav):show(b.dataset.nav));document.querySelectorAll('[data-room]').forEach(b=>b.onclick=()=>openRoom(b.dataset.room));document.querySelectorAll('[data-subroom]').forEach(b=>b.onclick=()=>{const id=b.dataset.subroom;if(id==='settings')return show('settings-room');const m={plan:['Food Plan','🍽️','Daily food logging and backdating are scheduled for Sprint 2.'],fasting:['Fasting Planner','🌙','The 5:2 and custom fasting workflows are scheduled for Sprint 2.'],weight:['Weight Check-in','⚖️','Weight history, backdating and trend graphs are scheduled for Sprint 2.'],summary:['Daily Summary','📊','Planned-versus-actual summaries are scheduled for Sprint 2.'],recipes:['Recipes','📒','Personal recipes and family meals will connect to the food database later.'],water:['Water','💧','Water logging is scheduled for Sprint 2.']};openPlaceholder(...m[id],'food-room')});
+$('placeholder-back').onclick=e=>show(e.currentTarget.dataset.target||'home-screen');$('placeholder-action').onclick=()=>placeholderAction?.();$('profile-button').onclick=()=>show('profile-picker');$('food-profile-button').onclick=()=>show('profile-picker');$('companion-centre').onclick=openVoice;$('food-companion-centre').onclick=openVoice;$('another-thought').onclick=setThought;$('close-voice').onclick=closeVoice;$('start-listening').onclick=startListening;$('send-command').onclick=()=>handleCommand($('voice-input').value);$('voice-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleCommand(e.currentTarget.value)}});document.querySelectorAll('[data-command]').forEach(b=>b.onclick=()=>{$('voice-input').value=b.dataset.command;handleCommand(b.dataset.command)});$('settings-form').addEventListener('input',()=>settingsDirty=true);$('settings-form').onsubmit=e=>{e.preventDefault();saveSettings()};$('edit-companion').onclick=editCompanion;$('save-and-leave').onclick=()=>{saveSettings();closeConfirm();show(pendingNavigation||'food-room');pendingNavigation=null};$('discard-and-leave').onclick=()=>{settingsDirty=false;closeConfirm();show(pendingNavigation||'food-room');pendingNavigation=null};$('cancel-leave').onclick=()=>{closeConfirm();pendingNavigation=null};
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js').catch(()=>{});if('speechSynthesis'in window){populateVoiceOptions();speechSynthesis.onvoiceschanged=populateVoiceOptions}renderCharacterGrid('character-grid',selectedCharacter,id=>selectedCharacter=id);if(state.activeProfileId&&activeProfile()){applyTheme(activeProfile().theme||'forest');show('home-screen')}else if(state.profiles.length)show('profile-picker');else show('welcome-screen');
 })();

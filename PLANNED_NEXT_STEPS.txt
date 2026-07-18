@@ -1,0 +1,11 @@
+PLANNED NEXT STEPS — SPRINT 2
+
+- Working Food & Nutrition daily logging.
+- Backdated meal and drink entries.
+- Professional food database integration planning.
+- Weight Check-in with date selection and graph ranges.
+- 5:2 and custom fasting workflows.
+- Water logging.
+- Daily planned-versus-actual summary.
+- Better voice-driven food entry.
+- Secure accounts and cross-device cloud synchronisation remain a separate infrastructure milestone.

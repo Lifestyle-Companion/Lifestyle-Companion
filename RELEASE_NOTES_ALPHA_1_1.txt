@@ -1,0 +1,48 @@
+LIFESTYLE COMPANION — FOUNDER'S TRIAL EDITION
+ALPHA 1.1 — FOUNDATION REFINEMENT
+
+WHAT CHANGED
+
+1. New five-step onboarding wizard
+   - About You profile: full name, preferred name, date of birth, email, phone and address.
+   - Companion setup: character, name, personality, theme and device voice.
+   - Room selection: testers choose which Rooms they want to activate now.
+   - Conditional Food & Nutrition setup: health questions appear only when Food & Nutrition is selected.
+   - Review page before profile creation.
+
+2. Voice preview
+   - Selecting a voice immediately plays a sample greeting.
+   - Testers can move between voices and hear each one before deciding.
+
+3. Room visibility and activation
+   - All Home Circle Rooms remain visible.
+   - Active, not-yet-configured and coming-soon Rooms use subtle status badges.
+   - Tapping an available but unconfigured Room starts its setup pathway.
+   - Tapping a coming-soon Room displays a friendly message and records local interest.
+
+4. Responsive circles
+   - Home and Food & Nutrition navigation use square, aspect-ratio-controlled stages.
+   - Mobile scaling was revised to prevent oval distortion and cut-off lower buttons.
+   - Additional compact rules apply to shorter phone screens.
+
+5. Preferences & Settings
+   - Removed the duplicated Companion editor from the bottom of the page.
+   - Added a simple Edit My Companion button.
+   - Reuses master profile details automatically.
+   - Added current weight, height, goal weight, activity level, fasting preference, water target and dietary notes.
+
+6. Voice interaction sheet
+   - Previous command is no longer displayed when opened.
+   - The text box is blank and ready for a typed command.
+   - Testers may speak, type or use a quick command.
+
+7. Visual refinement
+   - Home uses a soft gradient and subtle pattern.
+   - Food & Nutrition has a warmer kitchen-inspired background.
+
+8. Local analytics foundation
+   - Room taps, setup starts and setup completions are recorded locally in browser storage.
+   - No information is sent anywhere in this Alpha build.
+
+DATA COMPATIBILITY
+Existing Alpha 1 profiles are automatically migrated where possible. Existing names become both full and preferred names until edited. Existing Food & Nutrition preferences are preserved.

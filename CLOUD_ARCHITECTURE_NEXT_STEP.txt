@@ -1,0 +1,38 @@
+LIFESTYLE COMPANION — CLOUD ARCHITECTURE NEXT STEP
+
+WHY THIS IS REQUIRED
+Every tester will use their own phone and tablet, and one person may use both. Local browser storage cannot synchronise between devices. A real trial therefore needs secure user accounts and cloud data storage.
+
+PROPOSED ALPHA ARCHITECTURE
+- Front end: responsive Progressive Web App first; native iOS packaging later.
+- Authentication: email magic link or Apple sign-in.
+- Database: hosted PostgreSQL service with row-level security.
+- Storage: private user-owned records; no tester can read another tester's data.
+- Account model: up to 10 invited trial accounts controlled by Founder Mode.
+- Sync model: every change is written to the cloud and reflected on the user's other devices.
+- Offline model: local queue with later synchronisation when connectivity returns.
+- Audit fields: created_at, updated_at, source_device and deleted_at.
+
+MINIMUM DATA TABLES
+users
+profiles
+companions
+health_preferences
+food_diary_days
+food_entries
+weight_entries
+fasting_days
+water_entries
+recipes
+trial_feedback
+trial_invitations
+
+SECURITY PRINCIPLES
+- Private by default.
+- Row-level access based on authenticated user ID.
+- Founder sees trial administration and anonymous usage counts, not private health details.
+- No family sharing until a separate consent-based sharing model is built.
+- Backups and account deletion must be designed before wider testing.
+
+DECISION NEEDED BEFORE CLOUD BUILD
+Choose a backend provider and create the project credentials. Those credentials cannot be invented or safely embedded without the Founder's account and service setup.

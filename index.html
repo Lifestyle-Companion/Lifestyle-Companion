@@ -1,53 +1,254 @@
-<!doctype html><html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f7f4ed"><title>Lifestyle Companion v0.4</title>
-<style>
-:root{--bg:#f7f4ed;--card:#fff;--ink:#153e32;--muted:#6c7872;--green:#15583f;--line:#dfe7e1;--soft:#edf4ef;--shadow:0 10px 28px rgba(29,60,50,.11);--yellow:#e4b931;--lime:#82b956;--good:#2d9658;--orange:#e8832f;--red:#cf4f43}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:560px;margin:auto;min-height:100vh;padding:12px 12px 94px}.screen{display:none}.screen.active{display:block}.header{text-align:center;position:relative;padding:5px 58px 8px}.header h1{margin:0;font:italic 700 31px Georgia,serif}.header p{margin:7px 0 0;color:var(--muted);font-size:14px}.profile{position:absolute;right:0;top:0;width:55px;height:55px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:var(--shadow)}.back{position:absolute;left:0;top:0;width:48px;height:48px;border:0;border-radius:15px;background:#fff;box-shadow:var(--shadow);font-size:23px}.card{background:#fff;border:1px solid var(--line);border-radius:21px;padding:15px;margin:11px 0;box-shadow:var(--shadow)}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.pill{background:var(--soft);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800}.circle-wrap{position:relative;width:100%;aspect-ratio:1/1.13}.orbit{position:absolute;left:10%;right:10%;top:13%;bottom:13%;border:2px solid #cfd9d3;border-radius:50%}.center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:40%;aspect-ratio:1;border-radius:48%;background:linear-gradient(#f6fbf7,#eaf3ed);border:2px solid #c9ddcf;box-shadow:var(--shadow);text-align:center;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center}.avatar{position:relative;width:78%;aspect-ratio:1}.avatar img{width:100%;height:100%;border-radius:43%;object-fit:cover;border:3px solid #fff}.costume{position:absolute;font-size:34px;filter:drop-shadow(0 2px 2px #fff)}.hat{top:-22px;left:50%;transform:translateX(-50%)}.prop{right:-19px;bottom:-8px}.center strong{font-size:20px;margin-top:6px}.center small{color:var(--muted);font-size:11px}.mic{position:absolute;right:5%;bottom:15%;width:55px;height:55px;border:0;border-radius:50%;background:#fff;color:var(--green);font-size:27px;box-shadow:var(--shadow)}.life-btn{position:absolute;width:31%;aspect-ratio:1/1.16;border-radius:48%;background:#fff;border:2px solid var(--accent);box-shadow:0 7px 18px rgba(29,60,50,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7px}.life-btn b{font-size:14px;color:var(--accent)}.life-btn span{font-size:26px}.life-btn small{font-size:9px;color:var(--muted);line-height:1.15}.life-btn.disabled{opacity:.75}.pos-top{left:34.5%;top:0}.pos-ur{right:2%;top:24%}.pos-lr{right:0;top:57%}.pos-bottom-r{right:18%;bottom:0}.pos-bottom-l{left:18%;bottom:0}.pos-ll{left:0;top:57%}.pos-ul{left:2%;top:24%}.quote{background:linear-gradient(100deg,#fff8e9,#f8edd2);border-color:#efd19a;line-height:1.45}.glance{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{text-align:center;background:var(--soft);border-radius:14px;padding:9px 5px}.metric b{display:block;font-size:12px}.metric span{font-size:20px}.metric small{color:var(--muted)}.composer{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,100%);padding:8px 12px;background:rgba(247,244,237,.95);z-index:8}.composer-inner{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);display:grid;grid-template-columns:45px 1fr 43px;gap:6px;align-items:center;padding:6px}.composer input{border:0;outline:0;font:inherit;width:100%}.send{border:0;background:none;font-size:24px;color:var(--green)}
-.subhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.subhead h2{margin:0;font-size:21px}.help{border:0;background:var(--soft);border-radius:10px;padding:8px 10px;font-weight:700}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}label{display:block;font-size:13px;font-weight:750;margin:8px 0 4px}input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit}.primary{border:0;border-radius:11px;background:var(--green);color:#fff;padding:11px 14px;font-weight:800}.wide{width:100%;font-size:16px;padding:14px}.secondary{border:0;border-radius:10px;background:var(--soft);padding:9px 11px;font-weight:750}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{border-radius:13px;padding:10px;background:var(--soft);text-align:center}.stat b{display:block;font-size:17px}.stat small{color:var(--muted)}.mealbar{border:2px solid #ef9b4c;background:#fff8ef;padding:10px;border-radius:12px}.foodcontrols{display:grid;grid-template-columns:1.5fr .65fr 1fr;gap:7px}.foodcontrols .full{grid-column:1/-1}.mealCards{display:grid;grid-template-columns:1fr 1fr;gap:9px}.meal h3{margin:0 0 7px}.foodline{display:grid;grid-template-columns:1fr 58px 70px 30px;gap:5px;align-items:center;font-size:12px;margin:5px 0}.foodline input{padding:6px}.foodline button{border:0;background:#fae8e5;border-radius:7px;padding:6px}.nut{margin:10px 0}.nuthead{display:flex;justify-content:space-between;gap:7px;font-size:13px}.bar{height:13px;background:#edf0ed;border-radius:999px;overflow:hidden}.fill{height:100%;transition:.25s}.comment{font-size:12px;color:var(--muted)}.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.summaryBox{border-radius:14px;padding:10px;border:2px solid transparent}.summaryBox b{font-size:17px;display:block}.goodbg{background:#e1f2e7;border-color:#70ba87}.lowbg{background:#fff4c9;border-color:#e4bd3e}.highbg{background:#ffecd8;border-color:#e58b40}.veryhighbg{background:#f8dfdc;border-color:#d46156}.canvas{width:100%;height:240px;border:1px solid var(--line);border-radius:12px}.toast{position:fixed;left:50%;bottom:83px;transform:translateX(-50%);background:#173d32;color:#fff;padding:10px 15px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1}.modal{position:fixed;inset:0;background:rgba(10,30,24,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:30}.modal.open{display:flex}.modalbox{max-width:420px;width:100%;background:#fff;border-radius:20px;padding:18px}.coming{text-align:center;padding:28px 15px}.coming span{font-size:50px}.hidden{display:none!important}@media(max-width:410px){.header h1{font-size:27px}.life-btn b{font-size:12px}.life-btn small{display:none}.grid2,.mealCards{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.foodcontrols{grid-template-columns:1fr 78px}.foodcontrols .full{grid-column:1/-1}.circle-wrap{aspect-ratio:1/1.18}}
-</style></head><body><div class="app">
-<section id="home" class="screen active"><header class="header"><img src="mal.jpg" class="profile"><h1 id="hello">Good afternoon, Mal</h1><p>I hope you’re doing well.<br>What part of life shall we look at today?</p></header><div class="card row"><div><b>💚 Life Pulse</b><div style="color:#287829;margin-top:4px">Calm and on track</div></div><span class="pill">Vision Preview</span></div><div class="circle-wrap"><div class="orbit"></div>
-<button class="life-btn pos-top disabled" style="--accent:#2878d4" onclick="coming('Planner','📅')"><span>📅</span><b>Planner</b><small>Coming in the future</small></button>
-<button class="life-btn pos-ur" style="--accent:#f07b17" onclick="enterFoodRoom()"><span>🥗</span><b>Food & Nutrition</b><small>Open this Room</small></button>
-<button class="life-btn pos-lr disabled" style="--accent:#3a8c29" onclick="coming('Exercise & Activity','👟')"><span>👟</span><b>Exercise & Activity</b><small>Coming in the future</small></button>
-<button class="life-btn pos-bottom-r disabled" style="--accent:#6d47c9" onclick="coming('Journal','📖')"><span>📖</span><b>Journal</b><small>Coming in the future</small></button>
-<button class="life-btn pos-bottom-l disabled" style="--accent:#ef4e4e" onclick="coming('Family & Friends','👨‍👩‍👧')"><span>👨‍👩‍👧</span><b>Family & Friends</b><small>Coming in the future</small></button>
-<button class="life-btn pos-ll disabled" style="--accent:#18a3a4" onclick="coming('Money & Budget','💰')"><span>💰</span><b>Money & Budget</b><small>Coming in the future</small></button>
-<button class="life-btn pos-ul disabled" style="--accent:#ee5b5b" onclick="coming('My Life','❤️')"><span>❤️</span><b>My Life</b><small>Coming in the future</small></button>
-<div class="center"><div class="avatar"><img src="hymie.jpg"><span class="costume prop">👋</span></div><strong>HYMIE</strong><small>Your lifestyle companion</small><button class="mic" onclick="toast('Voice conversation is coming later')">🎤</button></div></div><div class="card quote"><b>Today’s thought from Hymie</b><br><span id="quote">“Small steps each day become big changes over time.”</span><div style="margin-top:8px"><button class="secondary" onclick="newQuote()">Another thought or joke</button></div></div><div class="card"><h3 style="margin-top:0">Today at a glance</h3><div class="glance"><div class="metric"><span>💧</span><b>Water</b><small>Not entered</small></div><div class="metric"><span>✅</span><b>Nutrition</b><small>Open Room</small></div><div class="metric"><span>🌙</span><b>Sleep</b><small>Future</small></div><div class="metric"><span>🎯</span><b>Goals</b><small>Future</small></div><div class="metric"><span>🐷</span><b>Budget</b><small>Future</small></div><div class="metric"><span>❤️</span><b>Mood</b><small>Future</small></div></div></div></section>
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f0e8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Lifestyle Companion">
+  <title>Lifestyle Companion — Founder's Trial Alpha 1</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <section id="welcome-screen" class="screen active">
+      <div class="welcome-card">
+        <div class="trial-badge">Founder’s Trial Edition · Alpha 1</div>
+        <h1>Welcome to Lifestyle Companion</h1>
+        <p>This early trial is being shaped by a small group of invited testers. Your feedback will help build something supportive, useful and enjoyable.</p>
+        <button class="primary large" id="begin-setup">Begin setup</button>
+        <button class="secondary" id="returning-user">I already have a profile on this device</button>
+      </div>
+    </section>
 
-<section id="foodRoom" class="screen"><header class="header"><button class="back" onclick="show('home')">⌂</button><img src="mal.jpg" class="profile"><h1>Food & Nutrition</h1><p>Plan, balance and understand your daily food choices.</p></header><div class="card row"><div><b>🍽 You are in the Food & Nutrition Room</b><div style="color:var(--muted);font-size:12px;margin-top:4px">Choose one of Hymie’s sub-rooms.</div></div><span class="pill" id="chefMode">Chef Hymie</span></div><div class="circle-wrap"><div class="orbit"></div>
-<button class="life-btn pos-top" style="--accent:#7560c7" onclick="openSub('settings')"><span>⚙️</span><b>Preferences & Settings</b><small>Personal details and food rules</small></button>
-<button class="life-btn pos-ur" style="--accent:#ef7f23" onclick="openSub('plan')"><span>🍽</span><b>Food & Nutrition Plan</b><small>Build today or another day</small></button>
-<button class="life-btn pos-lr" style="--accent:#3b8d50" onclick="openSub('weight')"><span>⚖️</span><b>Weight</b><small>Progress and goal date</small></button>
-<button class="life-btn pos-bottom-r" style="--accent:#2878d4" onclick="openSub('summary')"><span>📊</span><b>Summary</b><small>Planned compared with target</small></button>
-<button class="life-btn pos-bottom-l disabled" style="--accent:#d85b72" onclick="coming('Recipes & Favourites','📖')"><span>📖</span><b>Recipes & Favourites</b><small>Coming in Learning Foods</small></button>
-<button class="life-btn pos-ll disabled" style="--accent:#18a3a4" onclick="coming('Hydration','💧')"><span>💧</span><b>Hydration</b><small>Coming in a future version</small></button>
-<button class="life-btn pos-ul disabled" style="--accent:#b77928" onclick="coming('Meal Planner','🗓️')"><span>🗓️</span><b>Meal Planner</b><small>Weekly planning coming later</small></button>
-<div class="center"><div class="avatar"><img src="hymie.jpg"><span class="costume hat" id="hat">👨‍🍳</span><span class="costume prop" id="prop">🥄</span></div><strong>HYMIE</strong><small id="chefText">Ready to help in the kitchen</small><button class="mic" onclick="changeChef()">🎤</button></div></div><div class="card quote"><b>Hymie’s kitchen note</b><br>“A healthy plan should suit the person eating it—not the other way around.”</div></section>
+    <section id="profile-picker" class="screen">
+      <header class="simple-header">
+        <button class="icon-button" data-nav="welcome-screen" aria-label="Back">←</button>
+        <div>
+          <h2>Choose your profile</h2>
+          <p>Up to 10 trial profiles can be stored on this device.</p>
+        </div>
+      </header>
+      <div id="profile-list" class="profile-grid"></div>
+      <button id="add-profile" class="primary wide">＋ Add another tester</button>
+      <p class="notice">This Sprint 1 build stores profiles locally on each device. Secure account sign-in and cross-device cloud sync are the next infrastructure step.</p>
+    </section>
 
-<section id="settings" class="screen"><header class="header"><button class="back" onclick="show('foodRoom')">‹</button><h1>Preferences & Settings</h1><p>Details Hymie uses to calculate and personalise.</p></header><div class="card"><div class="subhead"><h2>Your settings</h2><button class="help" onclick="help('Enter basic details and choose the units you want displayed. Food allergies are safety rules; foods you will not eat are preference rules.')">? Help</button></div><div class="grid2"><div><label>Preferred name</label><input id="name" value="Mal"><label>Date of birth</label><input id="dob" type="date"><label>Sex used for estimate</label><select id="sex"><option value="male">Male</option><option value="female">Female</option></select><label>Height</label><input id="height" type="number" value="175"></div><div><label>Current weight</label><input id="currentWeight" type="number" value="95" step="0.1"><label>Goal weight</label><input id="goalWeight" type="number" value="85" step="0.1"><label>Energy display</label><select id="energyUnit"><option value="cal">Calories (Cal)</option><option value="kj">Kilojoules (kJ)</option></select><label>Measurements</label><select id="units"><option value="metric">Metric</option><option value="imperial">Imperial</option></select></div></div><label>Foods I love</label><textarea id="love" placeholder="Example: roast chicken, bananas"></textarea><label>Foods I will not eat</label><textarea id="wont" placeholder="Example: avocado"></textarea><label>Context-dependent foods</label><textarea id="context" placeholder="Example: mushrooms are fine in pizza or casserole, but not served alone"></textarea><label>Allergies and intolerances</label><textarea id="allergy" placeholder="Example: peanut allergy; lactose intolerance; coeliac disease"></textarea><button class="primary wide" onclick="saveSettings()">SAVE PREFERENCES & SETTINGS</button></div></section>
+    <section id="setup-screen" class="screen">
+      <header class="simple-header">
+        <button class="icon-button" data-nav="profile-picker" aria-label="Back">←</button>
+        <div>
+          <h2>Create your Companion</h2>
+          <p>Name, character and style can be changed later.</p>
+        </div>
+      </header>
 
-<section id="plan" class="screen"><header class="header"><button class="back" onclick="show('foodRoom')">‹</button><h1>Food & Nutrition Plan</h1><p>Build a plan and watch its nutrition balance change live.</p></header><div class="card"><div class="row"><div><label style="margin:0">Plan date</label><input id="planDate" type="date"></div><span class="pill" id="friendlyPlan"></span></div><div class="stats" style="margin-top:10px"><div class="stat"><b id="goalEnergy">—</b><small>Daily goal</small></div><div class="stat"><b id="plannedEnergy">0</b><small>Planned</small></div><div class="stat" id="remainingBox"><b id="remainingEnergy">—</b><small>Remaining</small></div></div></div><div class="card"><div class="foodcontrols"><div class="full"><label>Food or drink</label><select id="food"></select></div><div><label>Quantity</label><input id="qty" type="number" step=".1" placeholder="0"></div><div><label>Measure</label><select id="measure"></select></div><div class="full mealbar"><label style="margin-top:0">Choose meal</label><select id="meal"><option>Breakfast</option><option>Morning tea</option><option>Lunch</option><option>Afternoon tea</option><option>Dinner</option><option>Snacks & Drinks</option></select></div><button class="primary full" onclick="addFood()">ADD TO PLAN</button></div></div><div class="card"><div class="subhead"><h2>Daily Nutrition Balance</h2><button class="help" onclick="help('Bars change colour according to how close the plan is to its suggested range. Yellow means very low, light green means low, green means good, orange means a little high and red means very high.')">? Help</button></div><div id="bars"></div><div class="card" style="background:#fff8e9"><b>Hymie’s live comment</b><p id="suggestion" style="margin-bottom:0"></p></div></div><div id="mealCards" class="mealCards"></div></section>
+      <div class="step-card">
+        <label for="tester-name">Your name</label>
+        <input id="tester-name" autocomplete="name" placeholder="For example, Tracey">
 
-<section id="weight" class="screen"><header class="header"><button class="back" onclick="show('foodRoom')">‹</button><h1>Weight</h1><p>See where you are, where you are going and your recent trend.</p></header><div class="stats"><div class="stat"><b id="latestWeight">—</b><small>Latest weight</small></div><div class="stat"><b id="distanceGoal">—</b><small>Distance to goal</small></div><div class="stat"><b id="goalDate">—</b><small>Estimated goal date</small></div></div><div class="card"><label>Date</label><input id="weightDate" type="date"><label>Weight</label><select id="weightSelect"></select><button class="primary wide" style="margin-top:10px" onclick="saveWeight()">RECORD OR UPDATE WEIGHT</button></div><div class="card"><div class="row"><h2 style="margin:0">Weight Progress</h2><select id="range" style="width:auto" onchange="drawChart()"><option value="30">Month</option><option value="90">3 months</option><option value="180">6 months</option><option value="365">Year</option><option value="all">All time</option></select></div><canvas id="chart" class="canvas" width="520" height="240"></canvas><button class="secondary" onclick="showHistory()">View weight history</button></div></section>
+        <label for="companion-name">Companion name</label>
+        <input id="companion-name" placeholder="For example, Stanley">
 
-<section id="summary" class="screen"><header class="header"><button class="back" onclick="show('foodRoom')">‹</button><h1>Daily Summary</h1><p>Your planned amounts alongside their targets.</p></header><div id="summaryBoxes" class="summaryGrid"></div><div class="card"><b>Hymie’s summary</b><p id="summaryText"></p></div></section>
-</div>
-<div class="composer"><div class="composer-inner"><button class="send" onclick="toast('Voice entry will be added later')">🎤</button><input placeholder="Speak to Hymie… or type your message"><button class="send" onclick="toast('Hymie has heard you — full conversation is coming later')">➤</button></div></div><div id="toast" class="toast"></div><div id="modal" class="modal"><div class="modalbox"><h2 id="modalTitle">Help</h2><div id="modalBody"></div><button class="primary wide" onclick="closeModal()">Close</button></div></div>
-<script>
-const $=id=>document.getElementById(id),today=()=>new Date().toISOString().slice(0,10);let S=JSON.parse(localStorage.getItem('lc04')||'{"profile":{},"entries":[],"weights":[]}');
-const foods=[{n:'Weet-Bix',b:'2 biscuits',k:136,p:4.4,c:26.6,f:.8,fi:3.8,m:['serve','biscuit']},{n:'Reduced-fat milk',b:'150 mL',k:69,p:5.2,c:7.2,f:2.2,fi:0,m:['150 mL','mL','cup']},{n:'Banana, small',b:'1 banana',k:90,p:1.1,c:23,f:.3,fi:2.6,m:['banana','serve']},{n:'Egg, boiled',b:'1 egg',k:78,p:6.3,c:.6,f:5.3,fi:0,m:['egg','serve']},{n:'Wholemeal toast',b:'1 slice',k:82,p:3.5,c:13.5,f:1.2,fi:2,m:['slice','serve']},{n:'Chicken breast, cooked',b:'100 g',k:165,p:31,c:0,f:3.6,fi:0,m:['100 g','g','serve']},{n:'Mixed salad',b:'2 cups',k:55,p:2.5,c:10,f:.6,fi:4,m:['2 cups','cup','serve']},{n:'Apple, medium',b:'1 apple',k:95,p:.5,c:25,f:.3,fi:4.4,m:['apple','serve']},{n:'Roast lamb, lean',b:'100 g',k:206,p:28,c:0,f:10,fi:0,m:['100 g','g','serve']},{n:'Potato, boiled',b:'150 g',k:116,p:2.9,c:26,f:.2,fi:2.6,m:['150 g','g','serve']},{n:'Chiko Roll',b:'1 roll',k:330,p:9,c:43,f:14,fi:3,m:['roll','serve']},{n:'Water',b:'250 mL',k:0,p:0,c:0,f:0,fi:0,w:250,m:['glass','250 mL','mL']}];
-function save(){localStorage.setItem('lc04',JSON.stringify(S))}function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');scrollTo(0,0);render()}function enterFoodRoom(){show('foodRoom');changeChef()}function openSub(id){show(id)}function toast(t){let x=$('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),2200)}function modal(title,body){$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modal').classList.add('open')}function closeModal(){$('modal').classList.remove('open')}function help(t){modal('Help from Hymie','<p>'+t+'</p>')}function coming(n,e){modal(n,'<div class="coming"><span>'+e+'</span><h3>Coming in a future version</h3><p>This Room is already part of the Lifestyle Companion vision, but it is not operational in this preview.</p></div>')}
-const quotes=['“Small steps each day become big changes over time.”','“Why did the tomato blush? It saw the salad dressing.”','“A plan is a guide, not a punishment.”','“Good choices count—even when the day is not perfect.”'];function newQuote(){$('quote').textContent=quotes[Math.floor(Math.random()*quotes.length)]}function changeChef(){let modes=[['👨‍🍳','🥄','Chef Hymie','Ready to help in the kitchen'],['🧑‍🍳','🍳','Cooking Hymie','Checking what is on the stove'],['👨‍🍳','🔥','BBQ Hymie','Ready to fire up the barbie'],['🎩','🥗','Nutrition Hymie','Balancing today’s food plan']];let m=modes[Math.floor(Math.random()*modes.length)];$('hat').textContent=m[0];$('prop').textContent=m[1];$('chefMode').textContent=m[2];$('chefText').textContent=m[3]}
-function age(d){if(!d)return 60;let b=new Date(d),n=new Date(),a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}function target(){let p=S.profile,a=age(p.dob),kg=Number(p.weight||95),cm=Number(p.height||175),b=10*kg+6.25*cm-5*a+(p.sex==='female'?-161:5);return Math.max(p.sex==='female'?1200:1500,Math.round(b*1.375-350))}function fmtK(k){return S.profile.energy==='kj'?Math.round(k*4.184)+' kJ':Math.round(k)+' Cal'}function wt(kg){return S.profile.units==='imperial'?(kg*2.20462).toFixed(1)+' lb':kg.toFixed(1)+' kg'}function entries(){return S.entries.filter(e=>e.date===$('planDate').value)}function totals(){return entries().reduce((a,e)=>{a.k+=e.k*e.q;a.p+=e.p*e.q;a.c+=e.c*e.q;a.f+=e.f*e.q;a.fi+=e.fi*e.q;a.w+=(e.w||0)*e.q;return a},{k:0,p:0,c:0,f:0,fi:0,w:0})}function targets(){let k=target(),kg=Number(S.profile.weight||95),p=Math.max(55,kg*.8);return{k,p1:p,p2:p*1.45,c1:k*.45/4,c2:k*.65/4,f1:k*.2/9,f2:k*.35/9,fi:30,w:2500}}
-function status(v,min,max){if(v<min*.55)return['very low','Very low','var(--yellow)','lowbg'];if(v<min)return['low','A little low','var(--lime)','lowbg'];if(v<=max)return['good','Looking good','var(--good)','goodbg'];if(v<=max*1.25)return['high','A little high','var(--orange)','highbg'];return['veryhigh','Too high','var(--red)','veryhighbg']}function bar(n,v,min,max,u){let s=status(v,min,max),pc=Math.min(100,v/max*100);return `<div class="nut"><div class="nuthead"><b>${n}</b><span>${v.toFixed(1)} ${u}</span></div><div class="bar"><div class="fill" style="width:${pc}%;background:${s[2]}"></div></div><div class="comment"><b>${s[1]}.</b> Suggested ${min.toFixed(0)}–${max.toFixed(0)} ${u}</div></div>`}
-function renderPlan(){let x=totals(),t=targets();$('goalEnergy').textContent=fmtK(t.k);$('plannedEnergy').textContent=fmtK(x.k);let rem=t.k-x.k;$('remainingEnergy').textContent=fmtK(rem);$('remainingBox').className='stat '+(rem<0?'veryhighbg':x.k/t.k>.85?'highbg':'goodbg');$('bars').innerHTML=bar('Protein',x.p,t.p1,t.p2,'g')+bar('Carbohydrate',x.c,t.c1,t.c2,'g')+bar('Fat',x.f,t.f1,t.f2,'g')+bar('Fibre',x.fi,t.fi,t.fi*1.3,'g')+bar('Water',x.w,t.w,t.w*1.25,'mL');let comments=[];[['protein',x.p,t.p1,t.p2],['carbohydrate',x.c,t.c1,t.c2],['fat',x.f,t.f1,t.f2],['fibre',x.fi,t.fi,t.fi*1.3]].forEach(z=>{let s=status(z[1],z[2],z[3]);if(s[0]!=='good')comments.push(`${z[0][0].toUpperCase()+z[0].slice(1)} is ${s[1].toLowerCase()}.`)});$('suggestion').textContent=comments.join(' ')||'The starter nutrition ranges are looking balanced.';let meals=['Breakfast','Morning tea','Lunch','Afternoon tea','Dinner','Snacks & Drinks'];$('mealCards').innerHTML=meals.map(m=>{let es=entries().filter(e=>e.meal===m);return `<div class="card meal"><h3>${m}</h3>${es.map(e=>`<div class="foodline"><span>${e.n}</span><input value="${e.q}" type="number" step=".1" onchange="editQty(${e.id},this.value)"><span>${fmtK(e.k*e.q)}</span><button onclick="removeFood(${e.id})">✕</button></div>`).join('')||'<small>Nothing planned yet.</small>'}</div>`}).join('')}
-window.editQty=(id,v)=>{let e=S.entries.find(x=>x.id===id);if(e)e.q=Math.max(.1,+v||.1);save();renderPlan();renderSummary()};window.removeFood=id=>{S.entries=S.entries.filter(x=>x.id!==id);save();render()};function addFood(){let q=+$('qty').value;if(!q)return toast('Please enter a new quantity');let f=foods[+$('food').value];S.entries.push({id:Date.now(),date:$('planDate').value,n:f.n,k:f.k,p:f.p,c:f.c,f:f.f,fi:f.fi,w:f.w||0,q,meal:$('meal').value});$('qty').value='';save();render();toast(f.n+' added')}
-function saveSettings(){S.profile={name:$('name').value,dob:$('dob').value,sex:$('sex').value,height:+$('height').value,weight:+$('currentWeight').value,goal:+$('goalWeight').value,energy:$('energyUnit').value,units:$('units').value,love:$('love').value,wont:$('wont').value,context:$('context').value,allergy:$('allergy').value};save();render();toast('✓ Preferences and settings saved')}
-function renderSettings(){let p=S.profile;if(!p.name)return;let map={name:p.name,dob:p.dob,sex:p.sex,height:p.height,currentWeight:p.weight,goalWeight:p.goal,energyUnit:p.energy,units:p.units,love:p.love,wont:p.wont,context:p.context,allergy:p.allergy};Object.entries(map).forEach(([k,v])=>{if($(k)&&v!==undefined)$(k).value=v})}
-function saveWeight(){let d=$('weightDate').value,val=+$('weightSelect').value,kg=S.profile.units==='imperial'?val/2.20462:val;S.weights=S.weights.filter(x=>x.date!==d);S.weights.push({date:d,kg});S.profile.weight=kg;save();render();toast('Weight recorded for '+friendly(d))}function friendly(d){let t=today(),s=new Date(d+'T00:00:00').toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short',year:'numeric'});return d===t?'Today, '+s:s}function renderWeight(){let w=[...S.weights].sort((a,b)=>a.date.localeCompare(b.date)),latest=w.length?w.at(-1).kg:Number(S.profile.weight||95),goal=Number(S.profile.goal||85);$('latestWeight').textContent=wt(latest);$('distanceGoal').textContent=wt(Math.max(0,latest-goal));let est='Not enough data';if(w.length>=2){let days=Math.max(1,(new Date(w.at(-1).date)-new Date(w[0].date))/864e5),rate=(w[0].kg-w.at(-1).kg)/(days/7);if(rate>.05){let weeks=(latest-goal)/rate,d=new Date();d.setDate(d.getDate()+weeks*7);est=d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}}$('goalDate').textContent=est;drawChart()}
-function drawChart(){let c=$('chart'),q=c.getContext('2d'),d=[...S.weights].sort((a,b)=>a.date.localeCompare(b.date)),r=$('range').value;if(r!=='all'){let cut=new Date();cut.setDate(cut.getDate()-+r);d=d.filter(x=>new Date(x.date)>=cut)}q.clearRect(0,0,c.width,c.height);q.fillStyle='#fff';q.fillRect(0,0,c.width,c.height);let L=48,R=12,T=18,B=42;if(!d.length){q.fillStyle='#6c7872';q.font='14px system-ui';q.fillText('Add weight entries to build the graph.',72,120);return}let vals=d.map(x=>x.kg),mn=Math.floor(Math.min(...vals)-1),mx=Math.ceil(Math.max(...vals)+1);q.font='11px system-ui';q.strokeStyle='#d9dfdb';q.fillStyle='#58655f';for(let i=0;i<5;i++){let y=T+i*(c.height-T-B)/4,v=mx-i*(mx-mn)/4;q.beginPath();q.moveTo(L,y);q.lineTo(c.width-R,y);q.stroke();q.fillText((S.profile.units==='imperial'?v*2.20462:v).toFixed(1),3,y+4)}let step=d.length===1?0:(c.width-L-R)/(d.length-1);q.strokeStyle='#356b55';q.lineWidth=3;q.beginPath();d.forEach((x,i)=>{let xx=L+i*step,yy=T+(mx-x.kg)/(mx-mn)*(c.height-T-B);i?q.lineTo(xx,yy):q.moveTo(xx,yy)});q.stroke();q.fillStyle='#356b55';d.forEach((x,i)=>{let xx=L+i*step,yy=T+(mx-x.kg)/(mx-mn)*(c.height-T-B);q.beginPath();q.arc(xx,yy,4,0,Math.PI*2);q.fill();if(i===0||i===d.length-1||d.length<5){q.save();q.translate(xx,c.height-27);q.rotate(-.45);q.fillStyle='#58655f';q.fillText(new Date(x.date+'T00:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}),0,0);q.restore()}})}function showHistory(){let w=[...S.weights].sort((a,b)=>b.date.localeCompare(a.date));modal('Weight history',w.length?w.map(x=>`<p><b>${friendly(x.date)}</b> — ${wt(x.kg)}</p>`).join(''):'<p>No weight entries yet.</p>')}
-function renderSummary(){let x=totals(),t=targets(),items=[['Energy',x.k,0,t.k,'',fmtK(x.k),'Target '+fmtK(t.k)],['Protein',x.p,t.p1,t.p2,'g',x.p.toFixed(1)+' g',`Target ${t.p1.toFixed(0)}–${t.p2.toFixed(0)} g`],['Carbohydrate',x.c,t.c1,t.c2,'g',x.c.toFixed(1)+' g',`Target ${t.c1.toFixed(0)}–${t.c2.toFixed(0)} g`],['Fat',x.f,t.f1,t.f2,'g',x.f.toFixed(1)+' g',`Target ${t.f1.toFixed(0)}–${t.f2.toFixed(0)} g`],['Fibre',x.fi,t.fi,t.fi*1.3,'g',x.fi.toFixed(1)+' g',`Target ${t.fi.toFixed(0)}–${(t.fi*1.3).toFixed(0)} g`],['Water',x.w,t.w,t.w*1.25,'mL',x.w.toFixed(0)+' mL',`Target ${t.w.toFixed(0)}–${(t.w*1.25).toFixed(0)} mL`]];$('summaryBoxes').innerHTML=items.map((it,i)=>{let s=i===0?(x.k>t.k*1.1?['','Too high','', 'veryhighbg']:x.k>t.k*.85?['','Close to target','','goodbg']:['','Below target','','lowbg']):status(it[1],it[2],it[3]);return `<div class="summaryBox ${s[3]}"><small>${it[0]}</small><b>${it[5]}</b><span>${it[6]}</span><div>${s[1]}</div></div>`}).join('');$('summaryText').textContent=$('suggestion')?.textContent||'Build a food plan to see Hymie’s summary.'}
-function initSelectors(){$('food').innerHTML=foods.map((f,i)=>`<option value="${i}">${f.n} — ${f.b}</option>`).join('');$('food').onchange=()=>{$('measure').innerHTML=foods[+$('food').value].m.map(x=>`<option>${x}</option>`).join('')};$('food').onchange();$('planDate').value=today();$('weightDate').value=today();let metric=S.profile.units!=='imperial',arr=[];if(metric){for(let x=40;x<=250;x+=.1)arr.push(`<option value="${x.toFixed(1)}">${x.toFixed(1)} kg</option>`)}else{for(let x=88;x<=550;x+=.2)arr.push(`<option value="${x.toFixed(1)}">${x.toFixed(1)} lb</option>`)}$('weightSelect').innerHTML=arr.join('');let latest=S.weights.length?[...S.weights].sort((a,b)=>a.date.localeCompare(b.date)).at(-1).kg:Number(S.profile.weight||95);$('weightSelect').value=metric?latest.toFixed(1):(latest*2.20462).toFixed(1)}
-function render(){let h=new Date().getHours(),part=h<12?'morning':h<18?'afternoon':'evening';$('hello').textContent=`Good ${part}, ${S.profile.name||'Mal'}`;$('friendlyPlan').textContent=friendly($('planDate').value);renderSettings();initSelectors();renderPlan();renderWeight();renderSummary();save()}
-$('planDate').onchange=render;$('weightDate').onchange=()=>{let e=S.weights.find(x=>x.date===$('weightDate').value);if(e)$('weightSelect').value=S.profile.units==='imperial'?(e.kg*2.20462).toFixed(1):e.kg.toFixed(1)};render();
-</script></body></html>
+        <label>Choose a Companion</label>
+        <div id="character-grid" class="character-grid"></div>
+
+        <div class="two-column">
+          <div>
+            <label for="voice-select">Voice</label>
+            <select id="voice-select"></select>
+          </div>
+          <div>
+            <label for="personality-select">Personality</label>
+            <select id="personality-select">
+              <option value="cheerful">Cheerful</option>
+              <option value="calm">Calm</option>
+              <option value="funny">Funny</option>
+              <option value="encouraging">Encouraging</option>
+              <option value="minimal">Quiet and minimal</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="theme-select">Colour theme</label>
+        <select id="theme-select">
+          <option value="forest">Forest green</option>
+          <option value="ocean">Ocean blue</option>
+          <option value="sunset">Warm sunset</option>
+          <option value="plum">Soft plum</option>
+          <option value="charcoal">Charcoal</option>
+        </select>
+
+        <button id="save-profile" class="primary large">Create my Companion</button>
+      </div>
+    </section>
+
+    <section id="home-screen" class="screen home-screen">
+      <header class="home-welcome">
+        <button id="profile-button" class="profile-chip" aria-label="Profile and settings"></button>
+        <h1 id="home-greeting"></h1>
+        <p id="home-subtitle">I hope you’re doing well. Where shall we go today?</p>
+      </header>
+
+      <main class="home-main">
+        <div class="circle-stage" id="home-circle">
+          <div class="orbit"></div>
+          <button class="room room-1" data-room="planner" style="--room:#3978cf"><span>📅</span><b>Planner</b></button>
+          <button class="room room-2 active-room" data-room="food" style="--room:#e97b2c"><span>🥗</span><b>Food & Nutrition</b></button>
+          <button class="room room-3" data-room="exercise" style="--room:#3b8d48"><span>👟</span><b>Exercise</b></button>
+          <button class="room room-4" data-room="journal" style="--room:#7c5bc7"><span>📖</span><b>Journal</b></button>
+          <button class="room room-5" data-room="family" style="--room:#d94f64"><span>👨‍👩‍👧</span><b>Family</b></button>
+          <button class="room room-6" data-room="budget" style="--room:#17999b"><span>💰</span><b>Budget</b></button>
+          <button class="room room-7" data-room="mylife" style="--room:#ce5c83"><span>❤️</span><b>My Life</b></button>
+
+          <button id="companion-centre" class="companion-centre" aria-label="Talk to your Companion">
+            <span id="home-character" class="companion-character"></span>
+            <strong id="home-companion-name"></strong>
+            <small>Tap to talk</small>
+            <span class="mic-badge">🎤</span>
+          </button>
+        </div>
+
+        <div class="thought-card">
+          <div>
+            <small id="thought-label">A thought from your Companion</small>
+            <p id="thought-text"></p>
+          </div>
+          <button id="another-thought" class="icon-button" aria-label="Another thought">↻</button>
+        </div>
+      </main>
+    </section>
+
+    <section id="food-room" class="screen themed-room">
+      <header class="room-header">
+        <button class="icon-button" data-nav="home-screen" aria-label="Home">⌂</button>
+        <div>
+          <h1>Food & Nutrition</h1>
+          <p id="kitchen-note"></p>
+        </div>
+        <button class="profile-chip compact" id="food-profile-button" aria-label="Profile"></button>
+      </header>
+
+      <main class="room-main">
+        <div class="circle-stage room-circle">
+          <div class="orbit"></div>
+          <button class="room room-1" data-subroom="settings" style="--room:#5d7eaa"><span>⚙️</span><b>Preferences</b></button>
+          <button class="room room-2" data-subroom="plan" style="--room:#e97b2c"><span>🍽️</span><b>Food Plan</b></button>
+          <button class="room room-3" data-subroom="fasting" style="--room:#6f62a8"><span>🌙</span><b>Fasting</b></button>
+          <button class="room room-4" data-subroom="weight" style="--room:#448a75"><span>⚖️</span><b>Weight Check-in</b></button>
+          <button class="room room-5" data-subroom="summary" style="--room:#cf6c48"><span>📊</span><b>Summary</b></button>
+          <button class="room room-6" data-subroom="recipes" style="--room:#bd8146"><span>📒</span><b>Recipes</b></button>
+          <button class="room room-7" data-subroom="water" style="--room:#3f91c6"><span>💧</span><b>Water</b></button>
+
+          <button id="food-companion-centre" class="companion-centre chef-centre" aria-label="Talk to your Companion">
+            <span class="costume">👨‍🍳</span>
+            <span id="food-character" class="companion-character"></span>
+            <strong id="food-companion-name"></strong>
+            <small>Kitchen mode</small>
+            <span class="mic-badge">🎤</span>
+          </button>
+        </div>
+      </main>
+    </section>
+
+    <section id="settings-room" class="screen content-screen">
+      <header class="simple-header sticky">
+        <button class="icon-button leave-check" data-nav="food-room" aria-label="Back">←</button>
+        <div><h2>Preferences & Settings</h2><p>Health goals and Companion preferences.</p></div>
+      </header>
+      <form id="settings-form" class="content-stack">
+        <div class="panel">
+          <h3>Health goals</h3>
+          <label for="activity-level">Activity level</label>
+          <select id="activity-level">
+            <option value="sedentary">Mostly sitting</option>
+            <option value="light">Lightly active</option>
+            <option value="moderate">Moderately active</option>
+            <option value="very">Very active</option>
+            <option value="industrial">Heavy physical work</option>
+          </select>
+
+          <label for="weight-goal">Weight goal</label>
+          <select id="weight-goal">
+            <option value="maintain">Maintain weight</option>
+            <option value="gradual">Gradual weight loss</option>
+            <option value="moderate">Moderate weight loss</option>
+            <option value="gain">Gradual weight gain</option>
+          </select>
+
+          <label for="fasting-plan">Fasting preference</label>
+          <select id="fasting-plan">
+            <option value="none">No fasting plan</option>
+            <option value="5-2">5:2 fasting</option>
+            <option value="custom">Custom fasting days</option>
+          </select>
+        </div>
+
+        <div class="panel">
+          <h3>My Companion</h3>
+          <label for="settings-companion-name">Companion name</label>
+          <input id="settings-companion-name">
+          <label>Companion character</label>
+          <div id="settings-character-grid" class="character-grid compact-grid"></div>
+          <label for="settings-personality">Personality</label>
+          <select id="settings-personality">
+            <option value="cheerful">Cheerful</option>
+            <option value="calm">Calm</option>
+            <option value="funny">Funny</option>
+            <option value="encouraging">Encouraging</option>
+            <option value="minimal">Quiet and minimal</option>
+          </select>
+        </div>
+
+        <button class="primary large" type="submit">Save changes</button>
+      </form>
+    </section>
+
+    <section id="placeholder-room" class="screen content-screen">
+      <header class="simple-header">
+        <button class="icon-button" id="placeholder-back" aria-label="Back">←</button>
+        <div><h2 id="placeholder-title"></h2><p>Founder’s Trial Alpha 1 foundation.</p></div>
+      </header>
+      <div class="panel placeholder-panel">
+        <div id="placeholder-icon" class="large-icon"></div>
+        <h3 id="placeholder-heading"></h3>
+        <p id="placeholder-copy"></p>
+      </div>
+    </section>
+  </div>
+
+  <div id="voice-sheet" class="sheet" aria-hidden="true">
+    <div class="sheet-card">
+      <button id="close-voice" class="icon-button sheet-close">✕</button>
+      <div id="voice-avatar" class="voice-avatar"></div>
+      <h2 id="voice-title">Speak to your Companion</h2>
+      <p id="voice-status">Tap the microphone and speak naturally.</p>
+      <div id="voice-transcript" class="transcript">Try: “Open Food and Nutrition”, “Open settings”, or “Tell me a joke”.</div>
+      <button id="start-listening" class="voice-button">🎤</button>
+      <div class="quick-commands">
+        <button data-command="open food and nutrition">Open Food & Nutrition</button>
+        <button data-command="open settings">Open Settings</button>
+        <button data-command="tell me a joke">Tell me a joke</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirm-sheet" class="sheet" aria-hidden="true">
+    <div class="sheet-card compact-sheet">
+      <div class="voice-avatar">💾</div>
+      <h2>Save your changes?</h2>
+      <p>You have unsaved changes. What would you like to do?</p>
+      <div class="button-row">
+        <button id="save-and-leave" class="primary">Save</button>
+        <button id="discard-and-leave" class="danger">Don’t save</button>
+        <button id="cancel-leave" class="secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

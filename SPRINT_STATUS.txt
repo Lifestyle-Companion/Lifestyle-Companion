@@ -1,0 +1,29 @@
+LIFESTYLE COMPANION — FOUNDER'S TRIAL EDITION
+ALPHA 1 SPRINT STATUS
+
+SPRINT 1: FOUNDATION — BUILD DELIVERED
+- Welcome-only Home screen
+- Centred Circle of Life
+- Companion profile setup
+- Up to 10 local profiles
+- Character/name/personality/voice/theme preferences
+- Voice command and spoken reply framework
+- Food & Nutrition Circle
+- Restored activity, weight-goal and fasting settings
+- Unsaved-change prompt
+- PWA and offline foundation
+
+NEXT INFRASTRUCTURE MILESTONE
+- Select and configure secure cloud backend
+- Add invited tester accounts
+- Synchronise each tester across phone, tablet and browser
+- Founder invitation controls
+
+NEXT DAILY-USE SPRINT
+- Professional food database selection and integration
+- Food search and quantity selection
+- Backdated food logging and editing
+- 5:2 fasting planner
+- Water logging
+- Weight Check-in with time-range graphs
+- Daily summaries

@@ -1,24 +1,10 @@
-Lifestyle Companion Version 0.3.1
-Food & Nutrition Foundation — Testing Update
+Lifestyle Companion Version 0.4 — Circle of Life Navigation Vision Preview
 
-MAIN CHANGES
-- Preferences & Settings replaces Additional Profile.
-- Larger Save Profile button and fading confirmation message.
-- Structured favourites, context-dependent foods, refused foods, allergies and intolerances.
-- Device spellcheck plus starter correction for common food misspellings.
-- Help buttons and optional first-time explanation bubbles.
-- Food planning can be entered or corrected for any date.
-- Remaining energy is green, yellow or red.
-- Meal selector is larger and highlighted.
-- Hymie suggestions update automatically after every food change.
-- Native rolling-style weight selectors on iPhone.
-- Friendly dates include weekday and Today where appropriate.
-- Existing weight dates can be amended.
+Upload index.html, hymie.jpg and mal.jpg to the root of the GitHub Pages repository.
 
-UPLOAD TO GITHUB
-Upload all three extracted files. index.html is essential. README.txt and Founder_Decision_Log.txt are project records.
+Operational path:
+Home Circle of Life > Food & Nutrition Room > Preferences & Settings / Food & Nutrition Plan / Weight / Summary.
 
-LIMITATIONS
-- Full conversational spelling and preference learning will arrive with Learning Foods.
-- Nutrition data remains a small approximate starter database.
-- This prototype is not medical advice.
+Other main Rooms and future Food sub-rooms are visible as Coming Soon.
+
+The build stores test data locally in the browser. Nutrition figures are prototype estimates and not medical advice.

@@ -1,17 +1,3 @@
-Lifestyle Companion — Founder Decision Log
-Updated for Version 0.3.1
+New decision — Circle within every Room
 
-1. Hymie assumes a food is acceptable unless the user records a preference or restriction.
-2. Food preferences are Favourite, Context-dependent/tolerated, Will not eat, and Safety restriction.
-3. Allergies and intolerances are structured safety rules, not ordinary dislikes.
-4. Context matters: a food may be acceptable within a recipe but not served alone.
-5. Users must be able to update food preferences naturally during normal use.
-6. All user text fields should support spelling recognition and correction.
-7. Confirmation messages should disappear automatically rather than require another tap.
-8. Important save actions must be visually prominent.
-9. Remaining energy should communicate status at a glance using green, yellow and red.
-10. Hymie nutrition suggestions must refresh whenever the food plan changes.
-11. Users must be able to backfill or correct records for any date.
-12. Dates should include the weekday and identify Today where useful.
-13. Page help should combine optional first-time guidance with permanent Help controls.
-14. People should not have to remember how to use Lifestyle Companion; it should teach itself as they use it.
+The main Circle of Life is the permanent Home navigation. Each major Room opens to its own themed circle, with Hymie in the centre and the Room's sub-rooms arranged around him. Hymie changes clothing, props and activity to suit the Room. This establishes a consistent, distinctive navigation language across the entire application.

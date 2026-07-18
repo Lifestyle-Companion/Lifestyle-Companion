@@ -1,0 +1,12 @@
+Lifestyle Companion — Founder Decision Log
+
+1. Hymie is a companion first, not merely a calculator.
+2. Capture First. Organise Later.
+3. Food & Nutrition Plan covers meals, snacks, drinks, hydration and nutrition balance.
+4. Exercise & Activity remains a separate Room but links automatically to Food & Nutrition.
+5. Weight records long-term progress and links to food and activity.
+6. The app should prevent avoidable user mistakes, including carrying quantities forward.
+7. Daily nutrition balance should show energy, protein, carbohydrate, fat, fibre and water.
+8. Food preferences are collected early and used later for personalised suggestions.
+9. “Won’t eat” is a firm exclusion; allergies and intolerances are safety rules.
+10. Feedback should remain positive, calm and non-judgemental.

@@ -1,11 +1,13 @@
-DECISION LOG — ALPHA 1.1
+ALPHA 1.2 DECISION LOG
 
-- Rooms are always visible on the Home Circle.
-- Features are activated only when the user chooses to use them.
-- Room-specific information is requested conditionally, not during unrelated setup.
-- Master profile information is entered once and reused by applicable Rooms.
-- Every main Room navigation layout must remain a mathematically true circle.
-- Core Room navigation must fit without vertical scrolling on supported phone and tablet screens.
-- Coming-soon Rooms may remain visible at public launch, provided the active core experience is polished and satisfying.
-- Interest in unfinished Rooms should be measured using more than raw taps: viewed, setup interest, setup completion and repeat usage.
-- Lifestyle Companion should inform, encourage and assist without making users feel guilty.
+- The Companion must teach the application rather than rely on a separate manual.
+- Onboarding must support a voice-guided usability test and a typing-only usability test.
+- All Rooms remain visible on Home whether configured, unconfigured or coming soon.
+- Room-specific personal information is collected only when that Room is activated.
+- Settings is a permanent Home Circle Room.
+- Users can store multiple labelled addresses and phone numbers.
+- Users can teach name pronunciation through a spoken sample and phonetic spelling.
+- Water support begins as optional Companion check-ins, not a user-chosen daily target.
+- Every main page has a Back control.
+- Alpha 1.2 intentionally starts with a clean data store.
+- Coming Soon Room taps and explicit interest are counted locally as a prototype of future product analytics.

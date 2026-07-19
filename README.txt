@@ -1,15 +1,19 @@
-LIFESTYLE COMPANION — FOUNDER'S TRIAL ALPHA 1.1
+LIFESTYLE COMPANION — FOUNDER'S TRIAL ALPHA 1.2
+Companion-Led Onboarding Usability Edition
 
-HOW TO RUN
-1. Extract the ZIP file.
-2. Keep all files together in the same folder.
-3. Upload the folder contents to the root of the GitHub Pages repository, replacing the previous Alpha 1 files.
-4. Refresh the published page. On iPhone/iPad, Safari may retain an older cached version briefly; close and reopen the page or remove and re-add the Home Screen shortcut if necessary.
+INSTALL / UPDATE
+1. Extract every file from the ZIP.
+2. Upload all files to the root of the GitHub Pages repository, replacing the prior build.
+3. Commit the changes.
+4. On each test device, refresh the page. If an older build remains visible, close the browser tab and reopen it. Removing and re-adding the Home Screen shortcut may also clear an old cached version.
+
+FRESH TEST DATA
+Alpha 1.2 uses a new storage key, so Alpha 1 and Alpha 1.1 profiles are ignored. The first launch begins with an empty Alpha 1.2 profile list.
+
+TEST PLAN
+Voice-guided profiles: Mal, Tracey and Shelly.
+Typing profiles: Mal2, Tracey2 and Shelly2.
+Up to 10 profiles can be created on one device.
 
 IMPORTANT
-This is still a browser-based Founder Trial. Profiles are private to the local browser but are not yet protected by account authentication and do not synchronise across devices.
-
-SUGGESTED COMMIT MESSAGE
-Release Alpha 1.1 — Foundation Refinement
-
-See RELEASE_NOTES_ALPHA_1_1.txt, KNOWN_ISSUES.txt, PLANNED_NEXT_STEPS.txt and DECISION_LOG.txt for details.
+Data is still stored locally in the browser on each device. It does not synchronise between iPhone and iPad yet.

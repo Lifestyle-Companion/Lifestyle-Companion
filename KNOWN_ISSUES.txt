@@ -1,9 +1,10 @@
-KNOWN ISSUES — ALPHA 1.1
+KNOWN ISSUES — ALPHA 1.2
 
-- Profiles and analytics remain local to each browser/device. iPhone and iPad do not yet synchronise.
-- Available voice names and quality depend on the operating system and browser.
-- Safari may require a direct tap before allowing speech playback. The voice selector itself provides that tap.
-- Browser speech recognition support varies. Typed commands remain available.
-- Only Food & Nutrition has an activation/setup pathway in this release.
-- Food logging, food database, weight graphs, fasting workflows, water logging, recipes and daily summaries are planned for Sprint 2.
-- Coming-soon interest data is local only and cannot yet be viewed in Founder Mode or combined across testers.
+1. Profiles are local to each browser/device. There is no cloud account or iPhone-to-iPad synchronisation yet.
+2. Browser speech recognition varies by device and browser. Safari may require microphone permission and an internet connection for recognition.
+3. The prototype can record a pronunciation sample and store a phonetic spelling, but browser text-to-speech voices cannot truly be trained from that recording. The real app will need a dedicated pronunciation/voice system.
+4. Full address autocomplete is not included. Browser autofill is used where available. A production release needs an Australian address lookup provider and privacy review.
+5. Recorded pronunciation audio is stored in browser local storage as a data URL. This is suitable only for small-scale testing.
+6. Phone formatting is a basic Australian normaliser, not a complete international phone-number validation library.
+7. Voice-only setup is assisted rather than fully hands-free. Selection controls still need tapping in this prototype.
+8. Food logging, weight graphs, fasting workflows and cloud analytics remain future work.

@@ -1,0 +1,21 @@
+ALPHA 1.2 TESTER CHECKLIST
+
+VOICE-GUIDED PROFILE
+- Start with Voice-guided setup.
+- Note every place where you still need help from another person.
+- Try microphone buttons for names, phone numbers, height and weight.
+- Compare at least three voices using Play, then Select one.
+- Record both name pronunciations.
+- Note whether Companion instructions are easy to understand.
+
+TYPING PROFILE
+- Create a second profile (Mal2, Tracey2 or Shelly2).
+- Use typing rather than microphone entry.
+- Compare ease, speed and confusion points with the first profile.
+
+GENERAL
+- Test Back from every screen.
+- Tap Settings and edit a detail.
+- Tap an unfinished Room and check the Coming Soon experience.
+- Delete a deliberately created test profile.
+- Check both portrait and landscape orientation where practical.

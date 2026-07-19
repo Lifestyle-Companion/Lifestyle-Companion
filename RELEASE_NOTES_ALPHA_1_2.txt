@@ -1,0 +1,27 @@
+LIFESTYLE COMPANION — ALPHA 1.2 RELEASE NOTES
+
+FOCUS
+Can a tester complete onboarding with Companion guidance, using either voice-first or typing-first entry?
+
+IMPLEMENTED
+- Fresh Alpha 1.2 data store; earlier profile data is not migrated.
+- Up to 10 profiles, with profile switching and deletion.
+- Separate voice-guided and typing setup starts.
+- Companion instruction panel on every onboarding step, with Repeat button.
+- Microphone buttons beside many setup fields.
+- Spoken pronunciation recording for the user's preferred name and Companion name.
+- Optional phonetic spelling for device text-to-speech pronunciation.
+- Reworked voice chooser with separate Play and Select controls.
+- Previous voice sample is stopped before a new voice plays.
+- Multiple labelled phone numbers: Mobile, Home, Business and Other.
+- Multiple labelled addresses: Main, Postal, Business, Holiday and Other.
+- Australian phone number normalisation toward +61 display.
+- Settings Room added to the Home Circle.
+- Universal Back buttons and navigation history.
+- Profile manager with explicit Delete confirmation.
+- Food & Nutrition health questions appear only when that Room is selected.
+- Manual water target removed; optional hydration check-in preference added.
+- All Rooms remain visible. Unfinished Rooms show Coming Soon and record local interest.
+- Food & Nutrition Circle uses a fixed 1:1 aspect ratio and short-screen scaling.
+- Voice command box opens blank for typed commands.
+- Full trial-data reset control in Profile Manager.

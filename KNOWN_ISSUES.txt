@@ -1,7 +1,8 @@
-Known limitations — Alpha 1.3
+KNOWN LIMITATIONS — ALPHA 1.4
 
-1. This browser prototype cannot train a text-to-speech voice from an audio recording. The recording is retained for review; phonetic spelling guides spoken pronunciation.
-2. Available system voices are controlled by the browser and device. Alpha 1.3 creates pace/pitch styles when only one voice is exposed, but these are variations of that one installed voice.
-3. Verified Australian address autocomplete requires an external address provider and is not connected in this offline/static trial. Speech entry, browser autofill and Same as main address are available now.
-4. Speech recognition and microphone recording depend on browser permissions, HTTPS hosting and device support.
-5. Data remains on the individual browser/device and is not yet cloud-synchronised.
+1. Browser voice availability varies by device and browser.
+2. Phonetic spelling helps but cannot guarantee every device voice pronounces every name correctly.
+3. Address autocomplete needs a connected external address service.
+4. Data is local to the current browser and device.
+5. Coming Soon Rooms are placeholders.
+6. This browser prototype is not an App Store build.

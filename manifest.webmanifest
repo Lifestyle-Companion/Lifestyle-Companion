@@ -1,1 +1,9 @@
-{"name":"Lifestyle Companion Founder’s Trial","short_name":"Lifestyle Companion","start_url":"./index.html","display":"standalone","background_color":"#eaf3ee","theme_color":"#236b4c","description":"Founder’s Trial Alpha 1.3 — Companion-led onboarding usability edition."}
+{
+  "name": "Lifestyle Companion \u2014 Founder\u2019s Trial Alpha 1.4",
+  "short_name": "Lifestyle Companion",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#eef5f1",
+  "theme_color": "#e8f2ec",
+  "icons": []
+}

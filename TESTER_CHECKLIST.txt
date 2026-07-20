@@ -1,13 +1,21 @@
-Alpha 1.3 tester checklist
+ALPHA 1.4 TESTER CHECKLIST
 
-1. Start a completely new profile.
-2. Test pronunciation recording. Confirm the status clearly changes through Get ready, Recording and Saved.
-3. Stop the recording yourself and play it back.
-4. Enter the phonetic spelling of the user and Companion names. Check voice previews use that pronunciation.
-5. Speak a main address using the microphone.
-6. Tick Same as main address for the postal address.
-7. Compare every available voice/style using Play, then Select one.
-8. Use Back and Continue repeatedly and report any freeze or double-page movement.
-9. On Review Profile, scroll through every field, use at least one Edit button, return to Review and tick every entry.
-10. After creating the profile, open Settings > Edit Profile and confirm all names, dates, phone numbers and addresses appear.
-11. Open Food & Nutrition > Preferences and confirm only Food & Nutrition settings appear.
+[ ] Start a completely new profile.
+[ ] Complete setup without assistance.
+[ ] Use Back on every page.
+[ ] Confirm each page opens at the top.
+[ ] Leave optional fields blank and continue successfully.
+[ ] Test Postal Same as Main.
+[ ] Enter at least two phone number types.
+[ ] Choose a Companion and preview voices.
+[ ] Select Food & Nutrition and complete its questions.
+[ ] Review every section.
+[ ] Use every Edit button and return to Review.
+[ ] Confirm Create Profile is locked until all sections are ticked.
+[ ] Create the profile and inspect Home.
+[ ] Open Settings and edit all profile information.
+[ ] Create a second profile.
+[ ] Switch profiles.
+[ ] Delete one profile.
+[ ] Tap Coming Soon Rooms and confirm the message is clear.
+[ ] Report any confusing wording, frozen button, clipped item or unexpected scroll position.

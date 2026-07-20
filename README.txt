@@ -1,8 +1,28 @@
-Lifestyle Companion — Founder’s Trial Alpha 1.3
+LIFESTYLE COMPANION — FOUNDER'S TRIAL ALPHA 1.4
+THE POLISHING RELEASE
 
-Upload every file in this folder to the root of the existing GitHub Pages repository, replacing the previous Alpha files.
+HOW TO RUN
+1. Extract the ZIP completely.
+2. Open the extracted folder.
+3. Double-click index.html.
+4. Use a current version of Edge, Chrome or Safari.
 
-Suggested GitHub commit message:
-Release Alpha 1.3 - Onboarding repairs and complete profile review
+PURPOSE
+Alpha 1.4 rebuilds onboarding around typing, clarity and reliability.
+It deliberately pauses microphone data entry.
 
-This release uses a new Alpha 1.3 local storage key, so testers begin with no profiles from earlier builds.
+TEST PRIORITIES
+- Complete setup using typing only.
+- Check every Back and Continue button.
+- Confirm every page starts at the top.
+- Test Same as Postal.
+- Test voice selection and preview.
+- Review every item, edit mistakes and return to Review.
+- Confirm Create Profile remains unavailable until all review sections are ticked.
+- Edit the complete profile through Settings.
+- Create and delete multiple profiles.
+- Check iPhone/iPad circular layouts.
+
+DATA
+All trial data stays in browser localStorage on the device.
+This is not yet a cloud-connected production application.

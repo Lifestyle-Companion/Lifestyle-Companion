@@ -1,0 +1,28 @@
+ALPHA 1.4 — THE POLISHING RELEASE
+
+BUILT
+- Rebuilt eight-step typed onboarding.
+- Removed microphone answer entry and pronunciation recording.
+- Companion remains written and spoken teacher.
+- Reliable Back and Continue controls.
+- Every page resets to the top.
+- Main and postal addresses with Same as Main checkbox.
+- Separate Mobile, Home, Business and Other phone fields.
+- Companion character, personality, theme and phonetic spelling.
+- Device voice list and preview.
+- All Rooms remain visible.
+- Conditional Food & Nutrition questions.
+- Detailed review with Edit controls and a confirmation tick for every section.
+- Create Profile locked until every review section is confirmed.
+- Full profile editing through Settings.
+- Profile switching and deletion.
+- Settings is a Home Circle Room.
+- Food Preferences contains Food-only information.
+- Local Room-interest analytics for Coming Soon taps.
+- Perfect-circle layout using CSS aspect-ratio.
+
+NOT INCLUDED
+- Address autocomplete service.
+- Microphone onboarding.
+- Cloud accounts and synchronisation.
+- Production App Store packaging.

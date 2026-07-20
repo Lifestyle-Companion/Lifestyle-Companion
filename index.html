@@ -3,60 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#eaf3ee">
+  <meta name="theme-color" content="#e8f2ec">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lifestyle Companion">
-  <title>Lifestyle Companion — Founder’s Trial Alpha 1.3</title>
+  <title>Lifestyle Companion — Founder’s Trial Alpha 1.4</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="app" class="app-shell">
-  <section id="welcome" class="screen active welcome-screen">
-    <div class="welcome-card card">
-      <div class="trial-badge">Founder’s Trial Edition · Alpha 1.3</div>
-      <div class="welcome-icon">🌿</div>
+<div id="app">
+  <section id="welcome" class="screen active welcome">
+    <div class="welcome-card">
+      <div class="badge">Founder’s Trial Edition · Alpha 1.4</div>
+      <div class="hero-icon">🌿</div>
       <h1>Lifestyle Companion</h1>
-      <p>Your Companion will guide you through setup one small step at a time.</p>
-      <div class="choice-stack">
-        <button id="voice-setup" class="primary big">🎤 Start voice-guided setup</button>
-        <button id="typed-setup" class="secondary big">⌨️ Start typing setup</button>
-        <button id="existing-profile" class="ghost">Use an existing profile on this device</button>
-      </div>
-      <p class="fineprint"><strong>Fresh trial:</strong> Alpha 1.3 uses a new empty data store. Profiles from earlier builds are not carried across.</p>
+      <p>Set up your profile one simple step at a time. Your Companion will explain each page, and you will type your answers.</p>
+      <button id="start-new" class="primary large">Create a new profile</button>
+      <button id="open-profiles" class="secondary large">Use or manage an existing profile</button>
+      <p class="fine">Alpha 1.4 uses its own fresh trial data. Earlier Alpha profiles are not imported.</p>
     </div>
   </section>
 
-  <section id="profiles" class="screen content-screen">
-    <header class="topbar"><button class="back-btn" data-back>← Back</button><div><h2>Profiles</h2><p>Create, switch or remove test profiles.</p></div></header>
-    <main class="page-body">
-      <div id="profile-list" class="profile-list"></div>
-      <button id="new-profile" class="primary wide">＋ Create another profile</button>
-      <button id="reset-all" class="danger-link">Delete all Alpha 1.3 trial data</button>
-    </main>
+  <section id="profiles" class="screen content">
+    <header class="topbar">
+      <button class="back" data-go="welcome">← Back</button>
+      <div><h2>Profiles</h2><p>Create, open, edit or remove trial profiles.</p></div>
+    </header>
+    <main class="page"><div id="profile-list"></div><button id="new-profile" class="primary wide">＋ Create another profile</button><button id="delete-all" class="danger wide">Delete all Alpha 1.4 trial data</button></main>
   </section>
 
-  <section id="wizard" class="screen content-screen">
+  <section id="wizard" class="screen content">
     <header class="topbar sticky">
-      <button id="wizard-back" class="back-btn">← Back</button>
-      <div class="grow"><h2 id="wizard-title">Welcome</h2><p id="wizard-subtitle"></p></div>
-      <div id="wizard-progress" class="progress">1 / 7</div>
+      <button id="wizard-back" class="back">← Back</button>
+      <div class="grow"><h2 id="step-title">Welcome</h2><p id="step-subtitle"></p></div>
+      <div id="step-count" class="step-count">1 of 8</div>
     </header>
-    <main class="page-body wizard-body">
-      <div id="guide-card" class="guide-card">
-        <div id="guide-avatar" class="guide-avatar">🐵</div>
-        <div class="grow"><strong id="guide-name">Your Companion</strong><p id="guide-text"></p></div>
-        <button id="repeat-guide" class="icon-btn" title="Repeat instructions">🔊</button>
-      </div>
+
+    <div class="progress-track"><span id="progress-bar"></span></div>
+
+    <main class="page wizard-page">
+      <aside class="teacher">
+        <div id="teacher-avatar" class="teacher-avatar">🐵</div>
+        <div class="grow"><strong id="teacher-name">Your Companion</strong><p id="teacher-text"></p></div>
+        <button id="speak-help" class="icon-button" aria-label="Read this guidance aloud">🔊</button>
+      </aside>
 
       <section class="step active" data-step="1">
-        <div class="card">
-          <h3>How would you like to set up this profile?</h3>
-          <div class="mode-grid">
-            <button class="mode-card" data-mode="voice"><span>🎤</span><b>Voice-guided</b><small>Speak answers where possible. You can still type at any time.</small></button>
-            <button class="mode-card" data-mode="typed"><span>⌨️</span><b>Typing</b><small>Enter details using the keyboard.</small></button>
-          </div>
-          <label class="check-row"><input id="guided-mode" type="checkbox" checked> Keep Companion teaching and explanations turned on</label>
+        <div class="card centre">
+          <div class="large-emoji">👋</div>
+          <h3>Welcome</h3>
+          <p>This setup collects only the basics needed to create your profile. Anything optional can be added later in Settings.</p>
+          <label class="check"><input id="teacher-enabled" type="checkbox" checked> Keep Companion explanations turned on</label>
         </div>
       </section>
 
@@ -64,145 +61,167 @@
         <div class="card">
           <h3>About you</h3>
           <div class="form-grid">
-            <label>Full name *<div class="input-with-mic"><input id="full-name" autocomplete="name"><button class="mic-field" data-listen="full-name">🎤</button></div></label>
-            <label>Preferred name *<div class="input-with-mic"><input id="preferred-name"><button class="mic-field" data-listen="preferred-name">🎤</button></div></label>
-            <label>Date of birth<div class="input-with-mic"><input id="dob" type="date"><button class="mic-field" data-listen="dob" data-date>🎤</button></div></label>
-            <label>Email address<div class="input-with-mic"><input id="email" type="email" autocomplete="email"><button class="mic-field" data-listen="email">🎤</button></div></label>
+            <label>Preferred name *<input id="preferred-name" autocomplete="nickname" placeholder="What should your Companion call you?"></label>
+            <label>Full name *<input id="full-name" autocomplete="name"></label>
+            <label>Date of birth<input id="dob" type="date"></label>
+            <label>Email address<input id="email" type="email" autocomplete="email" inputmode="email"></label>
           </div>
-          <div class="pronunciation-box">
-            <h4>Teach your Companion your name</h4>
-            <p>Record yourself saying your preferred name so it can be checked later. The phonetic spelling is what helps the current device voice say it correctly, for example <em>Hi-me</em>.</p>
-            <div class="pronounce-actions">
-              <button id="record-user-name" class="secondary">🎙 Start recording</button>
-              <button id="play-user-name" class="ghost" disabled>▶ Play recording</button>
-              <span id="user-record-status" class="record-status">Not recorded</span>
-            </div>
-            <label>Phonetic spelling (optional)<input id="preferred-phonetic" placeholder="For example: Hi-me"></label>
-          </div>
+          <p class="fine">Only preferred name and full name are required for this trial.</p>
         </div>
       </section>
 
       <section class="step" data-step="3">
         <div class="card">
-          <h3>Contact details</h3>
-          <p>Optional. You can add more numbers and addresses later in Settings.</p>
-          <div id="phones-editor" class="repeat-editor"></div>
-          <button id="add-phone" class="secondary">＋ Add phone number</button>
-          <div id="addresses-editor" class="repeat-editor"></div>
-          <button id="add-address" class="secondary">＋ Add address</button>
-          <p class="fineprint">You can type or speak an address. Browser autofill may offer stored addresses. Verified Australian address suggestions still require a connected address service in a later build.</p>
+          <h3>Address</h3>
+          <p>Enter your main address. Postal address can be copied with one tick.</p>
+          <fieldset>
+            <legend>Main address</legend>
+            <div class="form-grid">
+              <label>Street address<input id="home-street" autocomplete="street-address"></label>
+              <label>Suburb or town<input id="home-suburb" autocomplete="address-level2"></label>
+              <label>State<select id="home-state"><option value="">Select</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select></label>
+              <label>Postcode<input id="home-postcode" inputmode="numeric" maxlength="4" autocomplete="postal-code"></label>
+              <label>Country<input id="home-country" value="Australia" autocomplete="country-name"></label>
+            </div>
+          </fieldset>
+          <label class="check"><input id="postal-same" type="checkbox" checked> Postal address is the same as my main address</label>
+          <fieldset id="postal-fields" class="hidden">
+            <legend>Postal address</legend>
+            <div class="form-grid">
+              <label>Street or PO Box<input id="postal-street"></label>
+              <label>Suburb or town<input id="postal-suburb"></label>
+              <label>State<select id="postal-state"><option value="">Select</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select></label>
+              <label>Postcode<input id="postal-postcode" inputmode="numeric" maxlength="4"></label>
+              <label>Country<input id="postal-country" value="Australia"></label>
+            </div>
+          </fieldset>
+          <p class="fine">Verified address suggestions require a connected Australian address service and remain parked for a later build.</p>
         </div>
       </section>
 
       <section class="step" data-step="4">
         <div class="card">
-          <h3>Choose your Companion</h3>
-          <label>Companion name *<div class="input-with-mic"><input id="companion-name" placeholder="Hymie, Stanley…"><button class="mic-field" data-listen="companion-name">🎤</button></div></label>
-          <div id="character-grid" class="character-grid"></div>
-          <div class="pronunciation-box">
-            <h4>Teach the Companion’s name</h4><p>Record the name for reference, then add phonetic spelling so the device voice can pronounce it correctly.</p>
-            <div class="pronounce-actions"><button id="record-companion-name" class="secondary">🎙 Start recording</button><button id="play-companion-name" class="ghost" disabled>▶ Play recording</button><span id="companion-record-status" class="record-status">Not recorded</span></div>
-            <label>Phonetic spelling (optional)<input id="companion-phonetic" placeholder="For example: Hi-me"></label>
+          <h3>Phone numbers</h3>
+          <p>Add only the numbers you use. All fields on this page are optional.</p>
+          <div class="phone-grid">
+            <label>Mobile<div class="phone-row"><select id="mobile-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="mobile-number" inputmode="tel" placeholder="0412 345 678"></div></label>
+            <label>Home<div class="phone-row"><select id="home-phone-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="home-phone-number" inputmode="tel" placeholder="07 1234 5678"></div></label>
+            <label>Business<div class="phone-row"><select id="business-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="business-number" inputmode="tel"></div></label>
+            <label>Other<div class="phone-row"><select id="other-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="other-number" inputmode="tel"></div></label>
           </div>
-          <label>Personality<select id="personality"><option value="cheerful">Cheerful</option><option value="calm">Calm and patient</option><option value="funny">Light-hearted</option><option value="encouraging">Encouraging</option><option value="minimal">Quiet and brief</option></select></label>
         </div>
       </section>
 
       <section class="step" data-step="5">
         <div class="card">
-          <h3>Choose a voice</h3>
-          <p>Use the Play button to hear a voice. Tick Select when you find the one you like.</p>
-          <div id="voice-list" class="voice-list"></div>
+          <h3>Choose your Companion</h3>
+          <label>Companion name *<input id="companion-name" placeholder="For example: Hymie or Stanley"></label>
+          <label>Phonetic spelling <input id="companion-phonetic" placeholder="Optional, for example: Hi-me"></label>
+          <p class="fine">Phonetic spelling helps the device voice. Voice recording will return only after typed setup is reliable.</p>
+          <div id="character-grid" class="character-grid"></div>
+          <div class="form-grid">
+            <label>Personality<select id="personality"><option value="calm">Calm and patient</option><option value="cheerful">Cheerful</option><option value="encouraging">Encouraging</option><option value="funny">Light-hearted</option><option value="brief">Quiet and brief</option></select></label>
+            <label>Theme<select id="theme"><option value="garden">Garden</option><option value="coast">Coast</option><option value="outback">Outback</option><option value="classic">Classic</option></select></label>
+          </div>
         </div>
       </section>
 
       <section class="step" data-step="6">
         <div class="card">
-          <h3>Choose Rooms to set up now</h3>
-          <p>All Rooms will remain visible on the Home Circle. Unticked Rooms can be set up whenever you tap them.</p>
-          <div id="room-checks" class="room-checks"></div>
-          <div id="food-questions" class="conditional-panel hidden">
-            <h4>Food & Nutrition details</h4>
-            <div class="form-grid">
-              <label>Current weight (kg)<div class="input-with-mic"><input id="weight" type="number" step="0.1"><button class="mic-field" data-listen="weight">🎤</button></div></label>
-              <label>Height (cm)<div class="input-with-mic"><input id="height" type="number" step="0.1"><button class="mic-field" data-listen="height">🎤</button></div></label>
-              <label>Activity level<select id="activity"><option value="sedentary">Mostly sitting</option><option value="light">Lightly active</option><option value="moderate">Moderately active</option><option value="very">Very active</option><option value="industrial">Heavy physical work</option></select></label>
-              <label>Weight goal<select id="goal"><option value="maintain">Maintain weight</option><option value="gradual">Gradual weight loss</option><option value="moderate">Moderate weight loss</option><option value="gain">Gradual weight gain</option></select></label>
-              <label>Goal weight (optional)<input id="goal-weight" type="number" step="0.1"></label>
-              <label>Fasting preference<select id="fasting"><option value="none">No fasting plan</option><option value="5-2">5:2 fasting</option><option value="custom">Custom fasting days</option></select></label>
-            </div>
-            <label class="check-row"><input id="water-reminders" type="checkbox"> Ask me during daylight hours whether I have had water and offer to record it</label>
-            <label>Dietary needs or foods to avoid<textarea id="dietary" rows="3"></textarea></label>
-          </div>
+          <h3>Choose a voice</h3>
+          <p>Available voices depend on the device and browser. Select a voice, then use Preview.</p>
+          <div id="voice-list" class="voice-list"></div>
+          <button id="preview-selected-voice" class="secondary">🔊 Preview selected voice</button>
+          <p id="voice-note" class="fine"></p>
         </div>
       </section>
 
       <section class="step" data-step="7">
-        <div class="card review-card"><div id="review-avatar" class="review-avatar">🐵</div><h3 id="review-title">Review your profile</h3><p class="review-instruction">Scroll through every entry. Tick each item when it is correct, or choose Edit to return to the relevant setup page.</p><div id="review-summary"></div></div>
+        <div class="card">
+          <h3>Choose Rooms to set up now</h3>
+          <p>Every Room remains visible on the Home Circle. Rooms marked “Coming Soon” can still be tapped so we can learn what interests testers.</p>
+          <div id="room-list" class="room-list"></div>
+          <div id="food-panel" class="conditional hidden">
+            <h4>Food & Nutrition basics</h4>
+            <div class="form-grid">
+              <label>Current weight (kg)<input id="weight" type="number" min="20" max="400" step="0.1"></label>
+              <label>Height (cm)<input id="height" type="number" min="100" max="250" step="0.1"></label>
+              <label>Activity level<select id="activity"><option value="">Select</option><option>Mostly sitting</option><option>Lightly active</option><option>Moderately active</option><option>Very active</option><option>Heavy physical work</option></select></label>
+              <label>Goal<select id="goal"><option value="">Select</option><option>Maintain weight</option><option>Gradual weight loss</option><option>Moderate weight loss</option><option>Gradual weight gain</option></select></label>
+              <label>Goal weight (optional)<input id="goal-weight" type="number" step="0.1"></label>
+              <label>Fasting preference<select id="fasting"><option>No fasting plan</option><option>5:2 fasting</option><option>Custom fasting days</option></select></label>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <div class="wizard-actions"><button id="prev-step" class="secondary">Back</button><button id="next-step" class="primary">Continue</button></div>
+      <section class="step" data-step="8">
+        <div class="card">
+          <div id="review-avatar" class="review-avatar">🐵</div>
+          <h3 class="centre">Review everything</h3>
+          <p class="review-help">Check each section. Use Edit to correct anything. Tick “I have reviewed this section” only when it is right.</p>
+          <div id="review-sections"></div>
+          <div id="review-status" class="review-status">Review all sections to create the profile.</div>
+        </div>
+      </section>
+
+      <div class="wizard-actions"><button id="previous" class="secondary">Back</button><button id="next" class="primary">Continue</button></div>
     </main>
   </section>
 
-  <section id="home" class="screen home-screen">
-    <header class="home-header"><button id="profiles-button" class="profile-chip"></button><div><h1 id="home-greeting"></h1><p>Where would you like to go?</p></div></header>
+  <section id="home" class="screen home">
+    <header class="home-header">
+      <button id="profile-chip" class="profile-chip"></button>
+      <div><h1 id="greeting"></h1><p id="home-message"></p></div>
+    </header>
     <main class="home-main">
-      <div class="circle-wrap">
+      <div class="circle">
         <div class="orbit"></div>
-        <button class="room r1" data-room="planner"><span>📅</span><b>Planner</b><i></i></button>
-        <button class="room r2" data-room="food"><span>🥗</span><b>Food & Nutrition</b><i></i></button>
-        <button class="room r3" data-room="exercise"><span>👟</span><b>Exercise</b><i></i></button>
-        <button class="room r4" data-room="journal"><span>📖</span><b>Journal</b><i></i></button>
-        <button class="room r5" data-room="family"><span>👨‍👩‍👧</span><b>Family</b><i></i></button>
-        <button class="room r6" data-room="budget"><span>💰</span><b>Budget</b><i></i></button>
-        <button class="room r7" data-room="mylife"><span>❤️</span><b>My Life</b><i></i></button>
+        <button class="room r1" data-room="food"><span>🍽️</span><b>Food & Nutrition</b><i></i></button>
+        <button class="room r2" data-room="planner"><span>📅</span><b>Planner</b><i></i></button>
+        <button class="room r3" data-room="shopping"><span>🛒</span><b>Shopping</b><i></i></button>
+        <button class="room r4" data-room="budget"><span>💰</span><b>Budget</b><i></i></button>
+        <button class="room r5" data-room="journal"><span>📖</span><b>Journal</b><i></i></button>
+        <button class="room r6" data-room="exercise"><span>🚶</span><b>Exercise</b><i></i></button>
+        <button class="room r7" data-room="navigation"><span>🧭</span><b>Navigation</b><i></i></button>
         <button class="room r8" data-room="settings"><span>⚙️</span><b>Settings</b><i></i></button>
-        <button id="talk-centre" class="companion-centre"><span id="home-avatar">🐵</span><strong id="home-companion">Companion</strong><small>Tap to talk</small></button>
+        <button id="companion-centre" class="companion-centre"><span id="home-avatar">🐵</span><strong id="home-companion">Companion</strong><small>Tap for help</small></button>
       </div>
-      <div class="thought card"><p id="thought"></p><button id="new-thought" class="icon-btn">↻</button></div>
+      <div class="thought"><span id="thought-avatar">🐵</span><p id="thought-text"></p></div>
     </main>
   </section>
 
-  <section id="food-room" class="screen food-screen content-screen">
-    <header class="topbar"><button class="back-btn" data-back>← Back</button><div class="grow"><h2>Food & Nutrition</h2><p id="food-note"></p></div></header>
-    <main class="food-main">
-      <div class="food-circle">
-        <div class="orbit"></div>
-        <button class="subroom s1">🍽️<b>Food Plan</b></button><button class="subroom s2">🌙<b>Fasting</b></button><button class="subroom s3">💧<b>Water</b></button><button class="subroom s4">📒<b>Recipes</b></button><button class="subroom s5">📊<b>Daily Summary</b></button><button class="subroom s6">⚖️<b>Weight Check-in</b></button><button class="subroom s7" id="food-preferences-button">⚙️<b>Preferences</b></button>
-        <button id="food-talk" class="companion-centre"><span id="food-avatar">🐵</span><strong id="food-companion">Companion</strong><small>Tap to talk</small></button>
+  <section id="settings" class="screen content">
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Settings Room</h2><p>Your profile, Companion and Rooms in one place.</p></div></header>
+    <main class="page">
+      <div class="settings-grid">
+        <button data-settings="profile">👤 <b>My Profile</b><small>View or edit all personal details</small></button>
+        <button data-settings="companion">🤝 <b>My Companion</b><small>Name, character, voice and personality</small></button>
+        <button data-settings="rooms">⭕ <b>My Rooms</b><small>Manage active Rooms</small></button>
+        <button data-settings="profiles">👥 <b>Profile Manager</b><small>Switch, rename or delete profiles</small></button>
+        <button data-settings="notifications">🔔 <b>Notifications</b><small>Coming later</small></button>
+        <button data-settings="privacy">🔒 <b>Privacy</b><small>Private by default</small></button>
       </div>
     </main>
   </section>
 
-
-  <section id="food-preferences" class="screen content-screen food-screen">
-    <header class="topbar"><button class="back-btn" data-back>← Back</button><div><h2>Food & Nutrition Preferences</h2><p>Only settings that affect this Room.</p></div></header>
-    <main class="page-body"><div id="food-preferences-detail" class="card"></div></main>
-  </section>
-
-  <section id="settings" class="screen content-screen settings-screen">
-    <header class="topbar sticky"><button class="back-btn" data-back>← Back</button><div><h2>Settings</h2><p>Edit your profile, Companion and Rooms.</p></div></header>
-    <main class="page-body">
-      <div class="card settings-menu">
-        <button data-settings="profile">👤 Edit profile</button>
-        <button data-settings="companion">🐵 Edit Companion</button>
-        <button data-settings="rooms">⭕ Manage Rooms</button>
-        <button data-settings="profiles">👥 Manage profiles</button>
-        <button data-settings="guidance">🧭 Companion teaching</button>
+  <section id="food" class="screen content food">
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Food & Nutrition</h2><p>Food-only tools and preferences.</p></div></header>
+    <main class="page">
+      <div class="food-grid">
+        <button>🍽️ <b>Today’s Meals</b></button><button>📋 <b>Meal Plan</b></button><button>🥗 <b>Food Preferences</b></button><button>💧 <b>Water</b></button><button>⚖️ <b>Weight</b></button><button>📊 <b>Summary</b></button>
       </div>
-      <div id="settings-detail" class="card"><p>Select an option above.</p></div>
+      <div class="card"><h3>Food Preferences</h3><p>This area intentionally contains only Food & Nutrition information. Profile, address, phone and Companion details belong in Settings.</p></div>
     </main>
   </section>
 
-  <section id="placeholder" class="screen content-screen">
-    <header class="topbar"><button class="back-btn" data-back>← Back</button><div><h2 id="placeholder-title"></h2></div></header>
-    <main class="page-body"><div class="card placeholder-card"><div id="placeholder-icon" class="placeholder-icon"></div><h3 id="placeholder-heading"></h3><p id="placeholder-copy"></p><button id="placeholder-action" class="primary"></button></div></main>
+  <section id="placeholder" class="screen content">
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2 id="placeholder-title">Room</h2><p>Future Room</p></div></header>
+    <main class="page"><div class="card centre"><div id="placeholder-icon" class="large-emoji">🚧</div><h3>Coming Soon</h3><p id="placeholder-text"></p><button class="primary" data-go="home">Return Home</button></div></main>
   </section>
-
-  <div id="voice-sheet" class="sheet" aria-hidden="true"><div class="sheet-card"><button id="close-voice" class="close-btn">×</button><div id="voice-sheet-avatar" class="review-avatar">🐵</div><h3 id="voice-sheet-title">Speak to Companion</h3><p id="voice-status">Tap the microphone or type below.</p><textarea id="command-input" rows="3" placeholder="Type your command here…"></textarea><div class="sheet-actions"><button id="listen-command" class="primary">🎤 Listen</button><button id="send-command" class="secondary">Send typed command</button></div></div></div>
-  <div id="toast" class="toast"></div>
 </div>
+
+<div id="toast" class="toast"></div>
 <script src="app.js"></script>
 </body>
 </html>

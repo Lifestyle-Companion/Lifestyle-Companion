@@ -1,0 +1,20 @@
+Lifestyle Companion — Founder’s Trial Alpha 1.3
+Onboarding Repair & Review Edition
+
+Implemented from the latest tester feedback:
+
+• Fresh Alpha 1.3 storage. Earlier Alpha data is intentionally not imported.
+• Pronunciation recording now shows Get ready, Recording, elapsed seconds and Recording saved states.
+• Recordings run until Stop is pressed, with a 10-second safety limit.
+• Playback stops any earlier recording before starting and reports playback failures.
+• Phonetic spelling is now clearly identified as the control used by browser voices.
+• Address fields now include microphone entry.
+• Postal address includes a Same as main address option.
+• Phone numbers retain standard Australian +61 formatting.
+• Voice selection keeps separate Play and Select controls.
+• When a device exposes only one voice, four trial voice styles are provided using different pace and pitch settings.
+• Back and Continue actions stop active speech/audio and include a short navigation lock to reduce double taps and apparent freezing.
+• Review Profile now displays the entered names, dates, email, every phone number, every address, Companion details, selected voice and Rooms.
+• Every review entry has a confirmation tick and an Edit button. The profile cannot be created until all review entries are checked.
+• Settings > Edit Profile now displays the complete profile, including date of birth, pronunciation spelling, phone numbers and addresses.
+• Food & Nutrition Preferences is now a separate Room-specific page and no longer opens general Settings.

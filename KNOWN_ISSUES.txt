@@ -1,10 +1,7 @@
-KNOWN ISSUES — ALPHA 1.2
+Known limitations — Alpha 1.3
 
-1. Profiles are local to each browser/device. There is no cloud account or iPhone-to-iPad synchronisation yet.
-2. Browser speech recognition varies by device and browser. Safari may require microphone permission and an internet connection for recognition.
-3. The prototype can record a pronunciation sample and store a phonetic spelling, but browser text-to-speech voices cannot truly be trained from that recording. The real app will need a dedicated pronunciation/voice system.
-4. Full address autocomplete is not included. Browser autofill is used where available. A production release needs an Australian address lookup provider and privacy review.
-5. Recorded pronunciation audio is stored in browser local storage as a data URL. This is suitable only for small-scale testing.
-6. Phone formatting is a basic Australian normaliser, not a complete international phone-number validation library.
-7. Voice-only setup is assisted rather than fully hands-free. Selection controls still need tapping in this prototype.
-8. Food logging, weight graphs, fasting workflows and cloud analytics remain future work.
+1. This browser prototype cannot train a text-to-speech voice from an audio recording. The recording is retained for review; phonetic spelling guides spoken pronunciation.
+2. Available system voices are controlled by the browser and device. Alpha 1.3 creates pace/pitch styles when only one voice is exposed, but these are variations of that one installed voice.
+3. Verified Australian address autocomplete requires an external address provider and is not connected in this offline/static trial. Speech entry, browser autofill and Same as main address are available now.
+4. Speech recognition and microphone recording depend on browser permissions, HTTPS hosting and device support.
+5. Data remains on the individual browser/device and is not yet cloud-synchronised.

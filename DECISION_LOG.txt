@@ -9,5 +9,5 @@ ALPHA 1.2 DECISION LOG
 - Users can teach name pronunciation through a spoken sample and phonetic spelling.
 - Water support begins as optional Companion check-ins, not a user-chosen daily target.
 - Every main page has a Back control.
-- Alpha 1.2 intentionally starts with a clean data store.
+- Alpha 1.3 intentionally starts with a clean data store.
 - Coming Soon Room taps and explicit interest are counted locally as a prototype of future product analytics.

@@ -1,21 +1,13 @@
-ALPHA 1.2 TESTER CHECKLIST
+Alpha 1.3 tester checklist
 
-VOICE-GUIDED PROFILE
-- Start with Voice-guided setup.
-- Note every place where you still need help from another person.
-- Try microphone buttons for names, phone numbers, height and weight.
-- Compare at least three voices using Play, then Select one.
-- Record both name pronunciations.
-- Note whether Companion instructions are easy to understand.
-
-TYPING PROFILE
-- Create a second profile (Mal2, Tracey2 or Shelly2).
-- Use typing rather than microphone entry.
-- Compare ease, speed and confusion points with the first profile.
-
-GENERAL
-- Test Back from every screen.
-- Tap Settings and edit a detail.
-- Tap an unfinished Room and check the Coming Soon experience.
-- Delete a deliberately created test profile.
-- Check both portrait and landscape orientation where practical.
+1. Start a completely new profile.
+2. Test pronunciation recording. Confirm the status clearly changes through Get ready, Recording and Saved.
+3. Stop the recording yourself and play it back.
+4. Enter the phonetic spelling of the user and Companion names. Check voice previews use that pronunciation.
+5. Speak a main address using the microphone.
+6. Tick Same as main address for the postal address.
+7. Compare every available voice/style using Play, then Select one.
+8. Use Back and Continue repeatedly and report any freeze or double-page movement.
+9. On Review Profile, scroll through every field, use at least one Edit button, return to Review and tick every entry.
+10. After creating the profile, open Settings > Edit Profile and confirm all names, dates, phone numbers and addresses appear.
+11. Open Food & Nutrition > Preferences and confirm only Food & Nutrition settings appear.

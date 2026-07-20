@@ -4,7 +4,7 @@ FOCUS
 Can a tester complete onboarding with Companion guidance, using either voice-first or typing-first entry?
 
 IMPLEMENTED
-- Fresh Alpha 1.2 data store; earlier profile data is not migrated.
+- Fresh Alpha 1.3 data store; earlier profile data is not migrated.
 - Up to 10 profiles, with profile switching and deletion.
 - Separate voice-guided and typing setup starts.
 - Companion instruction panel on every onboarding step, with Repeat button.

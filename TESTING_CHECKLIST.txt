@@ -1,0 +1,41 @@
+FOUNDER TESTING CHECKLIST — ALPHA 0.1
+
+Please test naturally first, then deliberately try incorrect entries.
+
+ACCOUNT
+[ ] Cancel produces the farewell screen.
+[ ] Continue remains disabled until Join is ticked.
+[ ] Invalid email is rejected.
+[ ] Six-digit code rejects the wrong number.
+[ ] New code works after Generate a new code.
+[ ] Password rules and matching work.
+
+PROFILE
+[ ] Metric height and weight work.
+[ ] Imperial height and weight work.
+[ ] Lose weight reveals speed and fasting options.
+[ ] Maintain and gain hide those options.
+[ ] Missing or unreasonable entries are caught.
+[ ] Recommendations appear and make sense visually.
+[ ] Manual adjustment works.
+
+COMPANION
+[ ] Character selection works.
+[ ] Name is required.
+[ ] Voice preview works where supported.
+[ ] Finish setup opens Home.
+
+HOME AND SETTINGS
+[ ] All five Rooms are circular and positioned clearly.
+[ ] Four unfinished Rooms show Coming Soon.
+[ ] Settings opens and shows the saved profile.
+[ ] Edit Profile returns to the profile page.
+[ ] Edit Companion saves changes.
+[ ] Reset trial deletes the profile and restarts onboarding.
+
+For every issue, note:
+- device and browser
+- screen
+- what you tapped
+- what you expected
+- what actually happened

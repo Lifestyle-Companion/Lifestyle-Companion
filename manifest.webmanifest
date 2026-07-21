@@ -1,9 +1,9 @@
 {
-  "name": "Lifestyle Companion \u2014 Founder\u2019s Trial Alpha 1.4.1",
-  "short_name": "Lifestyle Companion",
-  "start_url": "index.html",
+  "name": "Healthy Eating \u2014 Founder Trial Alpha 0.1",
+  "short_name": "Healthy Eating",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#eef5f1",
-  "theme_color": "#e8f2ec",
+  "background_color": "#eef7ef",
+  "theme_color": "#2e6d4d",
   "icons": []
 }

@@ -1,0 +1,18 @@
+HEALTHY EATING ALPHA 0.1 — FIRST STANDALONE BUILD
+
+NEW
+- New Healthy Eating identity and onboarding.
+- Join or Cancel opening choice and farewell screen.
+- Email validation.
+- Simulated six-digit email verification.
+- Password confirmation and strength indicator.
+- Metric and imperial height and weight entry.
+- Lose, maintain or gain goal options.
+- Slow or faster weight-loss preference.
+- No fasting, 5:2 fasting or custom fasting preference.
+- Daily activity and exercise-credit choices.
+- BMI, healthy-weight range, weight goal, energy and macronutrient recommendations.
+- Accept recommendations or adjust them manually.
+- Companion character, name, personality, theme and voice preview.
+- Home Circle containing Diary, Food Database, Weight Check-in, Graphs and Settings.
+- Working Settings summary and edit routes.

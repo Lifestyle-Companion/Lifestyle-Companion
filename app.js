@@ -227,7 +227,7 @@ function renderSettings(){
 $("edit-profile").addEventListener("click",()=>{editingProfile=true;show("profile")});
 $("edit-companion").addEventListener("click",()=>show("companion"));
 $("reset-trial").addEventListener("click",()=>{
- if(confirm("Delete this Healthy Eating Alpha 0.1 trial profile and begin again?")){
+ if(confirm("Delete this Healthy Eating Alpha 0.1.1 trial profile and begin again?")){
   localStorage.removeItem(KEY);location.reload();
  }
 });

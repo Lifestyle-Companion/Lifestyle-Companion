@@ -1,0 +1,45 @@
+FOUNDER TESTING CHECKLIST — ALPHA 0.2
+
+Please complete onboarding naturally once, then deliberately test incorrect entries.
+
+ACCOUNT
+[ ] Join and Cancel work.
+[ ] Invalid email is rejected and Companion explains the issue.
+[ ] Six-digit code rejects an incorrect number.
+[ ] Password rules and matching work.
+
+COMPANION
+[ ] Companion setup appears immediately after password creation.
+[ ] Character and name selection work.
+[ ] Voice list appears where supported.
+[ ] Preview Companion speaks.
+[ ] Automatic spoken instructions can be turned on or off.
+[ ] Speaker buttons repeat instructions.
+
+PERSONAL DETAILS
+[ ] Email remains editable.
+[ ] Country, address and phone fields save.
+[ ] Date-of-birth validation works.
+[ ] Calories/kJ preference saves.
+
+HEALTH PROFILE
+[ ] Metric and imperial height/weight work.
+[ ] Lose weight reveals rate and fasting options.
+[ ] Maintain and gain hide those options.
+[ ] Missing or unreasonable entries produce friendly spoken guidance.
+
+RECOMMENDATIONS
+[ ] Values are rounded and easy to read.
+[ ] Energy appears in the selected unit.
+[ ] Manual adjustment works.
+[ ] Accepting recommendations opens Home.
+
+HOME AND SETTINGS
+[ ] Home greeting uses the first name and time of day.
+[ ] Tapping the Companion changes and speaks its message.
+[ ] Daily tip appears.
+[ ] Separate Personal, Health and Companion edit buttons work.
+[ ] Spoken guidance can be toggled in Settings.
+[ ] Reset trial deletes saved data and restarts onboarding.
+
+For every issue, note device/browser, screen, action, expected result and actual result.

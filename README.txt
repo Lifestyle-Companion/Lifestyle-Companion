@@ -1,18 +1,21 @@
-HEALTHY EATING — FOUNDER TRIAL ALPHA 0.1
+HEALTHY EATING — FOUNDER TRIAL ALPHA 0.2
 
 PURPOSE
-This is the first standalone Healthy Eating build. It covers:
-- account-registration prototype
-- email-format validation
-- simulated six-digit verification
-- password setup
-- dietary profile setup
-- calculated starting recommendations
-- manual recommendation adjustment
-- Companion setup
-- Healthy Eating Home Circle
-- working Settings entry
-- placeholders for Diary, Food Database, Weight Check-in and Graphs
+This milestone upgrade introduces a redesigned seven-step onboarding flow and spoken Companion guidance.
+
+INCLUDED
+- account registration prototype and simulated verification
+- Companion setup immediately after account creation
+- Personal Details separated from Health Profile
+- editable email, country, address and phone details
+- Calories or kilojoules preference
+- rounded starting recommendations
+- spoken instructions on setup screens
+- spoken friendly error guidance
+- repeat-instruction speaker buttons
+- interactive Companion messages on Home
+- separate Personal, Health and Companion settings routes
+- spoken-guidance on/off control
 
 HOW TO RUN
 1. Download the ZIP.
@@ -21,13 +24,12 @@ HOW TO RUN
 4. Double-click index.html.
 5. Use a current version of Edge, Chrome or Safari.
 
+SPOKEN GUIDANCE
+Speech uses the browser/device speech-synthesis service. Available voices differ by browser and device. Some browsers require a user tap before audio can begin. Use the speaker buttons or Preview Companion if automatic speech does not start.
+
 IMPORTANT PROTOTYPE LIMITATIONS
 - No real account is created on a server.
-- The email and six-digit code are simulated inside the app.
-- Trial information is saved only in local browser storage on that device.
+- Email and verification are simulated.
+- Trial information is saved only in local browser storage.
 - Passwords are not uploaded or used for real authentication.
-- Nutrition calculations are estimates for testing the workflow, not medical advice.
-- The build is intended for Mal, Tracey and Shelly to test the onboarding flow.
-
-CALCULATION NOTE
-The prototype uses BMI screening, the Mifflin–St Jeor resting-energy equation when the user selects male or female for calculation, an activity multiplier, and simple starting macro estimates. These rules must receive professional nutrition review before a public release.
+- Nutrition calculations are planning estimates, not medical advice.

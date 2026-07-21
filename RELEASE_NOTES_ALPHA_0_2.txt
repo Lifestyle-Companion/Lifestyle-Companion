@@ -1,0 +1,22 @@
+HEALTHY EATING ALPHA 0.2 — COMPANION GUIDANCE MILESTONE
+
+NEW
+- Companion setup moved directly after account creation.
+- Onboarding redesigned as seven clear steps.
+- Personal Details and Health Profile are now separate screens.
+- Personal Details now include editable email, country, address, mobile, other phone and preferred energy unit.
+- Companion can automatically speak instructions on each setup screen.
+- Speaker buttons repeat current instructions.
+- Companion speaks friendly explanations when validation fails.
+- Companion voice, personality and automatic speech preference are saved.
+- Home includes a prominent Companion message, daily greeting and daily tip.
+- Tapping the Companion provides spoken context-sensitive guidance.
+- Settings now has separate editing routes for Personal Details, Health Profile and Companion.
+- Settings includes a spoken-guidance on/off control.
+
+IMPROVED
+- Recommendation values are rounded for easier reading.
+- Daily energy can be displayed in kilojoules or Calories.
+- Home summary and Settings reflect the selected unit.
+- Australian wording and supportive language refined.
+- Service-worker cache version updated for Alpha 0.2.

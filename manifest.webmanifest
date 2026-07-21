@@ -1,9 +1,10 @@
 {
-  "name": "Healthy Eating \u2014 Founder Trial Alpha 0.1.1",
+  "name": "Healthy Eating Founder Trial Alpha 0.2",
   "short_name": "Healthy Eating",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#eef7ef",
-  "theme_color": "#2e6d4d",
-  "icons": []
+  "theme_color": "#eef7ef",
+  "lang": "en-AU",
+  "description": "Founder trial of the Healthy Eating application with spoken Companion guidance."
 }

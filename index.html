@@ -6,69 +6,54 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating">
-  <title>Healthy Eating — Founder Trial Alpha 0.1.1</title>
+  <title>Healthy Eating — Founder Trial Alpha 0.2</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="app">
-
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.1.1</div>
+      <div class="badge">Founder Trial · Alpha 0.2</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating</h1>
-      <p class="lead">Hello and welcome. Would you like to open an account with your Lifestyle Companion and join the Healthy Eating app?</p>
+      <p class="lead">Welcome. Your Lifestyle Companion will guide you through setup and help you build a practical starting plan.</p>
       <label class="join-choice"><input id="join-check" type="checkbox"> <span>Yes, I would like to join Healthy Eating.</span></label>
       <div class="welcome-actions">
         <button id="join-button" class="primary" disabled>Continue</button>
         <button id="cancel-button" class="secondary">Cancel</button>
       </div>
-      <p class="fine">This first founder build stores trial information only on this device. Email delivery is simulated until a secure account service is connected.</p>
+      <p class="fine">This founder build stores trial information only on this device. Account verification and email delivery are simulated.</p>
     </div>
   </section>
 
   <section id="goodbye" class="screen goodbye-screen">
     <div class="welcome-card">
-      <div class="logo">🌱</div>
-      <h1>Goodbye</h1>
-      <p class="lead">I’m sorry to see you leave. You’re welcome back here anytime.</p>
+      <div class="logo">🌱</div><h1>Goodbye</h1>
+      <p class="lead">I’m sorry to see you leave. You’re welcome back anytime.</p>
       <button data-go="welcome" class="primary">Return to Healthy Eating</button>
     </div>
   </section>
 
-  <section id="register" class="screen content-screen">
-    <header class="topbar">
-      <button class="back" data-go="welcome">← Back</button>
-      <div><h2>Create your account</h2><p>Step 1 of 3 · Email address</p></div>
-    </header>
+  <section id="register" class="screen content-screen" data-speech="Please enter the email address you would like to use. I will check that it looks valid before we continue.">
+    <header class="topbar"><button class="back" data-go="welcome">← Back</button><div><h2>Create your account</h2><p>Step 1 of 7 · Email address</p></div></header>
     <main class="page narrow">
-      <aside class="companion-note"><span>🤝</span><p>Let’s begin with an email address you can access. I’ll check that it looks valid before we continue.</p></aside>
+      <aside class="companion-note speakable"><span>🤝</span><p>Let’s begin with an email address you can access.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
-        <label>Email address
-          <input id="register-email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
-        </label>
+        <label>Email address<input id="register-email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></label>
         <small id="email-error" class="field-error"></small>
         <button id="send-code" class="primary wide">Send verification code</button>
       </div>
     </main>
   </section>
 
-  <section id="verify" class="screen content-screen">
-    <header class="topbar">
-      <button class="back" data-go="register">← Back</button>
-      <div><h2>Verify your email</h2><p>Step 2 of 3 · Six-digit code</p></div>
-    </header>
+  <section id="verify" class="screen content-screen" data-speech="A six digit verification code has been prepared. Enter the code shown in the prototype email preview.">
+    <header class="topbar"><button class="back" data-go="register">← Back</button><div><h2>Verify your email</h2><p>Step 2 of 7 · Six-digit code</p></div></header>
     <main class="page narrow">
-      <aside class="companion-note"><span>📧</span><p id="verify-message">A six-digit verification code has been prepared.</p></aside>
-      <div class="prototype-email">
-        <div><strong>Prototype email preview</strong><small>Real email delivery will be connected in a later secure build.</small></div>
-        <div class="code-display" id="preview-code">000 000</div>
-      </div>
+      <aside class="companion-note speakable"><span>📧</span><p id="verify-message">A six-digit verification code has been prepared.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
+      <div class="prototype-email"><div><strong>Prototype email preview</strong><small>Real delivery will be connected in a later secure build.</small></div><div class="code-display" id="preview-code">000 000</div></div>
       <div class="card">
-        <label>Enter your six-digit code
-          <input id="verify-code" class="code-input" inputmode="numeric" maxlength="6" placeholder="000000">
-        </label>
+        <label>Enter your six-digit code<input id="verify-code" class="code-input" inputmode="numeric" maxlength="6" placeholder="000000"></label>
         <small id="code-error" class="field-error"></small>
         <button id="verify-button" class="primary wide">Verify email</button>
         <button id="resend-code" class="text-button">Generate a new code</button>
@@ -76,13 +61,10 @@
     </main>
   </section>
 
-  <section id="password" class="screen content-screen">
-    <header class="topbar">
-      <button class="back" data-go="verify">← Back</button>
-      <div><h2>Create your password</h2><p>Step 3 of 3 · Account security</p></div>
-    </header>
+  <section id="password" class="screen content-screen" data-speech="Choose a password with at least eight characters, including a letter and a number. Enter it twice so I can make sure they match.">
+    <header class="topbar"><button class="back" data-go="verify">← Back</button><div><h2>Create your password</h2><p>Step 3 of 7 · Account security</p></div></header>
     <main class="page narrow">
-      <aside class="companion-note"><span>🔐</span><p>Use at least eight characters, including a letter and a number. Enter it twice so I can make sure they match.</p></aside>
+      <aside class="companion-note speakable"><span>🔐</span><p>Use at least eight characters, including a letter and a number.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
         <label>Password<input id="password-one" type="password" autocomplete="new-password"></label>
         <div id="password-strength" class="strength"><span></span><small>Not entered</small></div>
@@ -93,202 +75,99 @@
     </main>
   </section>
 
-  <section id="profile" class="screen content-screen">
-    <header class="topbar sticky">
-      <button class="back" data-go="password">← Back</button>
-      <div class="grow"><h2>Personal Details</h2><p>Tell me about yourself. Your health information comes next.</p></div>
-      <div class="step-pill">Personal Details</div>
-    </header>
+  <section id="companion" class="screen content-screen" data-speech="Now choose the Companion who will guide you through Healthy Eating. You can change these choices later in Settings.">
+    <header class="topbar sticky"><button class="back" data-go="password">← Back</button><div class="grow"><h2>Choose your Companion</h2><p>Step 4 of 7 · Your supportive guide</p></div><div class="step-pill">Companion</div></header>
     <main class="page">
-      <aside class="companion-note"><span>🧭</span><p>Take your time. You can change these details later in Settings.</p></aside>
+      <aside class="companion-note speakable"><span id="setup-avatar">🐵</span><p>Your Companion will encourage, explain and help you plan—never scold you.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
+      <div class="card">
+        <label>Companion name *<input id="companion-name" placeholder="For example, Hymie or Stanley"></label>
+        <div id="character-grid" class="character-grid"></div>
+        <div class="form-grid">
+          <label>Personality<select id="personality"><option value="calm">Calm and patient</option><option value="cheerful">Cheerful</option><option value="encouraging">Encouraging</option><option value="light-hearted">Light-hearted</option><option value="brief">Quiet and brief</option></select></label>
+          <label>Theme<select id="theme"><option value="garden">Garden</option><option value="coast">Coast</option><option value="outback">Outback</option><option value="classic">Classic</option></select></label>
+          <label class="full">Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
+          <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
+        </div>
+        <button id="preview-voice" class="secondary wide">🔊 Preview Companion</button>
+        <small id="companion-error" class="field-error"></small>
+        <button id="companion-next" class="primary wide">Continue to Personal Details</button>
+      </div>
+    </main>
+  </section>
+
+  <section id="personal" class="screen content-screen" data-speech="Now I would like to get to know you a little better. These details help personalise your Healthy Eating experience.">
+    <header class="topbar sticky"><button class="back" data-go="companion">← Back</button><div class="grow"><h2>Personal Details</h2><p>Step 5 of 7 · About you</p></div><div class="step-pill">Personal</div></header>
+    <main class="page">
+      <aside class="companion-note speakable"><span class="live-avatar">🐵</span><p>Take your time. You can change these details later in Settings.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
         <div class="form-grid">
           <label class="full">Full name *<input id="full-name" autocomplete="name" placeholder="For example, Malcolm West"></label>
+          <label>Email address<input id="personal-email" type="email" autocomplete="email"></label>
+          <label>Country *<select id="country"><option value="Australia">Australia</option><option value="New Zealand">New Zealand</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Other">Other</option></select></label>
+          <label class="full">Street address<input id="address" autocomplete="street-address" placeholder="Optional"></label>
+          <label>Mobile phone<input id="mobile" type="tel" autocomplete="tel" placeholder="Optional"></label>
+          <label>Other phone<input id="phone" type="tel" placeholder="Optional"></label>
           <label>Date of birth *<input id="dob" type="date"></label>
-          <label>Sex used for energy calculation *
-            <select id="calculation-sex">
-              <option value="">Select</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="manual">Prefer not to say — set energy manually</option>
-            </select>
-          </label>
+          <label>Preferred energy unit<select id="energy-unit"><option value="kJ">Kilojoules (kJ)</option><option value="Calories">Calories (kcal)</option></select></label>
         </div>
+        <small id="personal-error" class="field-error"></small>
+        <button id="personal-next" class="primary wide">Continue to Health Profile</button>
+      </div>
+    </main>
+  </section>
 
-        <fieldset>
-          <legend>Height *</legend>
-          <div class="segmented" data-group="height-unit">
-            <button type="button" class="active" data-value="metric">Metric</button>
-            <button type="button" data-value="imperial">Imperial</button>
-          </div>
-          <div id="height-metric" class="unit-fields"><label>Centimetres<input id="height-cm" type="number" min="100" max="250" step="0.1" inputmode="decimal"></label></div>
-          <div id="height-imperial" class="unit-fields hidden"><label>Feet<input id="height-ft" type="number" min="3" max="8" step="1"></label><label>Inches<input id="height-in" type="number" min="0" max="11.9" step="0.1"></label></div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Starting weight *</legend>
-          <div class="segmented" data-group="weight-unit">
-            <button type="button" class="active" data-value="metric">Metric</button>
-            <button type="button" data-value="imperial">Imperial</button>
-          </div>
-          <div id="weight-metric" class="unit-fields"><label>Kilograms<input id="weight-kg" type="number" min="30" max="400" step="0.1" inputmode="decimal"></label></div>
-          <div id="weight-imperial" class="unit-fields hidden"><label>Stone<input id="weight-st" type="number" min="4" max="60" step="1"></label><label>Pounds<input id="weight-lb" type="number" min="0" max="13.9" step="0.1"></label></div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Your goal *</legend>
-          <div class="choice-grid three">
-            <label><input type="radio" name="goal" value="lose"> Lose weight</label>
-            <label><input type="radio" name="goal" value="maintain"> Maintain weight</label>
-            <label><input type="radio" name="goal" value="gain"> Gain weight</label>
-          </div>
-          <div id="loss-options" class="conditional hidden">
-            <h4>Preferred rate of weight loss</h4>
-            <div class="choice-grid">
-              <label><input type="radio" name="loss-rate" value="slow" checked> Slowly and steadily</label>
-              <label><input type="radio" name="loss-rate" value="faster"> Faster, within a conservative trial limit</label>
-            </div>
-            <h4>Fasting preference</h4>
-            <div class="choice-grid">
-              <label><input type="radio" name="fasting" value="none" checked> No fasting plan</label>
-              <label><input type="radio" name="fasting" value="52"> 5:2 fasting</label>
-              <label><input type="radio" name="fasting" value="custom"> Custom fasting days</label>
-            </div>
-          </div>
-        </fieldset>
-
-        <label>Daily activity *
-          <select id="activity">
-            <option value="">Select</option>
-            <option value="1.2">Mostly seated</option>
-            <option value="1.375">Lightly active</option>
-            <option value="1.55">Moderately active</option>
-            <option value="1.725">Very active</option>
-            <option value="1.9">Heavy physical work or very intense activity</option>
-          </select>
-        </label>
-
-        <fieldset>
-          <legend>Exercise energy</legend>
-          <p class="fine">How much separately logged exercise should be added back to your daily energy allowance?</p>
-          <div class="choice-grid three">
-            <label><input type="radio" name="exercise-credit" value="0" checked> None</label>
-            <label><input type="radio" name="exercise-credit" value="50"> 50%</label>
-            <label><input type="radio" name="exercise-credit" value="100"> All</label>
-          </div>
-        </fieldset>
-
-        <small id="profile-error" class="field-error"></small>
+  <section id="health" class="screen content-screen" data-speech="Next we will look at your health information so I can calculate a suitable starting plan. These figures are estimates for planning, not medical advice.">
+    <header class="topbar sticky"><button class="back" data-go="personal">← Back</button><div class="grow"><h2>Health Profile</h2><p>Step 6 of 7 · Your starting point</p></div><div class="step-pill">Health</div></header>
+    <main class="page">
+      <aside class="companion-note speakable"><span class="live-avatar">🐵</span><p>These details help me prepare your first recommendation.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
+      <div class="card">
+        <label>Sex used for energy calculation *<select id="calculation-sex"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="manual">Prefer not to say — set energy manually</option></select></label>
+        <fieldset><legend>Height *</legend><div class="segmented" data-group="height-unit"><button type="button" class="active" data-value="metric">Metric</button><button type="button" data-value="imperial">Imperial</button></div><div id="height-metric" class="unit-fields"><label>Centimetres<input id="height-cm" type="number" min="100" max="250" step="0.1"></label></div><div id="height-imperial" class="unit-fields hidden"><label>Feet<input id="height-ft" type="number" min="3" max="8"></label><label>Inches<input id="height-in" type="number" min="0" max="11.9" step="0.1"></label></div></fieldset>
+        <fieldset><legend>Starting weight *</legend><div class="segmented" data-group="weight-unit"><button type="button" class="active" data-value="metric">Metric</button><button type="button" data-value="imperial">Imperial</button></div><div id="weight-metric" class="unit-fields"><label>Kilograms<input id="weight-kg" type="number" min="30" max="400" step="0.1"></label></div><div id="weight-imperial" class="unit-fields hidden"><label>Stone<input id="weight-st" type="number" min="4" max="60"></label><label>Pounds<input id="weight-lb" type="number" min="0" max="13.9" step="0.1"></label></div></fieldset>
+        <fieldset><legend>Your goal *</legend><div class="choice-grid three"><label><input type="radio" name="goal" value="lose"> Lose weight</label><label><input type="radio" name="goal" value="maintain"> Maintain weight</label><label><input type="radio" name="goal" value="gain"> Gain weight</label></div><div id="loss-options" class="conditional hidden"><h4>Preferred rate of weight loss</h4><div class="choice-grid"><label><input type="radio" name="loss-rate" value="slow" checked> Slowly and steadily</label><label><input type="radio" name="loss-rate" value="faster"> Faster, within a conservative trial limit</label></div><h4>Fasting preference</h4><div class="choice-grid"><label><input type="radio" name="fasting" value="none" checked> No fasting plan</label><label><input type="radio" name="fasting" value="52"> 5:2 fasting</label><label><input type="radio" name="fasting" value="custom"> Custom fasting days</label></div></div></fieldset>
+        <label>Daily activity *<select id="activity"><option value="">Select</option><option value="1.2">Mostly seated</option><option value="1.375">Lightly active</option><option value="1.55">Moderately active</option><option value="1.725">Very active</option><option value="1.9">Heavy physical work or very intense activity</option></select></label>
+        <fieldset><legend>Exercise energy</legend><p class="fine">How much separately logged exercise should be added back to your daily energy allowance?</p><div class="choice-grid three"><label><input type="radio" name="exercise-credit" value="0" checked> None</label><label><input type="radio" name="exercise-credit" value="50"> 50%</label><label><input type="radio" name="exercise-credit" value="100"> All</label></div></fieldset>
+        <small id="health-error" class="field-error"></small>
         <button id="calculate-button" class="primary wide">Calculate my recommendations</button>
       </div>
     </main>
   </section>
 
-  <section id="recommendations" class="screen content-screen">
-    <header class="topbar sticky">
-      <button class="back" data-go="profile">← Back</button>
-      <div class="grow"><h2>Your recommendations</h2><p>Review the starting plan prepared from your profile.</p></div>
-      <div class="step-pill">Review</div>
-    </header>
+  <section id="recommendations" class="screen content-screen" data-speech="I have prepared a starting plan for you. Review the figures and adjust them if needed before continuing.">
+    <header class="topbar sticky"><button class="back" data-go="health">← Back</button><div class="grow"><h2>Your recommendations</h2><p>Step 7 of 7 · Review your plan</p></div><div class="step-pill">Review</div></header>
     <main class="page">
-      <aside class="companion-note"><span>📋</span><p>These figures are estimates for planning, not medical advice. A doctor or accredited practising dietitian should guide you where health conditions, pregnancy, medications or eating-disorder concerns apply.</p></aside>
+      <aside class="companion-note speakable"><span class="live-avatar">🐵</span><p>These figures are rounded estimates for planning, not medical advice.</p><button class="speak-note" aria-label="Repeat instruction">🔊</button></aside>
       <div id="recommendation-grid" class="recommendation-grid"></div>
       <div class="card">
         <label class="accept-box"><input id="accept-recommendations" type="checkbox"> I agree to use these recommendations as my starting plan.</label>
         <button id="manual-toggle" class="secondary wide">Adjust recommendations manually</button>
-        <div id="manual-fields" class="form-grid hidden">
-          <label>Weight goal (kg)<input id="manual-goal-weight" type="number" step="0.1"></label>
-          <label>Daily energy (kJ)<input id="manual-energy" type="number" step="10"></label>
-          <label>Protein (g)<input id="manual-protein" type="number" step="1"></label>
-          <label>Fat (g)<input id="manual-fat" type="number" step="1"></label>
-          <label>Carbohydrate (g)<input id="manual-carbs" type="number" step="1"></label>
-        </div>
+        <div id="manual-fields" class="form-grid hidden"><label>Weight goal (kg)<input id="manual-goal-weight" type="number" step="0.1"></label><label>Daily energy<input id="manual-energy" type="number" step="10"></label><label>Protein (g)<input id="manual-protein" type="number" step="1"></label><label>Fat (g)<input id="manual-fat" type="number" step="1"></label><label>Carbohydrate (g)<input id="manual-carbs" type="number" step="1"></label></div>
         <small id="recommendation-error" class="field-error"></small>
-        <button id="recommendation-next" class="primary wide">Continue to Companion setup</button>
-      </div>
-    </main>
-  </section>
-
-  <section id="companion" class="screen content-screen">
-    <header class="topbar sticky">
-      <button class="back" data-go="recommendations">← Back</button>
-      <div class="grow"><h2>Choose your Companion</h2><p>Your supportive guide through Healthy Eating.</p></div>
-      <div class="step-pill">Companion</div>
-    </header>
-    <main class="page">
-      <aside class="companion-note"><span id="setup-avatar">🐵</span><p>Your Companion will encourage, explain and help you plan—never scold you.</p></aside>
-      <div class="card">
-        <label>Companion name *<input id="companion-name" placeholder="For example, Hymie or Stanley"></label>
-        <div id="character-grid" class="character-grid"></div>
-        <div class="form-grid">
-          <label>Personality
-            <select id="personality">
-              <option value="calm">Calm and patient</option>
-              <option value="cheerful">Cheerful</option>
-              <option value="encouraging">Encouraging</option>
-              <option value="light-hearted">Light-hearted</option>
-              <option value="brief">Quiet and brief</option>
-            </select>
-          </label>
-          <label>Theme
-            <select id="theme">
-              <option value="garden">Garden</option>
-              <option value="coast">Coast</option>
-              <option value="outback">Outback</option>
-              <option value="classic">Classic</option>
-            </select>
-          </label>
-          <label class="full">Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
-        </div>
-        <button id="preview-voice" class="secondary wide">🔊 Preview Companion</button>
-        <small id="companion-error" class="field-error"></small>
         <button id="finish-setup" class="primary wide">Finish setup</button>
       </div>
     </main>
   </section>
 
-  <section id="home" class="screen home-screen">
-    <header class="home-header">
-      <div>
-        <div class="badge">Healthy Eating · Alpha 0.1.1</div>
-        <h1 id="home-greeting">Welcome</h1>
-        <p id="home-summary"></p>
-      </div>
-      <button id="reset-trial" class="small-button">Reset trial</button>
-    </header>
+  <section id="home" class="screen home-screen" data-speech="Congratulations. Your Healthy Eating home is ready. Tap your Companion at any time for encouragement and guidance.">
+    <header class="home-header"><div><div class="badge">Healthy Eating · Alpha 0.2</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div><button id="reset-trial" class="small-button">Reset trial</button></header>
     <main class="home-main">
-      <div class="circle">
-        <div class="orbit"></div>
-        <button class="room r1" data-room="diary"><span>🍽️</span><b>Diary</b><small>Meals & planning</small></button>
-        <button class="room r2" data-room="database"><span>🥕</span><b>Food Database</b><small>Foods & recipes</small></button>
-        <button class="room r3" data-room="weight"><span>⚖️</span><b>Weight Check-in</b><small>History</small></button>
-        <button class="room r4" data-room="graphs"><span>📈</span><b>Graphs</b><small>Weight & energy</small></button>
-        <button class="room r5" data-room="settings"><span>⚙️</span><b>Settings</b><small>Profile</small></button>
-        <button id="home-companion" class="companion-centre"><span id="home-avatar">🐵</span><strong id="home-companion-name">Companion</strong><small>Tap for encouragement</small></button>
-      </div>
-      <div class="thought"><span id="thought-avatar">🐵</span><p id="thought-text">Your Healthy Eating home is ready.</p></div>
+      <div class="home-message"><span id="message-avatar">🐵</span><div><strong id="message-name">Companion</strong><p id="message-text">Your Healthy Eating home is ready.</p></div><button id="speak-home" class="speak-note" aria-label="Speak message">🔊</button></div>
+      <div class="circle"><div class="orbit"></div><button class="room r1" data-room="diary"><span>🍽️</span><b>Diary</b><small>Meals & planning</small></button><button class="room r2" data-room="database"><span>🥕</span><b>Food Database</b><small>Foods & recipes</small></button><button class="room r3" data-room="weight"><span>⚖️</span><b>Weight Check-in</b><small>History</small></button><button class="room r4" data-room="graphs"><span>📈</span><b>Graphs</b><small>Weight & energy</small></button><button class="room r5" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your details</small></button><button id="home-companion" class="companion-centre"><span id="home-avatar">🐵</span><strong id="home-companion-name">Companion</strong><small>Tap for guidance</small></button></div>
+      <div class="daily-tip"><strong>Today’s tip</strong><p id="daily-tip">Small changes are easier to repeat than perfect days.</p></div>
     </main>
   </section>
 
   <section id="settings" class="screen content-screen">
-    <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Settings</h2><p>View and change your trial profile.</p></div></header>
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Settings</h2><p>View and change your trial information.</p></div></header>
     <main class="page">
       <div id="settings-summary" class="card"></div>
-      <button id="edit-profile" class="primary wide">Edit profile and recommendations</button>
-      <button id="edit-companion" class="secondary wide">Edit Companion</button>
+      <div class="settings-grid"><button id="edit-personal" class="primary">Edit Personal Details</button><button id="edit-health" class="primary">Edit Health Profile</button><button id="edit-companion" class="secondary">Edit Companion</button><button id="toggle-speech" class="secondary">Turn spoken guidance off</button></div>
     </main>
   </section>
 
   <section id="placeholder" class="screen content-screen">
     <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2 id="placeholder-title">Room</h2><p>Planned for a later build</p></div></header>
-    <main class="page narrow">
-      <div class="card centre">
-        <div id="placeholder-icon" class="large-icon">🚧</div>
-        <h3>Coming Soon</h3>
-        <p id="placeholder-copy">This room is visible so testers can understand the intended Healthy Eating home.</p>
-        <button class="primary" data-go="home">Return Home</button>
-      </div>
-    </main>
+    <main class="page narrow"><div class="card centre"><div id="placeholder-icon" class="large-icon">🚧</div><h3>Coming Soon</h3><p id="placeholder-copy">This room is visible so testers can understand the intended Healthy Eating home.</p><button class="primary" data-go="home">Return Home</button></div></main>
   </section>
 
   <div id="toast" role="status" aria-live="polite"></div>

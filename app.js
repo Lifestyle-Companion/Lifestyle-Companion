@@ -1,6 +1,6 @@
 (() => {
 "use strict";
-const KEY="lifestyleCompanionAlpha14";
+const KEY="lifestyleCompanionAlpha141";
 const characters=["🐵","🐶","🐨","🦘","🦉","🐯","🐻","🦊","🐰","🧑","👩","🧔"];
 const rooms=[
  {id:"food",icon:"🍽️",name:"Food & Nutrition",available:true},
@@ -63,28 +63,75 @@ function renderRooms(){
 function renderStep(){
  qsa(".step").forEach(x=>x.classList.toggle("active",Number(x.dataset.step)===step));
  $("step-title").textContent=steps[step-1][0];$("step-subtitle").textContent=steps[step-1][1];$("step-count").textContent=`${step} of 8`;$("progress-bar").style.width=`${step*12.5}%`;
- $("previous").style.visibility=step===1?"hidden":"visible";$("next").textContent=step===8?(editingId?"Save Changes":"Create Profile"):"Continue";
+ $("previous").style.visibility=step===1?"hidden":"visible";$("next").textContent=step===8?(editingId?"Save Changes":"Create Profile"):"Continue";if(step<8){$("next").disabled=false;$("next").style.opacity="1"}
  if(step===8)renderReview();updateTeacher();window.scrollTo({top:0,left:0,behavior:"auto"});
 }
 function updateTeacher(){
  const enabled=$("teacher-enabled").checked;document.querySelector(".teacher").style.display=enabled?"flex":"none";
  $("teacher-avatar").textContent=draft?.companion?.character||"🐵";$("teacher-name").textContent=draft?.companion?.name||"Your Companion";$("teacher-text").textContent=steps[step-1][2];
 }
+
+function digitsOnly(value){return String(value||"").replace(/\D/g,"")}
+function formatAustralianPhone(value,type){
+ const d=digitsOnly(value).slice(0,10);
+ if(type==="mobile"){
+   if(d.length<=4)return d;
+   if(d.length<=7)return `${d.slice(0,4)} ${d.slice(4)}`;
+   return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
+ }
+ if(d.startsWith("0")){
+   if(d.length<=2)return d;
+   if(d.length<=6)return `${d.slice(0,2)} ${d.slice(2)}`;
+   return `${d.slice(0,2)} ${d.slice(2,6)} ${d.slice(6)}`;
+ }
+ if(d.length<=4)return d;
+ if(d.length<=7)return `${d.slice(0,4)} ${d.slice(4)}`;
+ return `${d.slice(0,4)} ${d.slice(4,7)} ${d.slice(7)}`;
+}
+function validateAustralianPhone(inputId,countryId,errorId,type,showEmpty=false){
+ const input=$(inputId), cc=$(countryId).value, error=$(errorId), d=digitsOnly(input.value);
+ input.classList.remove("invalid");error.textContent="";
+ if(!d)return true;
+ if(cc!=="+61")return true;
+ let message="";
+ if(d.length!==10)message=`This number has ${d.length} digits. Australian ${type==="mobile"?"mobile":"phone"} numbers normally have 10 digits.`;
+ else if(type==="mobile"&&!d.startsWith("04"))message="Australian mobile numbers should begin with 04.";
+ else if(type!=="mobile"&&!/^0[2378]/.test(d))message="This does not look like a valid Australian landline number. It should begin with 02, 03, 07 or 08.";
+ if(message){input.classList.add("invalid");error.textContent=message;return false}
+ return true;
+}
+function validateAllPhones(){
+ const checks=[
+  validateAustralianPhone("mobile-number","mobile-country","mobile-error","mobile"),
+  validateAustralianPhone("home-phone-number","home-phone-country","home-phone-error","landline"),
+  validateAustralianPhone("business-number","business-country","business-error","landline"),
+  validateAustralianPhone("other-number","other-country","other-error","other")
+ ];
+ return checks.every(Boolean);
+}
+function formatAustralianDate(value){
+ if(!value)return "Not provided";
+ const parts=value.split("-");
+ return parts.length===3?`${parts[2]}-${parts[1]}-${parts[0]}`:value;
+}
+function titleCase(value){return String(value||"").replace(/\b\w/g,c=>c.toUpperCase())}
+
 function validate(){
  if(step===2&&(!$("preferred-name").value.trim()||!$("full-name").value.trim())){toast("Please enter preferred name and full name.");return false}
+ if(step===4&&!validateAllPhones()){toast("Please check the highlighted phone number.");return false}
  if(step===5&&!$("companion-name").value.trim()){toast("Please give your Companion a name.");return false}
  return true;
 }
 function formatAddress(a){return [a.street,a.suburb,[a.state,a.postcode].filter(Boolean).join(" "),a.country].filter(Boolean).join(", ")||"Not provided"}
 function phoneText(p){return p.number?`${p.cc} ${p.number}`:"Not provided"}
 const reviewDefs=[
- ["about","About you",2,()=>`Preferred name: ${draft.preferredName||"Not provided"}\nFull name: ${draft.fullName||"Not provided"}\nDate of birth: ${draft.dob||"Not provided"}\nEmail: ${draft.email||"Not provided"}`],
+ ["about","About you",2,()=>`Preferred name: ${draft.preferredName||"Not provided"}\nFull name: ${draft.fullName||"Not provided"}\nDate of birth: ${formatAustralianDate(draft.dob)}\nEmail: ${draft.email||"Not provided"}`],
  ["address","Address",3,()=>`Main: ${formatAddress(draft.home)}\nPostal: ${draft.postalSame?"Same as main address":formatAddress(draft.postal)}`],
  ["phones","Phone numbers",4,()=>`Mobile: ${phoneText(draft.phones.mobile)}\nHome: ${phoneText(draft.phones.home)}\nBusiness: ${phoneText(draft.phones.business)}\nOther: ${phoneText(draft.phones.other)}`],
- ["companion","Companion",5,()=>`Name: ${draft.companion.name||"Not provided"}\nCharacter: ${draft.companion.character}\nPersonality: ${draft.companion.personality}\nTheme: ${draft.companion.theme}`],
+ ["companion","Companion",5,()=>`Name: ${draft.companion.name||"Not provided"}\nCharacter: ${draft.companion.character}\nPersonality: ${titleCase(draft.companion.personality)}\nTheme: ${titleCase(draft.companion.theme)}`],
  ["voice","Voice",6,()=>draft.companion.voiceURI?`Selected device voice: ${draft.companion.voiceURI}`:"Default device voice"],
  ["rooms","Rooms",7,()=>`Set up now: ${rooms.filter(r=>draft.rooms.includes(r.id)).map(r=>r.name).join(", ")}`],
- ["food","Food & Nutrition",7,()=>draft.rooms.includes("food")?`Weight: ${draft.food.weight||"Not provided"} kg\nHeight: ${draft.food.height||"Not provided"} cm\nActivity: ${draft.food.activity||"Not provided"}\nGoal: ${draft.food.goal||"Not provided"}\nGoal weight: ${draft.food.goalWeight||"Not provided"} kg\nFasting: ${draft.food.fasting}`:"Not selected for setup"]
+ ["food","Food & Nutrition",7,()=>draft.rooms.includes("food")?`Starting Weight: ${draft.food.weight||"Not provided"} kg\nHeight: ${draft.food.height||"Not provided"} cm\nActivity: ${draft.food.activity||"Not provided"}\nGoal: ${draft.food.goal||"Not provided"}\nGoal weight: ${draft.food.goalWeight||"Not provided"} kg\nFasting: ${draft.food.fasting}`:"Not selected for setup"]
 ];
 function renderReview(){
  readForm();$("review-avatar").textContent=draft.companion.character;
@@ -106,7 +153,7 @@ function renderProfiles(){
 }
 function openHome(p){
  $("profile-chip").textContent=p.companion.character;$("home-avatar").textContent=p.companion.character;$("thought-avatar").textContent=p.companion.character;$("home-companion").textContent=p.companion.name;
- const h=new Date().getHours(),part=h<12?"morning":h<18?"afternoon":"evening";$("greeting").textContent=`Good ${part}, ${p.preferredName}`;$("home-message").textContent=`${p.companion.name} is ready to help.`;$("thought-text").textContent=`Welcome back, ${p.preferredName}. Tap any Room. Unfinished Rooms will clearly say “Coming Soon”.`;
+ const h=new Date().getHours(),part=h<12?"morning":h<18?"afternoon":"evening";$("greeting").textContent=`Good ${part}, ${p.preferredName}`;$("home-message").textContent=`${p.companion.name} is ready to help.`;$("thought-text").textContent=`Welcome, ${p.preferredName}. Tap any Room. Unfinished Rooms will clearly say “Coming Soon”.`;
  qsa(".room").forEach(b=>b.classList.toggle("enabled",p.rooms.includes(b.dataset.room)));show("home")
 }
 function activeProfile(){return state.profiles.find(p=>p.id===state.activeId)||state.profiles[0]}
@@ -124,11 +171,30 @@ function roomOpen(id){
  const r=rooms.find(x=>x.id===id);$("placeholder-title").textContent=r.name;$("placeholder-icon").textContent=r.icon;$("placeholder-text").textContent=`${r.name} is visible by design but is not yet built in Alpha 1.4. Your tap has been recorded locally for founder testing.`;show("placeholder")
 }
 
+
+function bindPhoneFormatting(inputId,countryId,errorId,type){
+ const input=$(inputId);
+ input.addEventListener("input",()=>{
+   if($(countryId).value==="+61")input.value=formatAustralianPhone(input.value,type);
+   else input.value=input.value.replace(/[^\d +()-]/g,"");
+   validateAustralianPhone(inputId,countryId,errorId,type);
+ });
+ input.addEventListener("blur",()=>validateAustralianPhone(inputId,countryId,errorId,type));
+ $(countryId).addEventListener("change",()=>{
+   if($(countryId).value==="+61")input.value=formatAustralianPhone(input.value,type);
+   validateAustralianPhone(inputId,countryId,errorId,type);
+ });
+}
+
 load();
+bindPhoneFormatting("mobile-number","mobile-country","mobile-error","mobile");
+bindPhoneFormatting("home-phone-number","home-phone-country","home-phone-error","landline");
+bindPhoneFormatting("business-number","business-country","business-error","landline");
+bindPhoneFormatting("other-number","other-country","other-error","other");
 $("start-new").onclick=()=>startWizard();
 $("open-profiles").onclick=()=>{renderProfiles();show("profiles")};
 $("new-profile").onclick=()=>startWizard();
-$("delete-all").onclick=()=>{if(confirm("Delete every Alpha 1.4 profile on this device?")){state={profiles:[],activeId:null,analytics:[]};save();renderProfiles();toast("All Alpha 1.4 data deleted.")}};
+$("delete-all").onclick=()=>{if(confirm("Delete every Alpha 1.4.1 profile on this device?")){state={profiles:[],activeId:null,analytics:[]};save();renderProfiles();toast("All Alpha 1.4.1 data deleted.")}};
 qsa("[data-go]").forEach(b=>b.onclick=()=>{const id=b.dataset.go;if(id==="profiles")renderProfiles();show(id)});
 $("postal-same").onchange=()=>{$("postal-fields").classList.toggle("hidden",$("postal-same").checked)};
 $("previous").onclick=()=>{readForm();if(step>1){step--;renderStep()}};

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8f2ec">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lifestyle Companion">
-  <title>Lifestyle Companion — Founder’s Trial Alpha 1.4</title>
+  <title>Lifestyle Companion — Founder’s Trial Alpha 1.4.1</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,13 +14,13 @@
 <div id="app">
   <section id="welcome" class="screen active welcome">
     <div class="welcome-card">
-      <div class="badge">Founder’s Trial Edition · Alpha 1.4</div>
+      <div class="badge">Founder’s Trial Edition · Alpha 1.4.1</div>
       <div class="hero-icon">🌿</div>
       <h1>Lifestyle Companion</h1>
       <p>Set up your profile one simple step at a time. Your Companion will explain each page, and you will type your answers.</p>
       <button id="start-new" class="primary large">Create a new profile</button>
       <button id="open-profiles" class="secondary large">Use or manage an existing profile</button>
-      <p class="fine">Alpha 1.4 uses its own fresh trial data. Earlier Alpha profiles are not imported.</p>
+      <p class="fine">Alpha 1.4.1 uses its own fresh trial data. Earlier Alpha profiles are not imported.</p>
     </div>
   </section>
 
@@ -29,7 +29,7 @@
       <button class="back" data-go="welcome">← Back</button>
       <div><h2>Profiles</h2><p>Create, open, edit or remove trial profiles.</p></div>
     </header>
-    <main class="page"><div id="profile-list"></div><button id="new-profile" class="primary wide">＋ Create another profile</button><button id="delete-all" class="danger wide">Delete all Alpha 1.4 trial data</button></main>
+    <main class="page"><div id="profile-list"></div><button id="new-profile" class="primary wide">＋ Create another profile</button><button id="delete-all" class="danger wide">Delete all Alpha 1.4.1 trial data</button></main>
   </section>
 
   <section id="wizard" class="screen content">
@@ -104,10 +104,10 @@
           <h3>Phone numbers</h3>
           <p>Add only the numbers you use. All fields on this page are optional.</p>
           <div class="phone-grid">
-            <label>Mobile<div class="phone-row"><select id="mobile-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="mobile-number" inputmode="tel" placeholder="0412 345 678"></div></label>
-            <label>Home<div class="phone-row"><select id="home-phone-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="home-phone-number" inputmode="tel" placeholder="07 1234 5678"></div></label>
-            <label>Business<div class="phone-row"><select id="business-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="business-number" inputmode="tel"></div></label>
-            <label>Other<div class="phone-row"><select id="other-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="other-number" inputmode="tel"></div></label>
+            <label>Mobile<div class="phone-row"><select id="mobile-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="mobile-number" inputmode="tel" maxlength="14" placeholder="0428 886 594" aria-describedby="mobile-error"></div><small id="mobile-error" class="field-error"></small></label>
+            <label>Home<div class="phone-row"><select id="home-phone-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="home-phone-number" inputmode="tel" maxlength="14" placeholder="07 1234 5678" aria-describedby="home-phone-error"></div><small id="home-phone-error" class="field-error"></small></label>
+            <label>Business<div class="phone-row"><select id="business-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="business-number" inputmode="tel" maxlength="14" aria-describedby="business-error"></div><small id="business-error" class="field-error"></small></label>
+            <label>Other<div class="phone-row"><select id="other-country"><option>+61</option><option>+64</option><option>+1</option><option>+44</option></select><input id="other-number" inputmode="tel" maxlength="14" aria-describedby="other-error"></div><small id="other-error" class="field-error"></small></label>
           </div>
         </div>
       </section>

@@ -1,0 +1,18 @@
+ALPHA 1.4.1 — POLISH AND BUG-FIX RELEASE
+
+BUG FIXES
+- Fixed the frozen Continue button after completing Review.
+- Fixed the same frozen state when starting again after deleting a profile.
+- Fixed Save Changes flow when editing a Companion through Settings.
+
+POLISH
+- Australian mobile formatting: 0428886594 becomes 0428 886 594.
+- Australian landline formatting.
+- Detects incomplete and invalid Australian phone prefixes.
+- Review date shown as DD-MM-YYYY.
+- Personality and Theme start with capital letters.
+- Weight renamed Starting Weight.
+- First Home message says Welcome rather than Welcome back.
+- Circle of Life vertically repositioned.
+- Welcome message moved farther from the Circle.
+- Room icons given explicit equal width and height to prevent ovals.

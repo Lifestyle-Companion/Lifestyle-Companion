@@ -1,0 +1,49 @@
+HEALTHY EATING — FOUNDER TRIAL ALPHA 0.3
+
+MAJOR UPGRADE
+
+COMPANION CHOICE
+- Companion is now optional.
+- The app remains fully usable with written guidance when Companion mode is off.
+- Companion can be turned on or off later in Settings.
+- Spoken guidance has its own on/off control.
+- Saved Companion character, name and voice choices are retained when the Companion is turned off.
+
+LANGUAGE AND APPEARANCE
+- Added language and regional-format selection at the beginning of setup.
+- Added Garden, Coast, Outback and Classic theme preview cards.
+- Selecting a theme immediately previews and applies it.
+
+PERSONAL DETAILS
+- Added Preferred name.
+- Added pronunciation fields and spoken previews for the user and Companion names.
+- Replaced the single address field with Country, State/Region, Postcode, Suburb/City and Street address.
+- Added formatted address preview.
+- Added country-aware postcode checking.
+- Added country-aware phone formatting and international storage form.
+- Changed Calories display from kcal to Cal.
+
+HEALTH PROFILE AND GOALS
+- Weight-loss-rate choices are now Slow & steady, Recommended and Fast.
+- Fasting choices are now No fasting plan or Custom fasting days.
+- Custom fasting days reveal weekday and energy-target controls.
+- Added the user’s selected goal weight as a separate choice from the recommended goal.
+- Added optional future staged goals.
+- Calculated recommendations display as clean whole numbers.
+
+PROGRESS
+- Weight Check-in is now a working room.
+- Check-ins are saved in local history.
+- Recommendations recalculate after a weight change of at least 1 kg or a changed goal.
+- Small fluctuations are recorded without repeatedly changing the plan.
+- Manually chosen energy and nutrient targets are retained during automatic health-estimate refreshes.
+
+HOME
+- Added a rotating card containing jokes, quotes, tips, encouragement and food facts.
+- Each tap advances to the next item.
+- The Companion speaks the item when Companion speech is enabled.
+- Home automatically changes to a non-Companion presentation when Companion mode is off.
+
+TECHNICAL
+- Added Alpha 0.2 local-storage migration support.
+- Updated offline cache name and application metadata.

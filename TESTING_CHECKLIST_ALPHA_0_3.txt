@@ -1,0 +1,115 @@
+FOUNDER TESTING CHECKLIST — HEALTHY EATING ALPHA 0.3
+
+Please test naturally first, then deliberately try missing and incorrect entries.
+
+START AND LANGUAGE
+[ ] Join remains disabled until the founder-trial box is ticked.
+[ ] Cancel opens the farewell screen.
+[ ] Language selection appears before account registration.
+[ ] Each English regional option can be selected.
+[ ] Editing Language & Region from Settings returns to Settings.
+
+ACCOUNT
+[ ] Invalid email addresses are rejected.
+[ ] A six-digit prototype code is generated.
+[ ] Wrong codes are rejected.
+[ ] Generate a new code replaces the old code.
+[ ] Password rules and matching work.
+
+COMPANION OPTIONAL MODE
+[ ] Yes, use a Companion reveals all Companion controls.
+[ ] No Companion hides Companion-specific controls but leaves theme selection available.
+[ ] Setup completes successfully without a Companion.
+[ ] Home, Settings and Weight Check-in remain usable without a Companion.
+[ ] Turn Companion on/off works in Settings.
+[ ] Turning the Companion off retains its saved name, character and voice.
+[ ] Spoken-guidance on/off works only when Companion mode is on.
+
+COMPANION SPEECH AND PRONUNCIATION
+[ ] Companion name is required only when Companion mode is selected.
+[ ] Companion pronunciation preview speaks the entered pronunciation.
+[ ] Preferred-name pronunciation preview speaks the entered pronunciation.
+[ ] Spoken instructions occur on later setup screens when enabled.
+[ ] Repeat-speaker buttons work where supported.
+[ ] No automatic speech occurs when Companion mode or spoken guidance is off.
+[ ] Browser/device limitations are handled without stopping the app.
+
+THEMES
+[ ] Garden preview and colours apply.
+[ ] Coast preview and colours apply.
+[ ] Outback preview and colours apply.
+[ ] Classic preview and colours apply.
+[ ] The chosen theme remains after navigating between screens.
+[ ] The chosen theme appears after reopening the app in the same browser.
+
+PERSONAL DETAILS
+[ ] Full name is required.
+[ ] Preferred name is required and used in Home greetings.
+[ ] Email is prefilled from account setup and remains editable.
+[ ] Date-of-birth validation works.
+[ ] Cal is displayed instead of kcal.
+[ ] Country appears before region, postcode, suburb/city and street address.
+[ ] Region choices/labels change for the selected country.
+[ ] Postcode/ZIP/postal-code labels and checks change by country.
+[ ] Formatted address preview updates while typing.
+[ ] Australian mobile formats as 04xx xxx xxx.
+[ ] Australian landline formats as (0x) xxxx xxxx.
+[ ] US/Canadian phone formats as (xxx) xxx-xxxx.
+[ ] Invalid phone numbers are caught or can be left blank.
+
+HEALTH PROFILE
+[ ] Metric height and weight work.
+[ ] Imperial height and weight work.
+[ ] Lose, maintain and gain goals work.
+[ ] Lose weight shows Slow & steady, Recommended and Fast.
+[ ] Recommended is selected by default.
+[ ] No fasting plan hides custom controls.
+[ ] Custom fasting days require at least one weekday and an energy target.
+[ ] Selected goal weight can differ from the recommended goal.
+[ ] Unsafe or wrong-direction goal entries are caught.
+[ ] Calculated recommendations show clean whole numbers.
+
+GOAL PLAN
+[ ] Recommended goal and selected goal are shown separately.
+[ ] Selected goal can be changed on the review screen.
+[ ] Future goal stages can be added and removed.
+[ ] Weight-loss stages must decrease in sequence.
+[ ] Weight-gain stages must increase in sequence.
+[ ] Manual energy and nutrient adjustments work.
+[ ] Finish requires acceptance or completed manual values.
+
+HOME
+[ ] Greeting uses the preferred name.
+[ ] Companion Home presentation appears when enabled.
+[ ] Healthy Eating non-Companion presentation appears when disabled.
+[ ] Centre button provides spoken or written guidance as appropriate.
+[ ] Joke/quote/tip card advances on every tap.
+[ ] The Companion speaks the new card item only when speech is enabled.
+[ ] Settings opens.
+[ ] Diary, Food Database and Graphs still show Coming Soon.
+
+WEIGHT CHECK-IN
+[ ] Current weight and selected goal are prefilled.
+[ ] Check-in saves to Weight history.
+[ ] A change under 1 kg does not recalculate the plan.
+[ ] A change of at least 1 kg recalculates the plan.
+[ ] Changing the selected goal recalculates the plan.
+[ ] Manual energy/nutrient targets remain unchanged after automatic refresh.
+[ ] Home summary reflects the updated current weight and goal.
+
+SETTINGS AND STORAGE
+[ ] Settings summary shows language, theme, Companion state, current weight and goal.
+[ ] Edit Personal Details returns to Settings.
+[ ] Edit Companion & Theme returns to Settings.
+[ ] Edit Health Profile recalculates and returns to Settings after review.
+[ ] Saved data returns after closing and reopening in the same browser.
+[ ] Reset trial deletes the local profile and restarts setup.
+
+FOR EVERY ISSUE, NOTE
+- device and operating system
+- browser and browser version
+- screen
+- what you tapped or entered
+- what you expected
+- what actually happened
+- whether Companion mode and spoken guidance were on or off

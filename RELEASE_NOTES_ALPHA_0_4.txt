@@ -1,0 +1,17 @@
+HEALTHY EATING ALPHA 0.4 — PROFILE, PLANNING AND TRACKING FOUNDATION
+
+NEW
+- Postal address and Same as home option.
+- Dietary safety and food-preference profile with context-aware notes.
+- Selected goal weight chosen after app recommendation.
+- Flexible fasting-tool preference.
+- Expanded nutrition and water goals.
+- Daily live progress indicators.
+- Exercise and extra-activity log with none/half/all/custom calorie credit.
+- Weekly through all-time progress period controls.
+- Grocery shopping list.
+- Family and future service connections settings.
+
+FIXED
+- The app no longer starts a clean setup by addressing the user as Mal before a preferred name is entered.
+- Goal weight is no longer requested before recommendations are calculated.

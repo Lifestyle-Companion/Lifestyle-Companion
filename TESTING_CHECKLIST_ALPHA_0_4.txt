@@ -1,0 +1,23 @@
+FOUNDER TESTING CHECKLIST — ALPHA 0.4
+
+ONBOARDING
+[ ] Spoken setup uses neutral wording before preferred name is saved.
+[ ] Home and postal addresses work; Same as home hides postal fields.
+[ ] App recommendation appears before user-selected goal weight is entered.
+[ ] Flexible fasting choice does not require fixed days.
+[ ] Allergies, restrictions and food preferences save.
+[ ] Conditional food note accepts the mushroom example.
+[ ] Macro, water and micronutrient goals display clearly.
+
+FUNCTIONS
+[ ] Daily Live Progress saves values and updates colours.
+[ ] Exercise log calculates none, 50%, all and custom credit correctly.
+[ ] Progress History period buttons work.
+[ ] Grocery items add, combine duplicates, tick off and remove.
+[ ] Food Preferences summary displays saved information.
+[ ] Family preferences and future connection switches save.
+
+GENERAL
+[ ] Companion on/off and speech on/off still work.
+[ ] Themes, settings, weight check-in and reset still work.
+[ ] Test on Windows browser, iPad and iPhone where available.

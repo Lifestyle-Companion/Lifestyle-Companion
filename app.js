@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
-const KEY = "healthyEatingAlpha03";
-const LEGACY_KEYS = ["healthyEatingAlpha02"];
-const VERSION = "0.3";
+const KEY = "healthyEatingAlpha04";
+const LEGACY_KEYS = [];
+const VERSION = "0.4";
 
 const DEFAULTS = {
   version: VERSION,
@@ -578,7 +578,13 @@ $("personal-next").addEventListener("click", () => {
     mobile,
     mobileInternational: toInternationalPhone(mobile, country),
     phone,
-    phoneInternational: toInternationalPhone(phone, country)
+    phoneInternational: toInternationalPhone(phone, country),
+    postalSame: $("postal-same")?.checked ?? true,
+    postalCountry: $("postal-country")?.value || country,
+    postalRegion: $("postal-region")?.value.trim() || "",
+    postalPostcode: $("postal-postcode")?.value.trim() || "",
+    postalSuburb: $("postal-suburb")?.value.trim() || "",
+    postalStreet: $("postal-street")?.value.trim() || ""
   };
   let error = "", spoken = "";
   if(!personal.fullName){ error = "Please enter your full name."; spoken = "Please enter your full name before we continue."; }
@@ -743,8 +749,7 @@ $("calculate-button").addEventListener("click", () => {
   else if(!form.weightKg || form.weightKg < 30 || form.weightKg > 400){ error = "Please enter a valid weight."; spoken = "Please check your weight before we continue."; }
   else if(!form.goal){ error = "Please choose a goal."; spoken = "Please choose whether you want to lose, maintain, or gain weight."; }
   else if(!form.activity){ error = "Please choose your daily activity."; spoken = "Please choose the daily activity level that suits you best."; }
-  else if(form.fasting === "custom" && !form.fastingDays.length){ error = "Select at least one custom fasting day."; spoken = "Please select at least one custom fasting day."; }
-  else if(form.fasting === "custom" && form.fastingEnergyKj <= 0){ error = "Enter a fasting-day energy target."; spoken = "Please enter your fasting day energy target."; }
+  // Flexible fasting tools do not require permanent days or a fixed energy target during setup.
   if(error) return friendlyError("health-error", error, spoken);
 
   const preview = calculateRecommendationSet({
@@ -788,7 +793,6 @@ function renderRecommendations(){
     ["BMI", r.bmi, "Whole-number screening estimate"],
     ["Healthy weight range", `${r.healthyLow}–${r.healthyHigh} kg`, "Based on BMI 18.5–24.9"],
     ["Recommended goal", `${formatWeight(r.recommendedGoalWeight)} kg`, "Guidance, not a compulsory target"],
-    ["Your selected goal", `${formatWeight(data.health.selectedGoalWeight || r.selectedGoalWeight)} kg`, "You can change this below"],
     ["Daily energy", energyDisplay(r.energyKj), `Based on ${formatWeight(r.basedOnWeightKg)} kg`],
     ["Daily protein", `${roundWhole(r.protein)} g`, "Rounded starting estimate"],
     ["Daily fat", `${roundWhole(r.fat)} g`, "Rounded starting estimate"],
@@ -797,6 +801,13 @@ function renderRecommendations(){
   $("recommendation-grid").innerHTML = items.map(item =>
     `<div class="recommendation"><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong><small>${escapeHtml(item[2])}</small></div>`
   ).join("");
+  if($("micronutrient-grid")){
+    const age = ageFromDob(data.personal.dob);
+    const waterMl = roundWhole(Math.max(1800, data.health.currentWeightKg * 30));
+    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Water", `${waterMl.toLocaleString()} mL`, "Base estimate; activity, heat and medical restrictions may change it"],["Sodium limit", "2,000 mg"],["Added sugar limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
+    $("micronutrient-grid").innerHTML = micros.map(x=>`<div class="recommendation"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]||"General daily reference"}</small></div>`).join("");
+    data.recommendations.waterMl=waterMl;
+  }
   $("recommended-goal-display").textContent = `${formatWeight(r.recommendedGoalWeight)} kg`;
   $("review-selected-goal").value = formatWeight(data.health.selectedGoalWeight || r.selectedGoalWeight);
   $("manual-energy-unit").textContent = data.personal.energyUnit;

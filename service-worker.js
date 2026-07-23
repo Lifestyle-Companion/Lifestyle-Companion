@@ -1,9 +1,9 @@
-const CACHE_NAME = "healthy-eating-alpha-0-3";
+const CACHE_NAME = "healthy-eating-alpha-0-4";
 const APP_FILES = [
   "./",
   "./index.html",
   "./styles.css",
-  "./app.js",
+  "./app.js","alpha04.js",
   "./manifest.webmanifest"
 ];
 

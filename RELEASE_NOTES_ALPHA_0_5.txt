@@ -1,0 +1,37 @@
+HEALTHY EATING — FOUNDER TRIAL ALPHA 0.5
+FUNCTIONAL FOOD, PLANNING AND PROGRESS TRIAL
+
+NEW
+- Functional Food Diary with Breakfast, Smoko, Lunch, Afternoon Tea, Dinner, Supper and Other.
+- Planned food remains separate until marked Eaten.
+- Date-specific flexible fasting target.
+- Australian-first sample food library and exact-match search ranking.
+- Verified/estimated/user-created source labels and Not Available for missing nutrients.
+- Labelled Save Food control, Saved Foods, Custom Foods and reusable Recipes.
+- Saved Meals created from diary meals; historical diary entries remain independent.
+- Voice/Text review flow; nothing is automatically logged.
+- Scan capture-and-review workflow; nothing is automatically logged.
+- Meal Planner with adjustable minimum Health Score and plain-English explanations.
+- Visible Edit, Copy and Delete controls with confirmations and Undo.
+- Automatic daily nutrition totals from the diary.
+- Water, steps and activity integration.
+- Recorded-day progress averages that do not treat missing days as zero intake.
+- Printable report preview, Print/Save as PDF and downloadable trial data.
+- No public groups, leaderboards, flames, game badges or competitive streaks.
+
+IMPROVED
+- Alpha 0.4 profile data migrates into Alpha 0.5 on the same site/device.
+- Main confirmations remain visible longer.
+- Important actions use words rather than unexplained icons.
+- Australian spelling and terminology are prioritised.
+- Detailed decimal nutrients are preserved where rounding to zero would be misleading.
+- Uniform Title Case is used on major headings.
+
+NOT YET CONNECTED
+- Production Australian food database.
+- Live barcode lookup and automatic food/photo recognition.
+- Nutrition-label OCR.
+- Secure accounts and cross-device sync.
+- Live family invitations and shared cloud data.
+- Apple Health, Health Connect, watches and smart scales.
+- Scheduled push notifications.

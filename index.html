@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating">
-  <title>Healthy Eating — Founder Trial Alpha 0.4</title>
+  <title>Healthy Eating — Founder Trial Alpha 0.5</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.4</div>
+      <div class="badge">Founder Trial · Alpha 0.5</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating</h1>
       <p class="lead">Welcome. Set up Healthy Eating your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -39,7 +39,7 @@
   <section id="language" class="screen content-screen">
     <header class="topbar">
       <button id="language-back" class="back" data-go="welcome">← Back</button>
-      <div class="grow"><h2>Choose your language</h2><p>Step 1 of 8 · Language and regional format</p></div>
+      <div class="grow"><h2>Choose Your Language</h2><p>Step 1 of 8 · Language and regional format</p></div>
       <div class="step-pill">Language</div>
     </header>
     <main class="page narrow">
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.4 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.5 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -59,7 +59,7 @@
   </section>
 
   <section id="register" class="screen content-screen" data-speech="Please enter the email address you would like to use. I will check that it looks valid before we continue.">
-    <header class="topbar"><button class="back" data-go="language">← Back</button><div><h2>Create your account</h2><p>Step 2 of 8 · Email address</p></div></header>
+    <header class="topbar"><button class="back" data-go="language">← Back</button><div><h2>Create Your Account</h2><p>Step 2 of 8 · Email address</p></div></header>
     <main class="page narrow">
       <aside class="guide-note"><span>🤝</span><p>Let’s begin with an email address you can access.</p></aside>
       <div class="card">
@@ -71,7 +71,7 @@
   </section>
 
   <section id="verify" class="screen content-screen" data-speech="A six digit verification code has been prepared. Enter the code shown in the prototype email preview.">
-    <header class="topbar"><button class="back" data-go="register">← Back</button><div><h2>Verify your email</h2><p>Step 3 of 8 · Six-digit code</p></div></header>
+    <header class="topbar"><button class="back" data-go="register">← Back</button><div><h2>Verify Your Email</h2><p>Step 3 of 8 · Six-digit code</p></div></header>
     <main class="page narrow">
       <aside class="guide-note speakable"><span class="guide-avatar">📧</span><p id="verify-message">A six-digit verification code has been prepared.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="prototype-email"><div><strong>Prototype email preview</strong><small>Real delivery will be connected in a later secure build.</small></div><div class="code-display" id="preview-code">000 000</div></div>
@@ -85,7 +85,7 @@
   </section>
 
   <section id="password" class="screen content-screen" data-speech="Choose a password with at least eight characters, including a letter and a number. Enter it twice so I can make sure they match.">
-    <header class="topbar"><button class="back" data-go="verify">← Back</button><div><h2>Create your password</h2><p>Step 4 of 8 · Account security</p></div></header>
+    <header class="topbar"><button class="back" data-go="verify">← Back</button><div><h2>Create Your Password</h2><p>Step 4 of 8 · Account security</p></div></header>
     <main class="page narrow">
       <aside class="guide-note speakable"><span class="guide-avatar">🔐</span><p>Use at least eight characters, including a letter and a number.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
@@ -101,7 +101,7 @@
   <section id="companion" class="screen content-screen" data-speech="You can use Healthy Eating with a Companion, or without one. Choose the experience that suits you.">
     <header class="topbar sticky">
       <button id="companion-back" class="back" data-go="password">← Back</button>
-      <div class="grow"><h2>Companion and appearance</h2><p>Step 5 of 8 · Make the app yours</p></div>
+      <div class="grow"><h2>Companion and Appearance</h2><p>Step 5 of 8 · Make the app yours</p></div>
       <div class="step-pill">Choice</div>
     </header>
     <main class="page">
@@ -307,16 +307,16 @@
   <section id="recommendations" class="screen content-screen" data-speech="I have prepared a starting plan for you. Review the recommended goal and choose the goal weight that suits you.">
     <header class="topbar sticky">
       <button class="back" data-go="health">← Back</button>
-      <div class="grow"><h2>Your recommendations</h2><p>Step 8 of 8 · Review your plan</p></div>
+      <div class="grow"><h2>Your Recommendations</h2><p>Step 8 of 8 · Review your plan</p></div>
       <div class="step-pill">Review</div>
     </header>
     <main class="page">
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>Calculated figures are shown as clean whole numbers. Weight measurements may retain one decimal place.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div id="recommendation-grid" class="recommendation-grid"></div>
-      <div class="card"><h3>Detailed nutrition goals</h3><div id="micronutrient-grid" class="recommendation-grid"></div><p class="fine">These general adult estimates are for trial display only. Medical restrictions and clinician-set targets always take priority.</p></div>
+      <div class="card"><h3>Detailed Nutrition Goals</h3><div id="micronutrient-grid" class="recommendation-grid"></div><p class="fine">These general adult estimates are for trial display only. Medical restrictions and clinician-set targets always take priority.</p></div>
 
       <div class="card">
-        <h3>Your goal plan</h3>
+        <h3>Your Goal Plan</h3>
         <p class="fine">The recommended goal is guidance only. Choose your own current goal and optionally plan future stages.</p>
         <div class="goal-summary-row">
           <div><span>Recommended goal</span><strong id="recommended-goal-display">—</strong></div>
@@ -344,7 +344,7 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header">
-      <div><div class="badge">Healthy Eating · Alpha 0.4</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating · Alpha 0.5</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
       <button id="reset-trial" class="small-button">Reset trial</button>
     </header>
     <main class="home-main">
@@ -353,6 +353,20 @@
         <div><strong id="message-name">Companion</strong><p id="message-text">Your Healthy Eating home is ready.</p></div>
         <button id="speak-home" class="speak-note companion-only" aria-label="Speak message">🔊</button>
       </div>
+
+      <section class="today-board" aria-label="Today’s progress">
+        <div class="today-board-head">
+          <div><span class="eyebrow">Today</span><h2 id="a05-home-date">Daily Plan</h2><p id="a05-home-context">Your food, water, activity and planned meals appear here.</p></div>
+          <button class="secondary" data-open-feature="food-diary">Open Today’s Diary</button>
+        </div>
+        <div id="a05-home-summary" class="progress-grid compact-progress"></div>
+        <div class="quick-action-row">
+          <button data-open-feature="quick-log" class="primary">🎙️ Voice or Text Log</button>
+          <button data-open-feature="food-library" class="secondary">🥕 Find a Food</button>
+          <button data-open-feature="meal-planner" class="secondary">🗓️ Plan a Meal</button>
+          <button data-open-feature="scan-centre" class="secondary">📷 Scan Centre</button>
+        </div>
+      </section>
 
       <div class="circle">
         <div class="orbit"></div>
@@ -370,27 +384,166 @@
         <small>Tap for the next joke, quote, tip or food fact</small>
       </button>
       <div class="feature-launch-grid">
-        <button data-open-feature="daily-progress">📊 <strong>Daily Live Progress</strong><small>Energy, nutrients, water and steps</small></button>
-        <button data-open-feature="exercise-log">🏃 <strong>Exercise & Activity</strong><small>Log extra activity and calorie credit</small></button>
-        <button data-open-feature="progress-history">📈 <strong>Progress History</strong><small>Weekly to all-time views</small></button>
-        <button data-open-feature="shopping-list">🛒 <strong>Grocery Shopping List</strong><small>Manual, recipe and family-ready list</small></button>
-        <button data-open-feature="food-preferences">🥗 <strong>Food Preferences</strong><small>Love, like, dislike and conditional foods</small></button>
-        <button data-open-feature="family-connections">👨‍👩‍👧‍👦 <strong>Family & Connections</strong><small>Sharing and future device links</small></button>
+        <button data-open-feature="food-diary">🍽️ <strong>Food Diary & Day Plan</strong><small>Plan meals, log food and copy entries safely</small></button>
+        <button data-open-feature="food-library">🥕 <strong>Australian Food Library</strong><small>Verified samples, custom foods, saved foods and recipes</small></button>
+        <button data-open-feature="meal-planner">🗓️ <strong>Meal Planner</strong><small>Suggestions matched to goals, preferences and health score</small></button>
+        <button data-open-feature="daily-progress">📊 <strong>Daily Live Progress</strong><small>Automatic energy and nutrient totals, water and steps</small></button>
+        <button data-open-feature="exercise-log">🏃 <strong>Exercise & Activity</strong><small>Log anything above your usual day and choose calorie credit</small></button>
+        <button data-open-feature="progress-history">📈 <strong>Progress History</strong><small>Weekly, monthly and longer-term trends without game badges</small></button>
+        <button data-open-feature="shopping-list">🛒 <strong>Grocery Shopping List</strong><small>Manual entries and ingredients from planned meals</small></button>
+        <button data-open-feature="printable-report">🖨️ <strong>Printable Report</strong><small>Preview, print or save a PDF through your browser</small></button>
+        <button data-open-feature="family-connections">👨‍👩‍👧‍👦 <strong>Household & Connections</strong><small>Private sharing preferences and future device links</small></button>
       </div>
     </main>
   </section>
 
-  <section id="daily-progress" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Daily Live Progress</h2><p>Today at a glance</p></div></header><main class="page"><div class="card"><div id="daily-progress-grid" class="progress-grid"></div></div><div class="card"><h3>Update today</h3><div class="form-grid"><label>Energy eaten (Cal)<input id="today-cal" type="number" min="0"></label><label>Water (mL)<input id="today-water" type="number" min="0"></label><label>Protein (g)<input id="today-protein" type="number" min="0"></label><label>Fat (g)<input id="today-fat" type="number" min="0"></label><label>Carbohydrate (g)<input id="today-carbs" type="number" min="0"></label><label>Fibre (g)<input id="today-fibre" type="number" min="0"></label><label>Sugar (g)<input id="today-sugar" type="number" min="0"></label><label>Sodium (mg)<input id="today-sodium" type="number" min="0"></label><label>Steps<input id="today-steps" type="number" min="0"></label></div><button id="save-daily-progress" class="primary wide">Update live progress</button></div></main></section>
+  <section id="food-diary" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Food Diary & Day Plan</h2><p>Plan first, then record what actually happened.</p></div><button class="help-button" data-help="food-diary">Help With This Screen</button></header>
+    <main class="page">
+      <div class="card">
+        <div class="date-toolbar"><button data-diary-shift="-1">← Previous</button><label>Date<input id="diary-date" type="date"></label><button id="diary-today">Today</button><button data-diary-shift="1">Next →</button></div>
+        <div class="day-settings-grid">
+          <label>Day Type<select id="day-type"><option value="normal">Normal Day</option><option value="fasting">Flexible Fasting Day</option></select></label>
+          <label>Daily Energy Target (Cal)<input id="day-cal-target" type="number" min="300" max="10000" step="1"></label>
+          <button id="save-day-settings" class="secondary">Save Day Settings</button>
+        </div>
+        <p id="day-settings-note" class="fine"></p>
+        <div id="diary-day-summary" class="progress-grid compact-progress"></div>
+      </div>
+      <div class="card quick-log-card">
+        <h3>Quick Add</h3>
+        <div class="quick-action-row">
+          <button data-open-feature="food-library" class="primary">Find a Food</button>
+          <button data-open-feature="quick-log" class="secondary">Voice or Text Log</button>
+          <button data-open-feature="scan-centre" class="secondary">Scan & Review</button>
+          <button data-open-feature="meal-planner" class="secondary">Use Meal Planner</button>
+        </div>
+      </div>
+      <div id="diary-meals"></div>
+    </main>
+  </section>
 
-  <section id="exercise-log" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Exercise & Extra Activity</h2><p>Anything above your usual day</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Activity<input id="exercise-name" placeholder="Mowing, gym, brisk walk, heavy work..."></label><label>Duration (minutes)<input id="exercise-minutes" type="number" min="1"></label><label>Intensity<select id="exercise-intensity"><option>Light</option><option selected>Moderate</option><option>Vigorous</option></select></label><label>Estimated calories burned<input id="exercise-calories" type="number" min="0"></label><label>Credit to today’s food allowance<select id="exercise-credit-choice"><option value="0">None</option><option value="50">50%</option><option value="100">All</option><option value="custom">Custom</option></select></label><label>Custom credit (Cal)<input id="exercise-custom-credit" type="number" min="0"></label><label class="full">Notes<textarea id="exercise-notes" rows="2"></textarea></label></div><button id="add-exercise" class="primary wide">Add activity</button></div><div class="card"><h3>Activity history</h3><div id="exercise-history"></div></div></main></section>
+  <section id="food-library" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Australian Food Library</h2><p>Relevant local matches first, with transparent serving sizes and data sources.</p></div><button class="help-button" data-help="food-library">Help With This Screen</button></header>
+    <main class="page">
+      <div class="card">
+        <div class="food-search-row"><label class="grow">Search Foods<input id="food-search" type="search" placeholder="Try Weet-Bix, light milk, rissole or banana"></label><button id="clear-food-search" class="secondary">Clear</button></div>
+        <div class="library-tabs" role="tablist">
+          <button class="active" data-library-tab="all">Australian Foods</button><button data-library-tab="saved">Saved Foods</button><button data-library-tab="custom">My Foods</button><button data-library-tab="recipes">Recipes</button><button data-library-tab="meals">Saved Meals</button>
+        </div>
+        <div class="quick-action-row"><button data-open-feature="custom-food" class="secondary">＋ Create Custom Food</button><button data-open-feature="recipe-builder" class="secondary">＋ Create Recipe</button><button data-open-feature="scan-centre" class="secondary">📷 Scan & Review</button></div>
+      </div>
+      <div id="food-results"></div>
+    </main>
+  </section>
 
-  <section id="progress-history" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Progress History</h2><p>Weight, energy and activity trends</p></div></header><main class="page"><div class="card"><div class="segmented history-period"><button data-period="7">Weekly</button><button data-period="14">Fortnightly</button><button data-period="30" class="active">Monthly</button><button data-period="90">3 months</button><button data-period="180">6 months</button><button data-period="365">Yearly</button><button data-period="all">All time</button></div><div id="history-summary" class="status-box"></div><div id="history-bars" class="history-bars"></div></div></main></section>
+  <section id="food-entry-editor" class="screen content-screen">
+    <header class="topbar sticky"><button id="entry-editor-back" class="back">← Cancel</button><div class="grow"><h2 id="entry-editor-title">Review Food Entry</h2><p>Nothing is added until you confirm it.</p></div></header>
+    <main class="page narrow">
+      <div id="entry-source-warning" class="status-box"></div>
+      <div class="card">
+        <div class="form-grid">
+          <label>Date<input id="entry-date" type="date"></label>
+          <label>Meal<select id="entry-meal"><option>Breakfast</option><option>Morning Smoko</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Supper</option><option>Other</option></select></label>
+          <label>Status<select id="entry-status"><option value="eaten">Eaten / Drunk</option><option value="planned">Planned</option></select></label>
+          <label>Amount<input id="entry-amount" type="number" min="0.01" step="0.1"></label>
+          <label>Unit<select id="entry-unit"></select></label>
+          <label>Time<input id="entry-time" type="time"></label>
+          <label class="full">Notes<textarea id="entry-notes" rows="2" placeholder="Optional preparation or context note"></textarea></label>
+        </div>
+        <div id="entry-nutrition-preview" class="nutrition-preview"></div>
+        <div class="quick-action-row"><button id="save-food-entry" class="primary">Add to Diary</button><button id="save-food-entry-and-food" class="secondary">Add & Save Food</button></div>
+      </div>
+    </main>
+  </section>
 
-  <section id="shopping-list" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Grocery Shopping List</h2><p>For everyday supermarket groceries</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Item<input id="shopping-item" placeholder="Milk, bananas, wholemeal bread..."></label><label>Quantity or size<input id="shopping-quantity" placeholder="2 litres, 1 bunch..."></label><label>Category<select id="shopping-category"><option>Fruit & vegetables</option><option>Meat & seafood</option><option>Dairy & eggs</option><option>Bakery</option><option>Pantry</option><option>Frozen</option><option>Drinks</option><option>Other</option></select></label><label>Preferred brand or substitute<input id="shopping-brand"></label></div><button id="add-shopping-item" class="primary wide">Add grocery item</button></div><div class="card"><h3>My list</h3><div id="shopping-items"></div></div></main></section>
+  <section id="custom-food" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="food-library">← Back</button><div class="grow"><h2>Create Custom Food</h2><p>For a simple food with known nutrition. Use Recipes for mixed homemade foods.</p></div></header>
+    <main class="page narrow"><div class="card">
+      <div class="form-grid">
+        <label>Food Name *<input id="custom-food-name" placeholder="For example, Woolworths Light Milk"></label><label>Brand<input id="custom-food-brand"></label>
+        <label>Serving Amount *<input id="custom-serving-amount" type="number" min="0.1" step="0.1" value="100"></label><label>Serving Unit *<select id="custom-serving-unit"><option>g</option><option>mL</option><option>item</option><option>slice</option><option>biscuit</option><option>cup</option><option>serve</option></select></label>
+        <label>Calories (Cal) *<input id="custom-cal" type="number" min="0" step="0.1"></label><label>Protein (g)<input id="custom-protein" type="number" min="0" step="0.1"></label>
+        <label>Carbohydrate (g)<input id="custom-carbs" type="number" min="0" step="0.1"></label><label>Fat (g)<input id="custom-fat" type="number" min="0" step="0.1"></label>
+        <label>Saturated Fat (g)<input id="custom-sat-fat" type="number" min="0" step="0.1"></label><label>Fibre (g)<input id="custom-fibre" type="number" min="0" step="0.1"></label>
+        <label>Sugars (g)<input id="custom-sugar" type="number" min="0" step="0.1"></label><label>Sodium (mg)<input id="custom-sodium" type="number" min="0" step="1"></label>
+        <label class="full">Ingredients or Allergens<textarea id="custom-ingredients" rows="3" placeholder="Optional, but important for allergies"></textarea></label>
+      </div>
+      <p class="fine">Leave an unknown nutrient blank. Healthy Eating displays “Not Available” rather than pretending missing information is zero.</p>
+      <small id="custom-food-error" class="field-error"></small><button id="save-custom-food" class="primary wide">Save to My Foods</button>
+    </div></main>
+  </section>
+
+  <section id="recipe-builder" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="food-library">← Back</button><div class="grow"><h2>Create Recipe</h2><p>Build a batch once, then log each serving accurately.</p></div></header>
+    <main class="page">
+      <div class="card"><div class="form-grid"><label>Recipe Name *<input id="recipe-name" placeholder="For example, Homemade Beef Rissoles"></label><label>Number of Servings *<input id="recipe-servings" type="number" min="1" step="1" value="4"></label><label class="full">Preparation Notes<textarea id="recipe-notes" rows="2"></textarea></label></div></div>
+      <div class="card"><h3>Add Ingredients</h3><div class="form-grid"><label>Food<select id="recipe-food-select"></select></label><label>Amount<input id="recipe-ingredient-amount" type="number" min="0.01" step="0.1" value="1"></label><label>Unit<select id="recipe-ingredient-unit"></select></label></div><button id="add-recipe-ingredient" class="secondary">Add Ingredient</button><div id="recipe-ingredient-list"></div></div>
+      <div class="card"><h3>Recipe Nutrition</h3><div id="recipe-nutrition-preview"></div><small id="recipe-error" class="field-error"></small><button id="save-recipe" class="primary wide">Save Recipe</button></div>
+    </main>
+  </section>
+
+  <section id="quick-log" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Voice or Text Log</h2><p>Review what was understood before adding anything.</p></div><button class="help-button" data-help="quick-log">Help With This Screen</button></header>
+    <main class="page narrow">
+      <div class="card"><label>Say or Type Your Food<textarea id="voice-transcript" rows="4" placeholder="Example: Add two Weet-Bix with 200 millilitres of light milk for breakfast"></textarea></label><div class="quick-action-row"><button id="start-voice-log" class="primary">🎙️ Start Listening</button><button id="stop-voice-log" class="secondary">Stop</button><button id="parse-voice-log" class="secondary">Review Request</button></div><p id="voice-status" class="fine">Voice recognition depends on your browser and device. You can always edit the text before review.</p></div>
+      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal<select id="voice-meal"><option>Breakfast</option><option>Morning Smoko</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Supper</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
+    </main>
+  </section>
+
+  <section id="scan-centre" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Scan & Review Centre</h2><p>Capture first, review second, add only after confirmation.</p></div><button class="help-button" data-help="scan-centre">Help With This Screen</button></header>
+    <main class="page">
+      <div class="card"><div class="scan-mode-grid"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Label</button></div><label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label><div id="scan-preview" class="scan-preview empty-state">No image selected.</div><p id="scan-status" class="fine">Automatic AI recognition and live product lookup require secure online services. Alpha 0.5 provides the safe capture-and-review workflow without silently logging anything.</p></div>
+      <div id="scan-review-card" class="card hidden"><h3>Review Captured Item</h3><label>Choose the matching food from the local trial library<select id="scan-food-select"></select></label><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review Quantity Before Adding</button></div>
+    </main>
+  </section>
+
+  <section id="meal-planner" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Meal Planner</h2><p>Helpful suggestions—not rules—matched to your day.</p></div><button class="help-button" data-help="meal-planner">Help With This Screen</button></header>
+    <main class="page">
+      <div class="card"><div class="form-grid"><label>Plan Date<input id="planner-date" type="date"></label><label>Meal<select id="planner-meal"><option>Breakfast</option><option>Morning Smoko</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Supper</option></select></label><label>Prefer a Health Score of<select id="planner-min-score"><option value="0">No Minimum</option><option value="6">6/10 or Higher</option><option value="7" selected>7/10 or Higher</option><option value="8">8/10 or Higher</option></select></label><label>Approximate Meal Energy<select id="planner-energy"><option value="300">Around 300 Cal</option><option value="450" selected>Around 450 Cal</option><option value="600">Around 600 Cal</option><option value="800">Around 800 Cal</option></select></label></div><button id="generate-meal-suggestions" class="primary wide">Show Suitable Suggestions</button></div>
+      <div id="meal-suggestions"></div>
+    </main>
+  </section>
+
+  <section id="printable-report" class="screen content-screen">
+    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Printable Progress Report</h2><p>Preview before printing or saving as PDF.</p></div></header>
+    <main class="page">
+      <div class="card report-controls"><div class="form-grid"><label>From<input id="report-from" type="date"></label><label>To<input id="report-to" type="date"></label></div><div class="choice-grid"><label><input id="report-food" type="checkbox" checked> Food & Nutrition</label><label><input id="report-weight" type="checkbox" checked> Weight</label><label><input id="report-activity" type="checkbox" checked> Activity</label><label><input id="report-water" type="checkbox" checked> Water & Steps</label></div><div class="quick-action-row"><button id="preview-report" class="primary">Preview Report</button><button id="print-report" class="secondary">Print / Save as PDF</button><button id="download-data" class="secondary">Download My Trial Data</button></div></div>
+      <article id="report-preview" class="print-report card"><p class="empty-state">Choose a date range and select Preview Report.</p></article>
+    </main>
+  </section>
+
+  <div id="a05-modal" class="a05-modal hidden" role="dialog" aria-modal="true"><div class="a05-modal-card"><h3 id="a05-modal-title">Confirm</h3><p id="a05-modal-copy"></p><div id="a05-modal-extra"></div><div class="quick-action-row"><button id="a05-modal-cancel" class="secondary">Cancel</button><button id="a05-modal-confirm" class="danger-button">Confirm</button></div></div></div>
+  <div id="a05-action-toast" class="a05-action-toast" role="status" aria-live="polite"><span id="a05-toast-copy"></span><button id="a05-toast-action">Undo</button></div>
+
+  <section id="daily-progress" class="screen content-screen">
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Daily Live Progress</h2><p>Food totals update automatically; add water and steps manually.</p></div><button class="help-button" data-help="daily-progress">Help With This Screen</button></header>
+    <main class="page">
+      <div class="card"><div class="date-toolbar"><button data-day-shift="-1">← Previous</button><label>Date<input id="progress-date" type="date"></label><button data-day-today>Today</button><button data-day-shift="1">Next →</button></div><div id="daily-progress-grid" class="progress-grid"></div></div>
+      <div class="card"><h3>Water, Steps & Notes</h3><div class="form-grid"><label>Water (mL)<input id="today-water" type="number" min="0" step="50"></label><label>Steps<input id="today-steps" type="number" min="0" step="100"></label><label class="full">Daily note<textarea id="today-note" rows="3" placeholder="Optional note about today"></textarea></label></div><button id="save-daily-progress" class="primary wide">Save Today’s Update</button></div>
+      <div id="daily-progress-explanation" class="card"></div>
+    </main>
+  </section>
+
+  <section id="exercise-log" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Exercise & Extra Activity</h2><p>Anything above your usual day</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Activity<input id="exercise-name" placeholder="Mowing, gym, brisk walk, heavy work..."></label><label>Duration (minutes)<input id="exercise-minutes" type="number" min="1"></label><label>Intensity<select id="exercise-intensity"><option>Light</option><option selected>Moderate</option><option>Vigorous</option></select></label><label>Estimated calories burned<input id="exercise-calories" type="number" min="0"></label><label>Credit to today’s food allowance<select id="exercise-credit-choice"><option value="0">None</option><option value="50">50%</option><option value="100">All</option><option value="custom">Custom</option></select></label><label>Custom credit (Cal)<input id="exercise-custom-credit" type="number" min="0"></label><label class="full">Notes<textarea id="exercise-notes" rows="2"></textarea></label></div><button id="add-exercise" class="primary wide">Add activity</button></div><div class="card"><h3>Activity History</h3><div id="exercise-history"></div></div></main></section>
+
+  <section id="progress-history" class="screen content-screen">
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Progress History</h2><p>Weight, food, water and activity trends—without badges or game-style streaks.</p></div><button class="help-button" data-help="progress-history">Help With This Screen</button></header>
+    <main class="page">
+      <div class="card"><div class="segmented history-period"><button data-period="7">Weekly</button><button data-period="14">Fortnightly</button><button data-period="30" class="active">Monthly</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">Yearly</button><button data-period="all">All Time</button></div><div id="history-summary" class="status-box"></div></div>
+      <div class="card"><h3>Weight Trend</h3><div id="history-bars" class="history-bars"></div></div>
+      <div class="card"><h3>Recorded-Day Nutrition</h3><div id="nutrition-history"></div></div>
+      <div class="card"><h3>Activity & Water</h3><div id="activity-history-summary"></div></div>
+    </main>
+  </section>
+
+  <section id="shopping-list" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Grocery Shopping List</h2><p>For everyday supermarket groceries</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Item<input id="shopping-item" placeholder="Milk, bananas, wholemeal bread..."></label><label>Quantity or size<input id="shopping-quantity" placeholder="2 litres, 1 bunch..."></label><label>Category<select id="shopping-category"><option>Fruit & vegetables</option><option>Meat & seafood</option><option>Dairy & eggs</option><option>Bakery</option><option>Pantry</option><option>Frozen</option><option>Drinks</option><option>Other</option></select></label><label>Preferred brand or substitute<input id="shopping-brand"></label></div><button id="add-shopping-item" class="primary wide">Add grocery item</button></div><div class="card"><h3>My List</h3><div id="shopping-items"></div></div></main></section>
 
   <section id="food-preferences" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Food Preferences</h2><p>Meal-planning rules and context</p></div></header><main class="page"><div class="card"><div id="food-preference-summary"></div><button id="edit-food-profile" class="primary wide">Edit in Health Profile</button></div></main></section>
 
-  <section id="family-connections" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Family & Connections</h2><p>Sharing, devices and future integrations</p></div></header><main class="page"><div class="card"><h3>Family sharing</h3><label class="toggle"><input id="family-sharing-enabled" type="checkbox"><span>Enable a household sharing group</span></label><div class="form-grid"><label>Household name<input id="household-name" placeholder="For example, West family"></label><label>Invite family member by email<input id="family-email" type="email"></label></div><button id="save-family" class="primary">Save family sharing preferences</button><p class="fine">This founder build stores sharing preferences locally. Secure invitations and private cloud sharing will be connected later.</p></div><div class="card"><h3>Connections readiness</h3><div id="connections-list" class="connection-list"></div><p class="fine">These switches record the user’s preferred future connections. Actual data exchange requires each provider’s secure authorisation service.</p></div></main></section>
+  <section id="family-connections" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Family & Connections</h2><p>Sharing, devices and future integrations</p></div></header><main class="page"><div class="card"><h3>Family Sharing</h3><label class="toggle"><input id="family-sharing-enabled" type="checkbox"><span>Enable a household sharing group</span></label><div class="form-grid"><label>Household name<input id="household-name" placeholder="For example, West family"></label><label>Invite family member by email<input id="family-email" type="email"></label></div><button id="save-family" class="primary">Save family sharing preferences</button><p class="fine">This founder build stores sharing preferences locally. Secure invitations and private cloud sharing will be connected later.</p></div><div class="card"><h3>Connections Readiness</h3><div id="connections-list" class="connection-list"></div><p class="fine">These switches record the user’s preferred future connections. Actual data exchange requires each provider’s secure authorisation service.</p></div></main></section>
 
   <section id="settings" class="screen content-screen">
     <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Settings</h2><p>View and change your trial information.</p></div></header>
@@ -438,6 +591,6 @@
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
 <script src="app.js"></script>
-<script src="alpha04.js"></script>
+<script src="alpha05.js"></script>
 </body>
 </html>

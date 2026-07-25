@@ -1,0 +1,66 @@
+FOUNDER TESTING CHECKLIST — ALPHA 0.5
+
+UPGRADE AND ONBOARDING
+[ ] Alpha 0.4 profile migrates when opened from the same hosted site.
+[ ] Clean onboarding still works with Companion on and off.
+[ ] Spoken instructions do not use the preferred name before it is entered.
+[ ] Postal address, goal selection, dietary restrictions and food preferences remain saved.
+[ ] Major headings use consistent capitals.
+
+HOME AND NAVIGATION
+[ ] Home shows today's Energy, Protein, Water and Steps.
+[ ] Diary, Australian Food Library and Progress History circle buttons open real screens.
+[ ] Contextual Help With This Screen works and can be spoken by the Companion.
+[ ] No game badges, flames, public groups or leaderboards appear.
+
+FOOD LIBRARY
+[ ] Searching Weet-Bix shows Sanitarium Weet-Bix first.
+[ ] Irrelevant partial matches do not appear above an exact match.
+[ ] Review & Add opens a confirmation screen before logging.
+[ ] Serving units such as biscuits, grams and mL recalculate accurately.
+[ ] Save Food and Saved Foods work independently from diary history.
+[ ] Missing nutrients display Not Available rather than zero.
+[ ] Custom Food saves into My Foods.
+
+DIARY AND PLANNING
+[ ] Entries can be Planned or Eaten.
+[ ] Mark Eaten updates the daily totals.
+[ ] Edit changes only that diary entry.
+[ ] Copy creates an independent entry on another date.
+[ ] Delete names the entry, asks for confirmation and provides Undo.
+[ ] Flexible Fasting Day changes only the selected date's target.
+[ ] Save This Meal creates a reusable Saved Meal.
+[ ] Editing a Saved Meal does not rewrite historical diary entries.
+
+RECIPES AND MEAL PLANNER
+[ ] Recipe Builder totals ingredients and divides by servings.
+[ ] Recipe appears in Recipes and can be logged by serving.
+[ ] Meal Planner filters by selected minimum Health Score.
+[ ] Allergy or never-eat warnings block unsuitable suggestions.
+[ ] Suggested meals are added as Planned, not Eaten.
+
+VOICE, TEXT AND SCAN REVIEW
+[ ] Voice permission is optional; typed text always works.
+[ ] “Two Weet-Bix with 200 mL light milk for breakfast” reviews as separate quantities.
+[ ] Transcript can be corrected before adding.
+[ ] No voice/text item changes daily totals before Confirm & Add.
+[ ] Camera/photo capture does not automatically log anything.
+[ ] Scan & Review opens the normal quantity review screen.
+
+PROGRESS, ACTIVITY AND SHOPPING
+[ ] Daily Live Progress derives food totals automatically.
+[ ] Water and steps save for the selected date.
+[ ] Activity credit changes the day's available energy only by the selected amount.
+[ ] Progress History averages only recorded food days.
+[ ] Grocery duplicates combine and deletion provides confirmation/Undo.
+
+REPORTS
+[ ] Report Preview respects the date range and selected sections.
+[ ] Print / Save as PDF opens the browser print dialogue.
+[ ] Download My Trial Data creates a JSON backup.
+
+DEVICES
+[ ] Test on Windows browser.
+[ ] Test through GitHub Pages on iPhone.
+[ ] Test through GitHub Pages on iPad.
+[ ] Test landscape and portrait layouts.

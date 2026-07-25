@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
-const KEY = "healthyEatingAlpha04";
-const LEGACY_KEYS = [];
-const VERSION = "0.4";
+const KEY = "healthyEatingAlpha05";
+const LEGACY_KEYS = ["healthyEatingAlpha04"];
+const VERSION = "0.5";
 
 const DEFAULTS = {
   version: VERSION,
@@ -90,7 +90,7 @@ function toast(message){
   element.textContent = message;
   element.classList.add("show");
   clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => element.classList.remove("show"), 2800);
+  window.toastTimer = setTimeout(() => element.classList.remove("show"), 5000);
 }
 function friendlyError(id, text, spoken, inputId){
   $(id).textContent = text;
@@ -156,7 +156,10 @@ function loadStoredData(){
   for(const key of LEGACY_KEYS){
     try{
       const legacy = JSON.parse(localStorage.getItem(key));
-      if(legacy) return migrateLegacy(legacy);
+      if(legacy){
+        if(key === "healthyEatingAlpha04") return mergeDeep(clone(DEFAULTS), legacy);
+        return migrateLegacy(legacy);
+      }
     }catch(error){}
   }
   return clone(DEFAULTS);
@@ -964,6 +967,7 @@ function renderHome(){
   $("home-companion-action").textContent = enabled ? "Tap for guidance" : "Tap for written guidance";
   $("home-companion").classList.toggle("no-companion", !enabled);
   $("message-text").textContent = homeMessage();
+  if(typeof window.renderAlpha05Home === "function") window.renderAlpha05Home();
 
   const index = Math.abs(Number(data.preferences.inspirationIndex) || 0) % INSPIRATION.length;
   const item = INSPIRATION[index];
@@ -991,17 +995,21 @@ document.querySelectorAll(".room").forEach(button => button.addEventListener("cl
   const room = button.dataset.room;
   if(room === "settings"){ show("settings"); return; }
   if(room === "weight"){ show("weight-checkin"); return; }
+  if(typeof window.openAlpha05Feature === "function"){
+    if(room === "diary"){ window.openAlpha05Feature("food-diary"); return; }
+    if(room === "database"){ window.openAlpha05Feature("food-library"); return; }
+    if(room === "graphs"){ window.openAlpha05Feature("progress-history"); return; }
+  }
   const map = {
-    diary:["Diary","🍽️","Meal planning and food logging will be added here."],
-    database:["Food Database","🥕","Australian foods and recipes will be added here."],
-    graphs:["Graphs","📈","Progress graphs will be added here."]
+    diary:["Food Diary & Day Plan","🍽️","Meal planning and food logging are loading."],
+    database:["Australian Food Library","🥕","The local founder-trial food library is loading."],
+    graphs:["Progress History","📈","Your progress history is loading."]
   };
   const [title,icon,copy] = map[room];
   $("placeholder-title").textContent = title;
   $("placeholder-icon").textContent = icon;
   $("placeholder-copy").textContent = copy;
   show("placeholder");
-  speakText(`${title} is coming soon. ${copy}`);
 }));
 
 function formatSavedAddress(){

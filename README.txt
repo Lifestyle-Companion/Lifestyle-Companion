@@ -1,25 +1,38 @@
-HEALTHY EATING — FOUNDER TRIAL ALPHA 0.4
+HEALTHY EATING — FOUNDER TRIAL ALPHA 0.5
 
-This upgrade implements Mal’s post-Alpha 0.3 testing requirements.
+PURPOSE
+Alpha 0.5 moves beyond onboarding into the first practical day-to-day Healthy Eating trial. It preserves the Alpha 0.4 profile, Companion, recommendations, weight, activity, shopping and settings foundation, while adding functional food planning and logging.
 
-HOW TO RUN
+HOW TO RUN LOCALLY
 1. Extract the complete ZIP folder.
 2. Open index.html in a current browser.
-3. For a clean onboarding test, use Reset trial or clear this site’s local storage.
+3. For the best iPhone/iPad trial, publish the files through GitHub Pages or another HTTPS web host.
+4. Alpha 0.4 profile information is migrated automatically when the browser uses the same site address and local storage.
+5. Use Reset Trial only when you deliberately want a clean onboarding test.
 
-IMPLEMENTED IN THIS TRIAL
-- Separate home and postal addresses, including a Same as home option.
-- Neutral setup speech until a preferred name has been entered.
-- User-selected goal weight moved to the recommendation screen.
-- Flexible fasting interest recorded in setup; day-by-day plans reserved for Meal Planner.
-- Allergies, intolerances, medical/cultural restrictions and eating patterns.
-- Love/like/dislike/never-eat foods plus conditional preparation notes.
-- Expanded macro, water and micronutrient recommendation display.
-- Daily live progress dashboard with coloured indicators.
-- Exercise and extra-activity logging with calorie-credit choices.
-- Historical period selector and simple weight history visualisation.
-- Functional grocery shopping list.
-- Family-sharing preferences and future connection readiness.
+NEW FUNCTIONAL AREAS
+- Food Diary & Day Plan with separate Planned and Eaten status.
+- Flexible fasting-day target set independently for each date.
+- Australian-first local food library with relevant search ranking.
+- Clear serving quantities, nutrition sources and missing-data wording.
+- Saved Foods using a labelled button rather than an unexplained icon.
+- Custom Foods for simple known products.
+- Recipe Builder for mixed homemade foods and batch servings.
+- Saved Meal templates created from diary meals.
+- Meal Planner with adjustable preferred Health Score.
+- Voice or Text Log with transcript review before confirmation.
+- Scan & Review Centre that never logs automatically.
+- Visible Edit, Copy and Delete actions, confirmation and Undo.
+- Automatic Daily Live Progress calculated from diary records.
+- Progress History that excludes unrecorded days from food averages.
+- Printable report preview, browser Print/Save as PDF and trial-data download.
 
-LIMITATIONS
-All data remains local to this browser. Address auto-completion, secure family invitations, device integrations, live weather adjustments and provider data exchange require later secure online services. Nutrition figures are prototype estimates, not medical advice.
+IMPORTANT LIMITATIONS
+- The Australian food library is a small founder-trial sample, not a production database.
+- Automatic meal-photo recognition, barcode product lookup, nutrition-label OCR, live address suggestions, cloud accounts, cross-device sync, household invitations and device integrations require secure online services and are not active in this static GitHub Pages trial.
+- Voice recognition depends on the browser/device speech service. Alpha 0.5 provides the safer transcript-review and confirmation workflow.
+- Health Scores are transparent trial guidance, not a medical diagnosis.
+- Nutrition values are founder-trial samples and should be checked against packaging or professional advice.
+
+DATA
+All trial data remains in this browser's local storage unless the user downloads the trial-data JSON file. Publishing the static files to GitHub Pages does not create a secure personal account or cloud database.

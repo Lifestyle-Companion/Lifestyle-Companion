@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Healthy Eating">
-  <title>Healthy Eating — Founder Trial Alpha 0.5</title>
+  <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,11 +14,11 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.5</div>
+      <div class="badge">Founder Trial · Alpha 0.6</div>
       <div class="logo">🥗</div>
-      <h1>Healthy Eating</h1>
-      <p class="lead">Welcome. Set up Healthy Eating your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
-      <label class="join-choice"><input id="join-check" type="checkbox"> <span>Yes, I would like to join the Healthy Eating founder trial.</span></label>
+      <h1>Healthy Eating Companion</h1>
+      <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
+      <label class="join-choice"><input id="join-check" type="checkbox"> <span>Yes, I would like to join the Healthy Eating Companion founder trial.</span></label>
       <div class="welcome-actions">
         <button id="join-button" class="primary" disabled>Begin setup</button>
         <button id="cancel-button" class="secondary">Cancel</button>
@@ -32,7 +32,7 @@
       <div class="logo">🌱</div>
       <h1>Goodbye</h1>
       <p class="lead">I’m sorry to see you leave. You’re welcome back anytime.</p>
-      <button data-go="welcome" class="primary">Return to Healthy Eating</button>
+      <button data-go="welcome" class="primary">Return to Healthy Eating Companion</button>
     </div>
   </section>
 
@@ -43,7 +43,7 @@
       <div class="step-pill">Language</div>
     </header>
     <main class="page narrow">
-      <aside class="guide-note"><span>🌏</span><p>Choose the language and regional format you want Healthy Eating to use.</p></aside>
+      <aside class="guide-note"><span>🌏</span><p>Choose the language and regional format you want Healthy Eating Companion to use.</p></aside>
       <div class="card">
         <div class="language-grid">
           <label class="selection-card"><input type="radio" name="language" value="en-AU" checked><span><strong>English (Australia)</strong><small>Australian spelling, addresses and phone formats</small></span></label>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.5 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -98,37 +98,34 @@
     </main>
   </section>
 
-  <section id="companion" class="screen content-screen" data-speech="You can use Healthy Eating with a Companion, or without one. Choose the experience that suits you.">
+  <section id="companion" class="screen content-screen" data-speech="Choose the Australian Companion who feels right for you. Each one has a fixed name, personality and support style.">
     <header class="topbar sticky">
       <button id="companion-back" class="back" data-go="password">← Back</button>
-      <div class="grow"><h2>Companion and Appearance</h2><p>Step 5 of 8 · Make the app yours</p></div>
-      <div class="step-pill">Choice</div>
+      <div class="grow"><h2>Choose Your Companion</h2><p>Step 5 of 8 · Australian character and appearance</p></div>
+      <div class="step-pill">Companion</div>
     </header>
     <main class="page">
-      <aside class="guide-note speakable"><span id="setup-avatar" class="guide-avatar">🐵</span><p id="companion-guide-copy">A Companion can explain, encourage and speak instructions. The complete app also works without one.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
+      <aside class="guide-note speakable"><span id="setup-avatar" class="guide-avatar">🐦</span><p id="companion-guide-copy">Choose a named Australian Companion with a support style that suits you. You can change it later.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
 
       <div class="card">
         <fieldset>
-          <legend>Would you like to use a Companion?</legend>
+          <legend>Would you like a Companion?</legend>
           <div class="choice-grid">
-            <label class="selection-card"><input type="radio" name="companion-choice" value="yes" checked><span><strong>Yes, use a Companion</strong><small>Choose its character, name and voice.</small></span></label>
-            <label class="selection-card"><input type="radio" name="companion-choice" value="no"><span><strong>No Companion for now</strong><small>Use the full app with written guidance only.</small></span></label>
+            <label class="selection-card"><input type="radio" name="companion-choice" value="yes" checked><span><strong>Yes, use a Companion</strong><small>Choose from 16 Australian characters.</small></span></label>
+            <label class="selection-card"><input type="radio" name="companion-choice" value="no"><span><strong>No Companion for now</strong><small>Use the complete app with written guidance only.</small></span></label>
           </div>
         </fieldset>
 
         <div id="companion-details">
+          <div class="section-heading"><div><h3>Meet the Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
+          <div id="character-grid" class="character-grid companion-roster"></div>
+          <div id="companion-preview" class="companion-preview" aria-live="polite"></div>
+          <p class="fine">The Alpha 0.6 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
-            <label>Companion name *<input id="companion-name" placeholder="For example, Hymie or Stanley"></label>
-            <label>Say the Companion’s name like this<input id="companion-pronunciation" placeholder="Phonetic spelling, if needed"></label>
-          </div>
-          <button id="preview-companion-name" class="secondary">🔊 Preview Companion name</button>
-          <div id="character-grid" class="character-grid"></div>
-          <div class="form-grid">
-            <label>Personality<select id="personality"><option value="calm">Calm and patient</option><option value="cheerful">Cheerful</option><option value="encouraging">Encouraging</option><option value="light-hearted">Light-hearted</option><option value="brief">Quiet and brief</option></select></label>
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
           </div>
-          <button id="preview-voice" class="secondary wide">🔊 Preview Companion introduction</button>
+          <button id="preview-voice" class="secondary wide">🔊 Hear this Companion’s introduction</button>
         </div>
 
         <fieldset>
@@ -143,61 +140,39 @@
         </fieldset>
 
         <small id="companion-error" class="field-error"></small>
-        <button id="companion-next" class="primary wide">Continue to Personal Details</button>
+        <button id="companion-next" class="primary wide">Continue to Your Name</button>
       </div>
     </main>
   </section>
 
-  <section id="personal" class="screen content-screen" data-speech="Now I would like to get to know you a little better. These details help personalise your Healthy Eating experience.">
+  <section id="personal" class="screen content-screen" data-speech="Tell me your given name and the name you prefer to be called. That is all the personal information needed at this stage.">
     <header class="topbar sticky">
       <button id="personal-back" class="back" data-go="companion">← Back</button>
-      <div class="grow"><h2>Personal Details</h2><p>Step 6 of 8 · About you</p></div>
-      <div class="step-pill">Personal</div>
+      <div class="grow"><h2>Your Name</h2><p>Step 6 of 8 · Simple personal setup</p></div>
+      <div class="step-pill">You</div>
     </header>
-    <main class="page">
-      <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>Enter your preferred name so Healthy Eating knows what to call you.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
+    <main class="page narrow">
+      <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐦</span><p>Only your email, given name and preferred name are needed here. Address and phone details are not requested in this trial.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
-        <h3>Your name and preferences</h3>
         <div class="form-grid">
-          <label>Full name *<input id="full-name" autocomplete="name" placeholder="For example, Malcolm West"></label>
-          <label>Preferred name *<input id="preferred-name" placeholder="For example, Mal"></label>
-          <label class="full">Say my preferred name like this<input id="preferred-pronunciation" placeholder="Phonetic spelling, if needed"></label>
+          <label>Given name *<input id="full-name" autocomplete="given-name" placeholder="For example, Malcolm"></label>
+          <label>Preferred name<input id="preferred-name" placeholder="For example, Mal"><small class="field-help">Leave blank to use your given name.</small></label>
+          <label class="full">Say my preferred name like this<input id="preferred-pronunciation" placeholder="Optional phonetic spelling"></label>
         </div>
+        <input id="personal-email" type="hidden">
         <button id="preview-user-name" class="secondary">🔊 Preview my preferred name</button>
-        <div class="form-grid form-gap-top">
-          <label>Email address *<input id="personal-email" type="email" autocomplete="email"></label>
-          <label>Date of birth *<input id="dob" type="date"></label>
-          <label>Preferred energy unit<select id="energy-unit"><option value="kJ">Kilojoules (kJ)</option><option value="Cal">Calories (Cal)</option></select></label>
-        </div>
+        <p class="fine">Health details needed for the recommendation are asked on the next screen, with an explanation of why they are used.</p>
 
-        <hr>
-        <h3>Address</h3>
-        <p class="fine">Country-aware fields and formatting are included in this trial. Live address suggestions will require a secure online address service in a later build.</p>
-        <div class="form-grid">
-          <label>Country *<select id="country"><option value="Australia">Australia</option><option value="New Zealand">New Zealand</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Canada">Canada</option><option value="Other">Other</option></select></label>
-          <label><span id="region-label">State or territory</span><input id="region" list="region-options" autocomplete="address-level1" placeholder="Select or type"></label>
-          <datalist id="region-options"></datalist>
-          <label><span id="postcode-label">Postcode</span><input id="postcode" autocomplete="postal-code" inputmode="text" placeholder="0000"></label>
-          <label><span id="suburb-label">Suburb or town</span><input id="suburb" autocomplete="address-level2"></label>
-          <label class="full">Street address<input id="street-address" autocomplete="street-address" placeholder="House number and street"></label>
-        </div>
-        <div id="address-preview" class="format-preview"><strong>Formatted home address preview</strong><p>No address entered yet.</p></div>
-        <hr>
-        <h3>Postal address</h3>
-        <label class="toggle"><input id="postal-same" type="checkbox" checked><span>My postal address is the same as my home address</span></label>
-        <div id="postal-fields" class="form-grid hidden">
-          <label>Country<select id="postal-country"><option>Australia</option><option>New Zealand</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option></select></label>
-          <label>State, territory or region<input id="postal-region"></label>
-          <label>Postcode or postal code<input id="postal-postcode"></label>
-          <label>Suburb, town or city<input id="postal-suburb"></label>
-          <label class="full">Street or postal address<input id="postal-street" placeholder="For example, PO Box 123 or street address"></label>
-        </div>
-
-        <hr>
-        <h3>Phone numbers</h3>
-        <div class="form-grid">
-          <label>Mobile phone<input id="mobile" type="tel" autocomplete="tel" placeholder="0412 345 678"><small class="field-help">Formatted for the selected country when you leave the field.</small></label>
-          <label>Other phone<input id="phone" type="tel" placeholder="(07) 1234 5678"><small class="field-help">Optional</small></label>
+        <div id="founder-contact-fields" class="hidden" aria-hidden="true">
+          <select id="country"><option value="Australia">Australia</option><option value="New Zealand">New Zealand</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Canada">Canada</option><option value="Other">Other</option></select>
+          <input id="region"><datalist id="region-options"></datalist><span id="region-label"></span>
+          <input id="postcode"><span id="postcode-label"></span>
+          <input id="suburb"><span id="suburb-label"></span>
+          <input id="street-address">
+          <div id="address-preview"><p></p></div>
+          <input id="postal-same" type="checkbox" checked>
+          <div id="postal-fields"><select id="postal-country"><option>Australia</option></select><input id="postal-region"><input id="postal-postcode"><input id="postal-suburb"><input id="postal-street"></div>
+          <input id="mobile"><input id="phone">
         </div>
 
         <small id="personal-error" class="field-error"></small>
@@ -215,6 +190,11 @@
     <main class="page">
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>These details prepare a starting recommendation. You remain in control of your selected goal weight.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
+        <div class="form-grid">
+          <label>Date of birth *<input id="dob" type="date"><small class="field-help">Used to estimate resting energy needs.</small></label>
+          <label>Preferred energy unit<select id="energy-unit"><option value="kJ">Kilojoules (kJ)</option><option value="Cal">Calories (Cal)</option></select><small class="field-help">You can change this later.</small></label>
+        </div>
+        <hr>
         <label>Sex used for energy calculation *<select id="calculation-sex"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="manual">Prefer not to say — set energy manually</option></select></label>
 
         <fieldset>
@@ -240,7 +220,7 @@
           </div>
           <div id="goal-options" class="conditional hidden">
             <input id="selected-goal-weight" type="hidden" value="">
-            <p class="fine">Healthy Eating will calculate and show its recommendation first. You will choose your own goal weight on the next screen.</p>
+            <p class="fine">Healthy Eating Companion will calculate and show its recommendation first. You will choose your own goal weight on the next screen.</p>
           </div>
           <div id="loss-options" class="conditional hidden">
             <h4>Preferred rate of weight loss</h4>
@@ -313,6 +293,7 @@
     <main class="page">
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>Calculated figures are shown as clean whole numbers. Weight measurements may retain one decimal place.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div id="recommendation-grid" class="recommendation-grid"></div>
+      <div id="calculation-breakdown" class="card calculation-breakdown"></div>
       <div class="card"><h3>Detailed Nutrition Goals</h3><div id="micronutrient-grid" class="recommendation-grid"></div><p class="fine">These general adult estimates are for trial display only. Medical restrictions and clinician-set targets always take priority.</p></div>
 
       <div class="card">
@@ -344,13 +325,13 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header">
-      <div><div class="badge">Healthy Eating · Alpha 0.5</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
       <button id="reset-trial" class="small-button">Reset trial</button>
     </header>
     <main class="home-main">
       <div class="home-message">
         <span id="message-avatar">🐵</span>
-        <div><strong id="message-name">Companion</strong><p id="message-text">Your Healthy Eating home is ready.</p></div>
+        <div><strong id="message-name">Companion</strong><p id="message-text">Your Healthy Eating Companion home is ready.</p></div>
         <button id="speak-home" class="speak-note companion-only" aria-label="Speak message">🔊</button>
       </div>
 
@@ -375,7 +356,7 @@
         <button class="room r3" data-room="weight"><span>⚖️</span><b>Weight Check-in</b><small>Update progress</small></button>
         <button class="room r4" data-room="graphs"><span>📈</span><b>Graphs</b><small>Weight &amp; energy</small></button>
         <button class="room r5" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your choices</small></button>
-        <button id="home-companion" class="companion-centre"><span id="home-avatar">🐵</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small></button>
+        <button id="home-companion" class="companion-centre"><img id="home-avatar-image" class="home-avatar-image hidden" alt=""><span id="home-avatar">🐦</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small></button>
       </div>
 
       <button id="inspiration-card" class="inspiration-card">
@@ -409,6 +390,7 @@
         </div>
         <p id="day-settings-note" class="fine"></p>
         <div id="diary-day-summary" class="progress-grid compact-progress"></div>
+        <div id="diary-calculation-status" class="calculation-status" role="status"></div>
       </div>
       <div class="card quick-log-card">
         <h3>Quick Add</h3>
@@ -469,7 +451,7 @@
         <label>Sugars (g)<input id="custom-sugar" type="number" min="0" step="0.1"></label><label>Sodium (mg)<input id="custom-sodium" type="number" min="0" step="1"></label>
         <label class="full">Ingredients or Allergens<textarea id="custom-ingredients" rows="3" placeholder="Optional, but important for allergies"></textarea></label>
       </div>
-      <p class="fine">Leave an unknown nutrient blank. Healthy Eating displays “Not Available” rather than pretending missing information is zero.</p>
+      <p class="fine">Leave an unknown nutrient blank. Healthy Eating Companion displays “Not Available” rather than pretending missing information is zero.</p>
       <small id="custom-food-error" class="field-error"></small><button id="save-custom-food" class="primary wide">Save to My Foods</button>
     </div></main>
   </section>
@@ -494,7 +476,7 @@
   <section id="scan-centre" class="screen content-screen">
     <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Scan & Review Centre</h2><p>Capture first, review second, add only after confirmation.</p></div><button class="help-button" data-help="scan-centre">Help With This Screen</button></header>
     <main class="page">
-      <div class="card"><div class="scan-mode-grid"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Label</button></div><label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label><div id="scan-preview" class="scan-preview empty-state">No image selected.</div><p id="scan-status" class="fine">Automatic AI recognition and live product lookup require secure online services. Alpha 0.5 provides the safe capture-and-review workflow without silently logging anything.</p></div>
+      <div class="card"><div class="scan-mode-grid"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Label</button></div><label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label><div id="scan-preview" class="scan-preview empty-state">No image selected.</div><p id="scan-status" class="fine">Automatic AI recognition and live product lookup require secure online services. Alpha 0.6 provides the safe capture-and-review workflow without silently logging anything.</p></div>
       <div id="scan-review-card" class="card hidden"><h3>Review Captured Item</h3><label>Choose the matching food from the local trial library<select id="scan-food-select"></select></label><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review Quantity Before Adding</button></div>
     </main>
   </section>
@@ -585,12 +567,14 @@
 
   <section id="placeholder" class="screen content-screen">
     <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2 id="placeholder-title">Room</h2><p>Planned for a later build</p></div></header>
-    <main class="page narrow"><div class="card centre"><div id="placeholder-icon" class="large-icon">🚧</div><h3>Coming Soon</h3><p id="placeholder-copy">This room is visible so testers can understand the intended Healthy Eating home.</p><button class="primary" data-go="home">Return Home</button></div></main>
+    <main class="page narrow"><div class="card centre"><div id="placeholder-icon" class="large-icon">🚧</div><h3>Coming Soon</h3><p id="placeholder-copy">This room is visible so testers can understand the intended Healthy Eating Companion home.</p><button class="primary" data-go="home">Return Home</button></div></main>
   </section>
 
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
+<script src="config.js"></script>
+<script src="companions.js"></script>
 <script src="app.js"></script>
-<script src="alpha05.js"></script>
+<script src="alpha06.js"></script>
 </body>
 </html>

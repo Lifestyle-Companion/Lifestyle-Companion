@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" role="img" aria-labelledby="title desc">
+<title id="title">Barnaby the Bilby</title><desc id="desc">Prototype portrait badge for the Healthy Eating Companion founder trial.</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f2e6d4"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+<rect width="320" height="360" rx="36" fill="url(#g)"/>
+<circle cx="160" cy="142" r="104" fill="#fff" opacity=".88" stroke="#a4774f" stroke-width="8"/>
+<path d="M35 260 C85 225 235 225 285 260 L285 325 Q285 338 272 338 L48 338 Q35 338 35 325Z" fill="#a4774f" opacity=".95"/>
+<text x="160" y="180" text-anchor="middle" font-size="116" font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">🐰</text>
+<path d="M61 66 q25 -28 47 4 q-34 2 -47 25" fill="#a4774f" opacity=".65"/><path d="M259 66 q-25 -28 -47 4 q34 2 47 25" fill="#a4774f" opacity=".65"/>
+<text x="160" y="286" text-anchor="middle" fill="#fff" font-size="38" font-weight="700" font-family="Arial,sans-serif">Barnaby</text>
+<text x="160" y="318" text-anchor="middle" fill="#fff" font-size="19" font-family="Arial,sans-serif">the Bilby</text>
+</svg>

@@ -1,11 +1,29 @@
-const CACHE_NAME = "healthy-eating-alpha-0-5-v1";
+const CACHE_NAME = "healthy-eating-companion-alpha-0-6-v1";
 const APP_FILES = [
   "./",
   "./index.html",
   "./styles.css",
+  "./config.js",
+  "./companions.js",
   "./app.js",
-  "./alpha05.js",
-  "./manifest.webmanifest"
+  "./alpha06.js",
+  "./manifest.webmanifest",
+  "./assets/companions/koko-koala.svg",
+  "./assets/companions/skip-kangaroo.svg",
+  "./assets/companions/wally-wombat.svg",
+  "./assets/companions/ernie-echidna.svg",
+  "./assets/companions/rusty-dingo.svg",
+  "./assets/companions/barnaby-bilby.svg",
+  "./assets/companions/chuckles-kookaburra.svg",
+  "./assets/companions/gary-galah.svg",
+  "./assets/companions/percy-pelican.svg",
+  "./assets/companions/clancy-cassowary.svg",
+  "./assets/companions/rowdy-ringneck.svg",
+  "./assets/companions/salty-crocodile.svg",
+  "./assets/companions/spike-thorny-devil.svg",
+  "./assets/companions/anna-goanna.svg",
+  "./assets/companions/monty-python.svg",
+  "./assets/companions/shelly-turtle.svg"
 ];
 
 self.addEventListener("install", event => {

@@ -1,7 +1,9 @@
 const $ = id => document.getElementById(id);
-const KEY = "healthyEatingAlpha05";
-const LEGACY_KEYS = ["healthyEatingAlpha04"];
-const VERSION = "0.5";
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const KEY = APP.storageKey;
+const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
+const VERSION = APP.version;
+const COMPANIONS = window.HEC_COMPANIONS || [];
 
 const DEFAULTS = {
   version: VERSION,
@@ -11,7 +13,7 @@ const DEFAULTS = {
   completed: false,
   preferences: { language: "en-AU", theme: "garden", inspirationIndex: 0 },
   personal: {
-    fullName: "", preferredName: "", preferredPronunciation: "", email: "", dob: "",
+    givenName: "", fullName: "", preferredName: "", preferredPronunciation: "", email: "", dob: "",
     energyUnit: "kJ", country: "Australia", region: "", postcode: "", suburb: "",
     streetAddress: "", mobile: "", mobileInternational: "", phone: "", phoneInternational: ""
   },
@@ -23,8 +25,8 @@ const DEFAULTS = {
   },
   recommendations: {},
   companion: {
-    enabled: true, configured: false, character: "🐵", characterName: "Clever Chimp",
-    name: "", pronunciation: "", personality: "calm", voice: "", speechEnabled: true
+    enabled: true, configured: false, id: "percy-pelican", character: "🐦", characterName: "Percy the Pelican",
+    name: "Percy", customName: "", pronunciation: "", personality: "planner", voice: "", speechEnabled: true
   },
   heightUnit: "metric",
   weightUnit: "metric",
@@ -78,8 +80,8 @@ function displayName(){
   return (data.personal.preferredName || data.personal.fullName || "").trim().split(/\s+/)[0] || "";
 }
 function spokenUserName(){ return (data.personal.preferredPronunciation || displayName()).trim(); }
-function companionDisplayName(){ return data.companion.name || "Companion"; }
-function spokenCompanionName(){ return (data.companion.pronunciation || data.companion.name || "Companion").trim(); }
+function companionDisplayName(){ return data.companion.customName || data.companion.name || data.companion.characterName || "Companion"; }
+function spokenCompanionName(){ return (data.companion.pronunciation || data.companion.customName || data.companion.name || "Companion").trim(); }
 function personaliseSpeech(text){
   return String(text || "")
     .replaceAll("{name}", spokenUserName())
@@ -148,21 +150,46 @@ function migrateLegacy(legacy){
   migrated.weightUnit = legacy.weightUnit || "metric";
   return migrated;
 }
+function normaliseCompanionRecord(record){
+  const result = mergeDeep(clone(DEFAULTS.companion), record || {});
+  let selectedCompanion = COMPANIONS.find(item => item.id === result.id);
+  if(!selectedCompanion){
+    const oldName = String(result.name || result.characterName || "").toLowerCase();
+    selectedCompanion = COMPANIONS.find(item => oldName.includes(item.name.toLowerCase()) || oldName.includes(item.species.toLowerCase()));
+  }
+  selectedCompanion ||= COMPANIONS.find(item => item.id === "percy-pelican") || COMPANIONS[0];
+  if(selectedCompanion){
+    result.id = selectedCompanion.id;
+    result.name = selectedCompanion.name;
+    result.character = selectedCompanion.icon;
+    result.characterName = `${selectedCompanion.name} the ${selectedCompanion.species}`;
+    result.personality = selectedCompanion.personality;
+  }
+  return result;
+}
 function loadStoredData(){
   try{
     const current = JSON.parse(localStorage.getItem(KEY));
-    if(current) return mergeDeep(clone(DEFAULTS), current);
+    if(current){
+      const loaded = mergeDeep(clone(DEFAULTS), current);
+      loaded.companion = normaliseCompanionRecord(loaded.companion);
+      return loaded;
+    }
   }catch(error){}
   for(const key of LEGACY_KEYS){
     try{
       const legacy = JSON.parse(localStorage.getItem(key));
       if(legacy){
-        if(key === "healthyEatingAlpha04") return mergeDeep(clone(DEFAULTS), legacy);
-        return migrateLegacy(legacy);
+        const migrated = mergeDeep(clone(DEFAULTS), legacy);
+        migrated.version = VERSION;
+        migrated.companion = normaliseCompanionRecord(migrated.companion);
+        return migrated;
       }
     }catch(error){}
   }
-  return clone(DEFAULTS);
+  const fresh = clone(DEFAULTS);
+  fresh.companion = normaliseCompanionRecord(fresh.companion);
+  return fresh;
 }
 
 const THEME_COLOURS = {garden:"#2e6d4d",coast:"#17759b",outback:"#a64f2b",classic:"#385f84"};
@@ -187,7 +214,7 @@ function updateCompanionUI(){
   if($("companion-guide-copy")){
     $("companion-guide-copy").textContent = enabled
       ? "A Companion can explain, encourage and speak instructions. You can turn it off at any time."
-      : "Healthy Eating will use clear written instructions. You can turn the Companion on later in Settings.";
+      : "Healthy Eating Companion will use clear written instructions. You can turn the Companion on later in Settings.";
   }
   document.querySelectorAll(".companion-only").forEach(el => el.classList.toggle("hidden", !enabled));
   document.querySelectorAll(".live-avatar").forEach(el => el.textContent = enabled ? data.companion.character : "🧭");
@@ -234,8 +261,9 @@ function speakText(text, {force=false, allowWithoutCompanion=false} = {}){
   const chosen = voices.find(voice => voice.name === data.companion.voice);
   if(chosen) utterance.voice = chosen;
   utterance.lang = chosen?.lang || data.preferences.language || "en-AU";
-  utterance.rate = data.companion.personality === "brief" ? 1.08 : 0.96;
-  utterance.pitch = data.companion.personality === "cheerful" ? 1.08 : 1;
+  const voiceStyle = {calm:[0.92,1],encouraging:[1,1.03],steady:[0.94,.98],thoughtful:[0.9,1],loyal:[.98,1],curious:[1,1.04],"light-hearted":[1.02,1.07],social:[1.03,1.05],planner:[.95,1],confident:[.98,.97],energetic:[1.07,1.06],direct:[1,.95],protective:[.93,1],resourceful:[1,1.02],relaxed:[.9,.98],patient:[.88,1]}[data.companion.personality] || [.96,1];
+  utterance.rate = voiceStyle[0];
+  utterance.pitch = voiceStyle[1];
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
@@ -478,29 +506,47 @@ $("password-next").addEventListener("click", () => {
   show("companion", {speak:false});
 });
 
-const CHARACTERS = [
-  ["🐵","Clever Chimp"],["🐶","Friendly Puppy"],["🦉","Wise Owl"],["🐨","Gentle Koala"],
-  ["🦊","Bright Fox"],["🐧","Cheery Penguin"],["🦁","Brave Lion"],["🐼","Calm Panda"],
-  ["🐰","Kind Rabbit"],["🧑‍🍳","Food Guide"]
-];
+function selectedCompanionDefinition(){
+  return COMPANIONS.find(item => item.id === data.companion.id) || COMPANIONS.find(item => item.id === "percy-pelican") || COMPANIONS[0] || null;
+}
+function applyCompanionDefinition(definition){
+  if(!definition) return;
+  data.companion.id = definition.id;
+  data.companion.name = definition.name;
+  data.companion.character = definition.icon;
+  data.companion.characterName = `${definition.name} the ${definition.species}`;
+  data.companion.personality = definition.personality;
+}
+function renderCompanionPreview(){
+  const companion = selectedCompanionDefinition();
+  const panel = $("companion-preview");
+  if(!panel || !companion) return;
+  panel.innerHTML = `<div class="companion-preview-portrait"><img src="assets/companions/${escapeHtml(companion.id)}.svg" alt="${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}"></div><div><span class="source-chip verified">Australian Companion</span><h3>${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}</h3><p class="companion-tagline">${escapeHtml(companion.tagline)}</p><p><strong>Speaking style:</strong> ${escapeHtml(companion.speakingStyle)}</p><p><strong>Especially helpful with:</strong> ${companion.strengths.map(escapeHtml).join(" · ")}</p><blockquote>“${escapeHtml(companion.intro)}”</blockquote></div>`;
+}
 function renderCharacters(){
-  $("character-grid").innerHTML = CHARACTERS.map(([icon,name]) =>
-    `<button type="button" class="character ${data.companion.character === icon ? "selected" : ""}" data-icon="${icon}" data-name="${escapeHtml(name)}"><span>${icon}</span><small>${escapeHtml(name)}</small></button>`
+  const grid = $("character-grid");
+  if(!grid) return;
+  grid.innerHTML = COMPANIONS.map(companion =>
+    `<button type="button" class="character companion-card ${data.companion.id === companion.id ? "selected" : ""}" data-companion-id="${escapeHtml(companion.id)}" aria-pressed="${data.companion.id === companion.id}"><img src="assets/companions/${escapeHtml(companion.id)}.svg" alt=""><span><strong>${escapeHtml(companion.name)}</strong><small>${escapeHtml(companion.species)}</small></span></button>`
   ).join("");
-  document.querySelectorAll(".character").forEach(button => button.addEventListener("click", () => {
-    data.companion.character = button.dataset.icon;
-    data.companion.characterName = button.dataset.name;
-    document.querySelectorAll(".character").forEach(item => item.classList.toggle("selected", item === button));
+  grid.querySelectorAll("[data-companion-id]").forEach(button => button.addEventListener("click", () => {
+    const definition = COMPANIONS.find(item => item.id === button.dataset.companionId);
+    applyCompanionDefinition(definition);
+    grid.querySelectorAll("[data-companion-id]").forEach(item => {
+      const chosen = item === button;
+      item.classList.toggle("selected", chosen);
+      item.setAttribute("aria-pressed", String(chosen));
+    });
+    renderCompanionPreview();
     updateCompanionUI();
   }));
+  renderCompanionPreview();
 }
 function syncCompanionForm(){
   data.companion.enabled = selected("companion-choice") !== "no";
-  data.companion.name = $("companion-name").value.trim();
-  data.companion.pronunciation = $("companion-pronunciation").value.trim();
-  data.companion.personality = $("personality").value;
-  data.companion.voice = $("voice-select").value;
-  data.companion.speechEnabled = $("speech-enabled").checked;
+  applyCompanionDefinition(selectedCompanionDefinition());
+  data.companion.voice = $("voice-select")?.value || "";
+  data.companion.speechEnabled = $("speech-enabled")?.checked !== false;
   data.preferences.theme = document.body.dataset.theme || data.preferences.theme;
 }
 document.querySelectorAll('input[name="companion-choice"]').forEach(input => input.addEventListener("change", () => {
@@ -511,22 +557,13 @@ document.querySelectorAll("[data-theme-choice]").forEach(card => card.addEventLi
   data.preferences.theme = card.dataset.themeChoice;
   applyTheme();
 }));
-$("preview-companion-name").addEventListener("click", () => {
+$("preview-voice")?.addEventListener("click", () => {
   syncCompanionForm();
-  const name = spokenCompanionName();
-  if(!data.companion.name) return friendlyError("companion-error", "Enter a Companion name before previewing it.", "Please enter a Companion name first.");
-  speakText(`Hello. My name is ${name}.`, {force:true,allowWithoutCompanion:true});
+  const companion = selectedCompanionDefinition();
+  speakText(companion?.intro || `Hello ${spokenUserName() || "there"}. I am ${spokenCompanionName()}.`, {force:true,allowWithoutCompanion:true});
 });
-$("preview-voice").addEventListener("click", () => {
+$("companion-next")?.addEventListener("click", () => {
   syncCompanionForm();
-  if(!data.companion.name) return friendlyError("companion-error", "Please give your Companion a name.", "Your Companion needs a name before the preview.");
-  speakText(`Hello ${spokenUserName() || "there"}. I am ${spokenCompanionName()}. I will explain each step, help you plan, and encourage you along the way.`, {force:true,allowWithoutCompanion:true});
-});
-$("companion-next").addEventListener("click", () => {
-  syncCompanionForm();
-  if(data.companion.enabled && !data.companion.name){
-    return friendlyError("companion-error", "Please give your Companion a name, or choose No Companion.", "Your Companion needs a name before we continue.");
-  }
   data.companion.configured = true;
   $("companion-error").textContent = "";
   save();
@@ -555,58 +592,32 @@ $("postcode").addEventListener("blur", () => {
   $(id).value = formatPhone($(id).value, $("country").value);
 }));
 
-$("preview-user-name").addEventListener("click", () => {
-  const preferred = $("preferred-name").value.trim();
+$("preview-user-name")?.addEventListener("click", () => {
+  const given = $("full-name").value.trim();
+  const preferred = $("preferred-name").value.trim() || given;
   const pronunciation = $("preferred-pronunciation").value.trim() || preferred;
-  if(!preferred) return friendlyError("personal-error", "Enter your preferred name before previewing it.", "Please enter your preferred name first.");
+  if(!preferred) return friendlyError("personal-error", "Enter your given name before previewing it.", "Please enter your given name first.");
   speakText(`Hello ${pronunciation}.`, {force:true,allowWithoutCompanion:true});
 });
 
 $("personal-next").addEventListener("click", () => {
-  const country = $("country").value;
-  const mobile = formatPhone($("mobile").value, country);
-  const phone = formatPhone($("phone").value, country);
-  const personal = {
-    fullName: $("full-name").value.trim(),
-    preferredName: $("preferred-name").value.trim(),
-    preferredPronunciation: $("preferred-pronunciation").value.trim(),
-    email: $("personal-email").value.trim(),
-    dob: $("dob").value,
-    energyUnit: $("energy-unit").value,
-    country,
-    region: $("region").value.trim(),
-    postcode: formatPostcode($("postcode").value, country),
-    suburb: $("suburb").value.trim(),
-    streetAddress: $("street-address").value.trim(),
-    mobile,
-    mobileInternational: toInternationalPhone(mobile, country),
-    phone,
-    phoneInternational: toInternationalPhone(phone, country),
-    postalSame: $("postal-same")?.checked ?? true,
-    postalCountry: $("postal-country")?.value || country,
-    postalRegion: $("postal-region")?.value.trim() || "",
-    postalPostcode: $("postal-postcode")?.value.trim() || "",
-    postalSuburb: $("postal-suburb")?.value.trim() || "",
-    postalStreet: $("postal-street")?.value.trim() || ""
-  };
+  const givenName = $("full-name").value.trim();
+  const preferredName = $("preferred-name").value.trim() || givenName;
+  const email = (data.email || $("personal-email")?.value || "").trim();
   let error = "", spoken = "";
-  if(!personal.fullName){ error = "Please enter your full name."; spoken = "Please enter your full name before we continue."; }
-  else if(!personal.preferredName){ error = "Please enter the name you want Healthy Eating to call you."; spoken = "Please enter your preferred name so I know what to call you."; }
-  else if(!validEmail(personal.email)){ error = "Please enter a valid email address."; spoken = "Please check your email address before we continue."; }
-  else if(!personal.country){ error = "Please choose your country."; spoken = "Please choose your country so I can use the right local settings."; }
-  else if(personal.postcode && !validPostcode(personal.postcode, personal.country)){ error = `Please check the ${COUNTRY_CONFIG[personal.country]?.postcodeLabel?.toLowerCase() || "postcode"}.`; spoken = "Please check your postcode or postal code."; }
-  else if(!validPhone(personal.mobile, personal.country)){ error = "Please check the mobile phone number or leave it blank."; spoken = "Please check the mobile phone number."; }
-  else if(!validPhone(personal.phone, personal.country)){ error = "Please check the other phone number or leave it blank."; spoken = "Please check the other phone number."; }
-  else {
-    const age = ageFromDob(personal.dob);
-    if(!personal.dob || age < 18 || age > 100){ error = "Please enter a valid date of birth for an adult user."; spoken = "Please check your date of birth. This founder trial is currently designed for adults."; }
-  }
+  if(!givenName){ error = "Please enter your given name."; spoken = "Please enter your given name before we continue."; }
+  else if(!validEmail(email)){ error = "Please check your email address."; spoken = "Please check your email address before we continue."; }
   if(error) return friendlyError("personal-error", error, spoken);
-  data.personal = personal;
-  data.email = personal.email;
-  $("mobile").value = mobile;
-  $("phone").value = phone;
-  $("postcode").value = personal.postcode;
+
+  data.personal = {
+    ...data.personal,
+    givenName,
+    fullName: givenName,
+    preferredName,
+    preferredPronunciation: $("preferred-pronunciation").value.trim(),
+    email
+  };
+  data.email = email;
   save();
   if(editMode === "personal"){
     editMode = null;
@@ -697,15 +708,20 @@ function calculateRecommendationSet({
   const healthyHighRaw = 24.9 * ((heightCm / 100) ** 2);
   const recommendedGoalWeight = recommendedGoalFor(goal, weightKg, healthyLowRaw, healthyHighRaw);
   let energyKj = null;
+  let bmrCal = null;
+  let tdeeCal = null;
+  let adjustmentCal = 0;
+  let minimumCal = null;
+  let targetCal = null;
 
   if(sex !== "manual"){
-    const bmrCal = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === "male" ? 5 : -161);
-    const tdeeCal = bmrCal * activity;
-    const adjustment = goal === "lose"
+    bmrCal = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === "male" ? 5 : -161);
+    tdeeCal = bmrCal * activity;
+    adjustmentCal = goal === "lose"
       ? (lossRate === "slow" ? -250 : lossRate === "fast" ? -750 : -500)
       : goal === "gain" ? 250 : 0;
-    const minimumCal = sex === "male" ? 1500 : 1200;
-    const targetCal = Math.max(tdeeCal + adjustment, minimumCal);
+    minimumCal = sex === "male" ? 1500 : 1200;
+    targetCal = Math.max(tdeeCal + adjustmentCal, minimumCal);
     energyKj = Math.round((targetCal * 4.184) / 100) * 100;
   }
 
@@ -713,9 +729,10 @@ function calculateRecommendationSet({
   const fat = energyKj ? roundWhole(((energyKj / 4.184) * 0.28) / 9) : roundWhole(0.8 * weightKg);
   const carbs = energyKj ? Math.max(0, roundWhole(((energyKj / 4.184) - protein * 4 - fat * 9) / 4)) : 0;
   const chosenGoal = selectedGoalWeight || recommendedGoalWeight;
+  const activityOptions = {1.2:"Mostly seated",1.375:"Lightly active",1.55:"Moderately active",1.725:"Very active",1.9:"Heavy physical work or very intense activity"};
 
   return {
-    bmi: roundWhole(bmiRaw),
+    bmi: roundWeight(bmiRaw),
     healthyLow: roundWhole(healthyLowRaw),
     healthyHigh: roundWhole(healthyHighRaw),
     recommendedGoalWeight,
@@ -725,6 +742,15 @@ function calculateRecommendationSet({
     fat,
     carbs,
     basedOnWeightKg: roundWeight(weightKg),
+    formulaName: "Mifflin–St Jeor",
+    formulaVersion: "HEC-MSJ-1.0",
+    bmrCal: bmrCal === null ? null : roundWhole(bmrCal),
+    activityFactor: activity,
+    activityLabel: activityOptions[activity] || "Manual activity factor",
+    tdeeCal: tdeeCal === null ? null : roundWhole(tdeeCal),
+    adjustmentCal,
+    minimumCal,
+    targetCal: targetCal === null ? null : roundWhole(targetCal),
     calculatedAt: new Date().toISOString()
   };
 }
@@ -744,10 +770,13 @@ function collectHealthForm(){
   };
 }
 $("calculate-button").addEventListener("click", () => {
+  data.personal.dob = $("dob").value;
+  data.personal.energyUnit = $("energy-unit").value;
   const form = collectHealthForm();
   const age = ageFromDob(data.personal.dob);
   let error = "", spoken = "";
-  if(!form.sex){ error = "Please select the option used for the energy calculation."; spoken = "Please choose the option used for your energy calculation."; }
+  if(!data.personal.dob || age < 18 || age > 100){ error = "Please enter a valid date of birth for an adult user."; spoken = "Please check your date of birth. This founder trial is currently designed for adults."; }
+  else if(!form.sex){ error = "Please select the option used for the energy calculation."; spoken = "Please choose the option used for your energy calculation."; }
   else if(!form.heightCm || form.heightCm < 100 || form.heightCm > 250){ error = "Please enter a valid height."; spoken = "Please check your height before we continue."; }
   else if(!form.weightKg || form.weightKg < 30 || form.weightKg > 400){ error = "Please enter a valid weight."; spoken = "Please check your weight before we continue."; }
   else if(!form.goal){ error = "Please choose a goal."; spoken = "Please choose whether you want to lose, maintain, or gain weight."; }
@@ -793,8 +822,8 @@ function renderRecommendations(){
   const r = data.recommendations;
   if(!r || !Object.keys(r).length) return;
   const items = [
-    ["BMI", r.bmi, "Whole-number screening estimate"],
-    ["Healthy weight range", `${r.healthyLow}–${r.healthyHigh} kg`, "Based on BMI 18.5–24.9"],
+    ["BMI planning estimate", formatWeight(r.bmi), "One screening measure only; it does not define your health"],
+    ["Reference weight range", `${r.healthyLow}–${r.healthyHigh} kg`, "General BMI reference, not a compulsory destination"],
     ["Recommended goal", `${formatWeight(r.recommendedGoalWeight)} kg`, "Guidance, not a compulsory target"],
     ["Daily energy", energyDisplay(r.energyKj), `Based on ${formatWeight(r.basedOnWeightKg)} kg`],
     ["Daily protein", `${roundWhole(r.protein)} g`, "Rounded starting estimate"],
@@ -804,6 +833,15 @@ function renderRecommendations(){
   $("recommendation-grid").innerHTML = items.map(item =>
     `<div class="recommendation"><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong><small>${escapeHtml(item[2])}</small></div>`
   ).join("");
+  if($("calculation-breakdown")){
+    if(r.targetCal){
+      const adjustmentText = r.adjustmentCal === 0 ? "No goal adjustment" : `${r.adjustmentCal > 0 ? "+" : ""}${r.adjustmentCal.toLocaleString()} Cal goal adjustment`;
+      const minimumText = r.targetCal === r.minimumCal ? ` The ${r.minimumCal.toLocaleString()} Cal founder-trial minimum was applied.` : "";
+      $("calculation-breakdown").innerHTML = `<h3>How this energy figure was calculated</h3><div class="calculation-steps"><div><span>1 · Resting estimate</span><strong>${r.bmrCal.toLocaleString()} Cal</strong><small>${escapeHtml(r.formulaName)} · age, sex, height and weight</small></div><div><span>2 · Daily activity</span><strong>× ${r.activityFactor}</strong><small>${escapeHtml(r.activityLabel)} → ${r.tdeeCal.toLocaleString()} Cal maintenance estimate</small></div><div><span>3 · Goal adjustment</span><strong>${escapeHtml(adjustmentText)}</strong><small>Selected goal: ${escapeHtml(goalLabel(data.health.goal))} · ${escapeHtml(lossRateLabel(data.health.lossRate))}</small></div><div><span>4 · Starting target</span><strong>${r.targetCal.toLocaleString()} Cal</strong><small>${escapeHtml(energyDisplay(r.energyKj))}.${escapeHtml(minimumText)}</small></div></div><p class="fine">Calculation record: ${escapeHtml(r.formulaVersion)}. You can adjust the target manually before accepting it.</p>`;
+    }else{
+      $("calculation-breakdown").innerHTML = `<h3>Energy target set manually</h3><p>You chose not to use the automatic sex-based calculation. Enter the daily energy target you want to use.</p>`;
+    }
+  }
   if($("micronutrient-grid")){
     const age = ageFromDob(data.personal.dob);
     const waterMl = roundWhole(Math.max(1800, data.health.currentWeightKg * 30));
@@ -945,12 +983,21 @@ const INSPIRATION = [
   {type:"Hydration tip",text:"Keep water where you can see it. Visible reminders are easier to act on."},
   {type:"Encouragement",text:"Today does not need to be flawless to be worthwhile."}
 ];
+function currentDayIsFasting(){
+  try{
+    const functional = JSON.parse(localStorage.getItem(APP.functionalStorageKey)) || {};
+    const date = todayISO();
+    return functional.daySettings?.[date]?.type === "fasting";
+  }catch(error){ return false; }
+}
 function homeMessage(){
   const name = displayName();
+  const companion = selectedCompanionDefinition();
   if(data.companion.enabled){
-    return `${greeting()}${name ? ", " + name : ""}. I’m ${companionDisplayName()}. Your plan is ready, and I’m here whenever you need guidance.`;
+    const support = currentDayIsFasting() && companion?.fasting ? companion.fasting : companion?.tagline || "Your plan is ready, and I’m here whenever you need guidance.";
+    return `${greeting()}${name ? ", " + name : ""}. I’m ${companionDisplayName()}. ${support}`;
   }
-  return `${greeting()}${name ? ", " + name : ""}. Your Healthy Eating plan is ready. Written guidance is available throughout the app.`;
+  return `${greeting()}${name ? ", " + name : ""}. Your Healthy Eating Companion plan is ready. Written guidance is available throughout the app.`;
 }
 function renderHome(){
   const name = displayName();
@@ -960,10 +1007,18 @@ function renderHome(){
 
   const enabled = data.companion.enabled;
   const avatar = enabled ? data.companion.character : "🥗";
+  const companionDefinition = selectedCompanionDefinition();
+  const portrait = $("home-avatar-image");
+  if(portrait){
+    portrait.classList.toggle("hidden", !enabled || !companionDefinition);
+    portrait.src = companionDefinition ? `assets/companions/${companionDefinition.id}.svg` : "";
+    portrait.alt = companionDefinition ? `${companionDefinition.name} the ${companionDefinition.species}` : "";
+  }
+  $("home-avatar").classList.toggle("hidden", enabled && !!companionDefinition);
   $("home-avatar").textContent = avatar;
   $("message-avatar").textContent = avatar;
-  $("home-companion-name").textContent = enabled ? companionDisplayName() : "Healthy Eating";
-  $("message-name").textContent = enabled ? companionDisplayName() : "Healthy Eating";
+  $("home-companion-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
+  $("message-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
   $("home-companion-action").textContent = enabled ? "Tap for guidance" : "Tap for written guidance";
   $("home-companion").classList.toggle("no-companion", !enabled);
   $("message-text").textContent = homeMessage();
@@ -976,7 +1031,8 @@ function renderHome(){
   updateCompanionUI();
 }
 $("home-companion").addEventListener("click", () => {
-  const message = HOME_GUIDANCE[Math.floor(Math.random() * HOME_GUIDANCE.length)];
+  const companion = selectedCompanionDefinition();
+  const message = currentDayIsFasting() && companion?.fasting ? companion.fasting : HOME_GUIDANCE[Math.floor(Math.random() * HOME_GUIDANCE.length)];
   const full = data.companion.enabled ? `${displayName() ? displayName() + ", " : ""}${message}` : message;
   $("message-text").textContent = full;
   if(data.companion.enabled) speakText(personaliseSpeech(full));
@@ -1190,7 +1246,7 @@ function populateForms(){
 
   $("register-email").value = data.email || "";
   $("personal-email").value = data.personal.email || data.email || "";
-  $("full-name").value = data.personal.fullName || "";
+  $("full-name").value = data.personal.givenName || data.personal.fullName || "";
   $("preferred-name").value = data.personal.preferredName || "";
   $("preferred-pronunciation").value = data.personal.preferredPronunciation || "";
   $("dob").value = data.personal.dob || "";
@@ -1205,11 +1261,9 @@ function populateForms(){
   $("phone").value = data.personal.phone || "";
   updateCountryFields();
 
+  data.companion = normaliseCompanionRecord(data.companion);
   setRadio("companion-choice", data.companion.enabled ? "yes" : "no");
-  $("companion-name").value = data.companion.name || "";
-  $("companion-pronunciation").value = data.companion.pronunciation || "";
-  $("personality").value = data.companion.personality || "calm";
-  $("speech-enabled").checked = data.companion.speechEnabled !== false;
+  if($("speech-enabled")) $("speech-enabled").checked = data.companion.speechEnabled !== false;
 
   $("calculation-sex").value = data.health.sex || "";
   const height = Number(data.health.heightCm) || 0;
@@ -1264,7 +1318,10 @@ function populateForms(){
 data = loadStoredData();
 data.version = VERSION;
 if(data.personal.energyUnit === "Calories") data.personal.energyUnit = "Cal";
-if(!data.personal.preferredName && data.personal.fullName) data.personal.preferredName = data.personal.fullName.trim().split(/\s+/)[0];
+if(!data.personal.givenName && data.personal.fullName) data.personal.givenName = data.personal.fullName.trim().split(/\s+/)[0];
+if(!data.personal.fullName && data.personal.givenName) data.personal.fullName = data.personal.givenName;
+if(!data.personal.preferredName && (data.personal.givenName || data.personal.fullName)) data.personal.preferredName = (data.personal.givenName || data.personal.fullName).trim().split(/\s+/)[0];
+data.companion = normaliseCompanionRecord(data.companion);
 if(!data.preferences) data.preferences = clone(DEFAULTS.preferences);
 if(!data.goalMilestones) data.goalMilestones = [];
 if(!data.weightHistory) data.weightHistory = [];

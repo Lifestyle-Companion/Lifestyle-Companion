@@ -1,7 +1,7 @@
 {
-  "name": "Healthy Eating Founder Trial Alpha 0.5",
-  "short_name": "Healthy Eating",
-  "description": "Functional founder trial with Australian food logging, day planning, recipes, meal planning and progress reporting.",
+  "name": "Healthy Eating Companion Founder Trial Alpha 0.6",
+  "short_name": "HE Companion",
+  "description": "Australian founder trial with named Aussie Companions, food planning, fasting days, recipes, diary calculations and transparent energy goals.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

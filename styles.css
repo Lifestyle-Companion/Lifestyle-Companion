@@ -128,7 +128,7 @@ fieldset{border:1px solid var(--line);border-radius:17px;padding:18px;margin:18p
 }
 
 textarea{display:block;width:100%;margin-top:7px;padding:13px 14px;border-radius:12px;border:1px solid #bfcfc3;background:white;color:var(--ink);font:inherit;resize:vertical}.feature-launch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:min(940px,96vw)}.feature-launch-grid button{display:flex;flex-direction:column;gap:5px;align-items:flex-start;text-align:left;background:white;color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow);font-size:1.35rem}.feature-launch-grid strong{font-size:.98rem}.feature-launch-grid small{font-size:.76rem;color:var(--muted)}.progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.progress-card{padding:16px;border:2px solid var(--line);border-radius:16px}.progress-card>div:first-child{display:flex;justify-content:space-between;gap:10px}.progress-card span{font-size:.8rem}.progress-track{height:12px;background:#e7ece8;border-radius:8px;overflow:hidden;margin:12px 0}.progress-track i{display:block;height:100%;background:currentColor}.progress-card.green{color:#287a48;background:#eff9f2}.progress-card.yellow{color:#977000;background:#fff9df}.progress-card.red{color:#a33a3a;background:#fff0f0}.list-row,.shopping-row,.connection-row,.summary-line{display:flex;align-items:flex-start;gap:12px;padding:13px;border-bottom:1px solid var(--line)}.list-row>div,.shopping-row span,.connection-row span,.summary-line span{flex:1}.list-row small,.shopping-row small,.connection-row small{display:block;color:var(--muted)}.shopping-row.done span{text-decoration:line-through;opacity:.55}.shopping-row button{padding:7px 10px}.connection-row{justify-content:space-between}.connection-row input{width:22px;height:22px}.summary-line strong{width:150px}.history-period{width:100%;flex-wrap:wrap}.history-bars{display:flex;align-items:flex-end;gap:12px;min-height:240px;overflow-x:auto;padding:20px 4px}.history-column{min-width:72px;text-align:center}.history-column i{display:block;width:42px;margin:auto;background:var(--green);border-radius:8px 8px 0 0}.history-column small{font-size:.7rem}.status-box{padding:15px;border-radius:14px;background:#f2f7f3;margin:12px 0}@media(max-width:700px){.feature-launch-grid,.progress-grid{grid-template-columns:1fr}.summary-line{flex-direction:column}.summary-line strong{width:auto}}
-/* Alpha 0.5 functional founder trial */
+/* Alpha 0.6 functional founder trial */
 .eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:900}
 .today-board{width:min(940px,96vw);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:24px;padding:clamp(18px,4vw,28px);box-shadow:var(--shadow)}
 .today-board-head,.meal-heading,.food-card-head,.entry-main,.recipe-row,.voice-review-row,.food-detail-title{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
@@ -165,4 +165,41 @@ textarea{display:block;width:100%;margin-top:7px;padding:13px 14px;border-radius
 @media(max-width:650px){.today-board-head,.meal-heading,.diary-entry,.food-search-row{flex-direction:column;align-items:stretch}.entry-actions,.food-card-actions{justify-content:flex-start}.compact-progress,.progress-grid{grid-template-columns:1fr}.date-toolbar{align-items:stretch}.date-toolbar button,.date-toolbar label{width:100%}.day-settings-grid{grid-template-columns:1fr}.nutrition-card-grid{grid-template-columns:1fr 1fr}.help-button{width:100%;margin:8px 0 0}.topbar{flex-wrap:wrap}.summary-line{grid-template-columns:1fr}.a05-action-toast{width:92vw;justify-content:space-between}}
 @media print{
   body{background:#fff!important}.screen{display:none!important}#printable-report{display:block!important}.topbar,.report-controls,.a05-action-toast,.a05-modal{display:none!important}.page{width:100%!important;padding:0!important}.print-report{box-shadow:none!important;border:0!important;margin:0!important}.print-report table{page-break-inside:auto}.print-report tr{page-break-inside:avoid}.print-report section{page-break-inside:avoid}
+}
+
+/* Healthy Eating Companion Alpha 0.6 */
+.companion-roster{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.companion-card{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;gap:12px;padding:9px;text-align:left;background:#fff;border:2px solid var(--line);border-radius:16px;box-shadow:none}
+.companion-card:hover{transform:translateY(-1px)}
+.companion-card.selected{border-color:var(--accent);background:var(--pale);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
+.character.companion-card img{display:block;width:72px;height:82px;object-fit:cover;border-radius:12px;border:1px solid color-mix(in srgb,var(--accent) 20%,var(--line))}
+.character.companion-card span{display:block;font-size:inherit;min-width:0}
+.character.companion-card strong{display:block;font-size:.98rem;color:var(--ink)}
+.character.companion-card small{display:block;margin-top:3px;font-size:.76rem;color:var(--muted)}
+.companion-preview{display:grid;grid-template-columns:190px minmax(0,1fr);gap:22px;align-items:center;margin:18px 0;padding:20px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(135deg,var(--surface2),#fff)}
+.companion-preview-portrait img{display:block;width:100%;max-height:220px;object-fit:contain;border-radius:18px}
+.companion-preview h3{margin:4px 0 6px;font-size:1.45rem}
+.companion-tagline{font-size:1.05rem;color:var(--accent)!important;font-weight:750}
+.companion-preview blockquote{margin:14px 0 0;padding:12px 14px;border-left:4px solid var(--accent);background:#fff;border-radius:0 12px 12px 0;color:var(--ink);line-height:1.5}
+.home-avatar-image{width:76%;height:58%;object-fit:cover;object-position:50% 30%;border-radius:50%;margin-bottom:4px;border:2px solid #fff}
+.calculation-breakdown{margin-top:16px}
+.calculation-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.calculation-steps>div{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
+.calculation-steps span,.calculation-steps strong,.calculation-steps small{display:block}
+.calculation-steps span{font-size:.77rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:850}
+.calculation-steps strong{margin:6px 0;font-size:1.08rem}
+.calculation-steps small{color:var(--muted);line-height:1.4}
+.calculation-status{display:flex;align-items:flex-start;gap:8px;margin-top:14px;padding:12px 14px;border-radius:13px;border:1px solid var(--line)}
+.calculation-status strong,.calculation-status span{display:block}
+.calculation-status span{color:var(--muted);font-size:.86rem;line-height:1.4}
+.calculation-status.ok{background:#eff9f2;border-color:#bcdcc6}
+.calculation-status.warning{background:#fff7df;border-color:#e4c779}
+.calculation-status.neutral{background:var(--surface2)}
+.search-guidance{border-left:5px solid var(--accent)}
+.search-guidance p{margin:5px 0 0;color:var(--muted)}
+@media(max-width:700px){
+  .companion-roster{grid-template-columns:1fr}
+  .companion-preview{grid-template-columns:1fr;text-align:left}
+  .companion-preview-portrait img{width:min(230px,100%);margin:auto}
+  .calculation-steps{grid-template-columns:1fr}
 }

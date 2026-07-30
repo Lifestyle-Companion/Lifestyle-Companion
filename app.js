@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.1",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -729,7 +729,7 @@ function calculateRecommendationSet({
   const fat = energyKj ? roundWhole(((energyKj / 4.184) * 0.28) / 9) : roundWhole(0.8 * weightKg);
   const carbs = energyKj ? Math.max(0, roundWhole(((energyKj / 4.184) - protein * 4 - fat * 9) / 4)) : 0;
   const chosenGoal = selectedGoalWeight || recommendedGoalWeight;
-  const activityOptions = {1.2:"Mostly seated",1.375:"Lightly active",1.55:"Moderately active",1.725:"Very active",1.9:"Heavy physical work or very intense activity"};
+  const activityOptions = {1.2:"Mostly seated",1.375:"Lightly active",1.55:"Moderately active",1.725:"Very active",1.9:"Heavy physical work"};
 
   return {
     bmi: roundWeight(bmiRaw),
@@ -859,11 +859,11 @@ function renderRecommendations(){
   $("accept-recommendations").checked = false;
   $("recommendation-error").textContent = "";
   $("milestone-error").textContent = "";
+  data.goalMilestones = [];
   if(!r.energyKj){
     $("manual-fields").classList.remove("hidden");
     $("accept-recommendations").checked = false;
   }else $("manual-fields").classList.add("hidden");
-  renderMilestones();
 }
 function renderMilestones(){
   const container = $("milestone-list");
@@ -883,7 +883,7 @@ function renderMilestones(){
     renderMilestones();
   }));
 }
-$("add-milestone").addEventListener("click", () => {
+$("add-milestone")?.addEventListener("click", () => {
   if(data.goalMilestones.length >= 5){
     toast("Up to five future goal stages can be added in this trial.");
     return;
@@ -922,9 +922,6 @@ $("finish-setup").addEventListener("click", () => {
   const goalError = validateGoalWeight(data.health.goal, data.health.currentWeightKg, selectedGoalWeight, data.recommendations.healthyLow);
   if(goalError) return friendlyError("milestone-error", goalError, goalError);
 
-  const milestoneResult = collectMilestones(selectedGoalWeight);
-  if(milestoneResult.error) return friendlyError("milestone-error", milestoneResult.error, milestoneResult.error);
-
   const manual = !$("manual-fields").classList.contains("hidden");
   if(manual){
     const energy = Number($("manual-energy").value);
@@ -945,7 +942,7 @@ $("finish-setup").addEventListener("click", () => {
   data.health.selectedGoalWeight = roundWeight(selectedGoalWeight);
   data.recommendations.selectedGoalWeight = roundWeight(selectedGoalWeight);
   data.recommendations.manual = manual;
-  data.goalMilestones = milestoneResult.milestones;
+  data.goalMilestones = [];
   data.completed = true;
   if(!data.weightHistory.length){
     data.weightHistory.push({date:todayISO(),weightKg:data.health.startingWeightKg,note:"Starting weight"});
@@ -955,12 +952,13 @@ $("finish-setup").addEventListener("click", () => {
     returnToSettingsAfterRecommendations = false;
     editMode = null;
     show("settings", {speak:false});
-  }else show("home");
+  }else if(typeof window.openAlpha05Feature === "function") window.openAlpha05Feature("daily-progress");
+  else show("daily-progress", {speak:false});
 });
 
 function greeting(){
   const hour = new Date().getHours();
-  return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  return hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 }
 const HOME_GUIDANCE = [
   "Your plan is a flexible starting point. It can change as your life and progress change.",
@@ -975,13 +973,13 @@ const INSPIRATION = [
   {type:"Quote",text:"Progress grows from ordinary choices repeated often."},
   {type:"Food fact",text:"Frozen vegetables can be just as useful as fresh vegetables and are often easier to keep on hand."},
   {type:"Joke",text:"What is a vegetable’s favourite kind of music? Anything with a good beet."},
-  {type:"Encouragement",text:"One unplanned choice does not undo the helpful choices you made before it."},
+  {type:"Food thought",text:"One unplanned choice does not undo the helpful food choices you made before it."},
   {type:"Planning tip",text:"Deciding on lunch before the day becomes busy can reduce last-minute decisions."},
   {type:"Quote",text:"A realistic plan is more powerful than a perfect plan you cannot live with."},
   {type:"Food fact",text:"Protein and fibre can help a meal feel more satisfying."},
   {type:"Joke",text:"Why did the banana visit the doctor? It was not peeling well."},
   {type:"Hydration tip",text:"Keep water where you can see it. Visible reminders are easier to act on."},
-  {type:"Encouragement",text:"Today does not need to be flawless to be worthwhile."}
+  {type:"Food thought",text:"Today’s eating does not need to be flawless to be worthwhile."}
 ];
 function currentDayIsFasting(){
   try{
@@ -1018,50 +1016,42 @@ function renderHome(){
   $("home-avatar").textContent = avatar;
   $("message-avatar").textContent = avatar;
   $("home-companion-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
-  $("message-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
+  $("message-name").textContent = "Healthy Eating Companion";
   $("home-companion-action").textContent = enabled ? "Tap for guidance" : "Tap for written guidance";
   $("home-companion").classList.toggle("no-companion", !enabled);
-  $("message-text").textContent = homeMessage();
-  if(typeof window.renderAlpha05Home === "function") window.renderAlpha05Home();
-
-  const index = Math.abs(Number(data.preferences.inspirationIndex) || 0) % INSPIRATION.length;
+  const dayNumber = Math.floor(Date.now() / 86400000);
+  const index = Math.abs(dayNumber) % INSPIRATION.length;
   const item = INSPIRATION[index];
-  $("inspiration-type").textContent = item.type;
-  $("inspiration-text").textContent = item.text;
+  $("message-type").textContent = item.type;
+  $("message-text").textContent = item.text;
   updateCompanionUI();
 }
 $("home-companion").addEventListener("click", () => {
   const companion = selectedCompanionDefinition();
   const message = currentDayIsFasting() && companion?.fasting ? companion.fasting : HOME_GUIDANCE[Math.floor(Math.random() * HOME_GUIDANCE.length)];
   const full = data.companion.enabled ? `${displayName() ? displayName() + ", " : ""}${message}` : message;
-  $("message-text").textContent = full;
+  toast(full);
   if(data.companion.enabled) speakText(personaliseSpeech(full));
 });
 $("speak-home").addEventListener("click", () => speakText($("message-text").textContent, {force:true}));
-$("inspiration-card").addEventListener("click", () => {
-  data.preferences.inspirationIndex = ((Number(data.preferences.inspirationIndex) || 0) + 1) % INSPIRATION.length;
-  const item = INSPIRATION[data.preferences.inspirationIndex];
-  $("inspiration-type").textContent = item.type;
-  $("inspiration-text").textContent = item.text;
-  save();
-  if(data.companion.enabled && data.companion.speechEnabled) speakText(item.text);
-});
 
 document.querySelectorAll(".room").forEach(button => button.addEventListener("click", () => {
   const room = button.dataset.room;
   if(room === "settings"){ show("settings"); return; }
-  if(room === "weight"){ show("weight-checkin"); return; }
+  if(room === "progress-weight"){ show("progress-weight-hub", {speak:false}); return; }
   if(typeof window.openAlpha05Feature === "function"){
+    if(room === "daily-progress"){ window.openAlpha05Feature("daily-progress"); return; }
     if(room === "diary"){ window.openAlpha05Feature("food-diary"); return; }
     if(room === "database"){ window.openAlpha05Feature("food-library"); return; }
-    if(room === "graphs"){ window.openAlpha05Feature("progress-history"); return; }
+    if(room === "meal-planner"){ window.openAlpha05Feature("meal-planner"); return; }
   }
   const map = {
+    "daily-progress":["Daily Progress","📊","Today’s progress is loading."],
     diary:["Food Diary & Day Plan","🍽️","Meal planning and food logging are loading."],
-    database:["Australian Food Library","🥕","The local founder-trial food library is loading."],
-    graphs:["Progress History","📈","Your progress history is loading."]
+    database:["Australian Food Library","🥕","The food library is loading."],
+    "meal-planner":["Meal Planner","🗓️","Meal planning is loading."]
   };
-  const [title,icon,copy] = map[room];
+  const [title,icon,copy] = map[room] || ["Healthy Eating Companion","🧭","This room is being prepared."];
   $("placeholder-title").textContent = title;
   $("placeholder-icon").textContent = icon;
   $("placeholder-copy").textContent = copy;
@@ -1328,7 +1318,7 @@ if(!data.weightHistory) data.weightHistory = [];
 applyTheme();
 populateForms();
 save();
-if(data.completed) show("home", {speak:false});
+if(data.completed) show("home", {speak:false}); // alpha06.js immediately opens Daily Progress once functional data is ready.
 else show("welcome", {speak:false});
 
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){

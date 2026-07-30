@@ -1,4 +1,4 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.1
 
 PURPOSE
 Alpha 0.6 begins the next development phase using the Alpha 0.5 trial as its foundation. It introduces the new Healthy Eating Companion identity, simpler onboarding, the full 16-character Australian Companion roster, transparent energy calculations, stronger food search ranking and calorie-total safeguards.
@@ -53,3 +53,11 @@ FILES
 - alpha06.js — food diary, library, recipes, planning, progress, reports and calculation safeguards
 - assets/companions/ — replaceable prototype portrait assets
 - service-worker.js and manifest.webmanifest — installable PWA support
+
+
+ALPHA 0.6.1 FOCUSED UPDATE
+- Daily Progress now opens first.
+- Home is a separate Companion Circle navigation page.
+- Food Preferences moved out of onboarding and can be completed later.
+- One weight goal replaces staged future goals.
+- See HEC_SCREEN_BLUEPRINT_ALPHA_0_6_1.md for the agreed page-by-page structure.

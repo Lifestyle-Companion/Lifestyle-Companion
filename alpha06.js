@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.1",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -66,7 +66,7 @@ const MEAL_SUGGESTIONS = [
 ];
 
 const EXT_DEFAULTS = {
-  version:"0.6", diary:{}, daySettings:{}, water:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[],
+  version:"0.6.1", diary:{}, daySettings:{}, water:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[],
   family:{enabled:false,name:"",email:""}, connections:{}, customFoods:[], savedFoodIds:[], recipes:[], mealTemplates:[],
   ui:{diaryDate:isoToday(), libraryTab:"all", scanMode:"food"}
 };
@@ -87,7 +87,7 @@ function loadExt(){
       const legacy = JSON.parse(localStorage.getItem(legacyKey));
       if(legacy){
         const migrated = merge(clone(EXT_DEFAULTS),legacy);
-        migrated.version = "0.6";
+        migrated.version = "0.6.1";
         if(legacy.daily?.date){
           migrated.water[legacy.daily.date] = legacy.daily.water || 0;
           migrated.steps[legacy.daily.date] = legacy.daily.steps || 0;
@@ -626,7 +626,8 @@ document.addEventListener("click",event=>{const b=event.target.closest("[data-ad
 
 // Daily progress
 function renderDailyProgress(){
-  const date=by("progress-date").value||ext.ui.diaryDate||isoToday();by("progress-date").value=date;const {nutrients,planned,water,steps,goals}=daySummary(date);
+  const date=by("progress-date").value||ext.ui.diaryDate||isoToday();by("progress-date").value=date;ext.ui.diaryDate=date;
+  const {nutrients,planned,water,steps,goals}=daySummary(date);
   by("today-water").value=water||"";by("today-steps").value=steps||"";by("today-note").value=ext.dailyNotes[date]||"";
   by("daily-progress-grid").innerHTML=[
     ["Energy",nutrients.calories,goals.calories,"Cal","energy"],["Protein",nutrients.protein,goals.protein,"g","positive"],["Carbohydrate",nutrients.carbs,goals.carbs,"g","positive"],["Fat",nutrients.fat,goals.fat,"g","positive"],
@@ -659,10 +660,23 @@ document.addEventListener("click",event=>{const b=event.target.closest("[data-sh
 
 // Food preferences and family readiness
 function renderFoodPreferences(){
-  const d=mainData().dietary||{};const rows=[["Foods I Love",d["foods-love"]],["Foods I Like",d["foods-like"]],["Foods I Dislike",d["foods-dislike"]],["Foods I Will Never Eat",d["foods-never"]],["Conditional Preferences",d["food-context"]],["Allergies",d["food-allergies"]],["Medical Restrictions",d["medical-restrictions"]]];
-  by("food-preference-summary").innerHTML=rows.map(([label,value])=>`<div class="summary-line"><strong>${label}</strong><span>${esc(value||"Not Entered")}</span></div>`).join("");
+  const d=mainData().dietary||{};
+  by("pref-foods-love").value=d["foods-love"]||"";
+  by("pref-foods-like").value=d["foods-like"]||"";
+  by("pref-foods-dislike").value=d["foods-dislike"]||"";
+  by("pref-foods-never").value=d["foods-never"]||"";
+  by("pref-food-context").value=d["food-context"]||"";
 }
-by("edit-food-profile")?.addEventListener("click",()=>{if(typeof window.show==="function")window.show("health",{speak:false});window.scrollTo(0,900);});
+by("save-food-preferences")?.addEventListener("click",()=>{
+  const d=mainData();d.dietary ||= {};
+  d.dietary["foods-love"]=by("pref-foods-love").value.trim();
+  d.dietary["foods-like"]=by("pref-foods-like").value.trim();
+  d.dietary["foods-dislike"]=by("pref-foods-dislike").value.trim();
+  d.dietary["foods-never"]=by("pref-foods-never").value.trim();
+  d.dietary["food-context"]=by("pref-food-context").value.trim();
+  localStorage.setItem(MAIN_KEY,JSON.stringify(d));
+  showActionToast("Food Preferences saved. You can update them at any time.",null,5500);
+});
 const CONNECTIONS=["Apple Health & Apple Watch","Google Health Connect","Smart Scales","Fitness Trackers","Nutrition Apps","Calendar & Reminders","Private Household Sharing"];
 function renderConnections(){by("family-sharing-enabled").checked=!!ext.family.enabled;by("household-name").value=ext.family.name||"";by("family-email").value=ext.family.email||"";by("connections-list").innerHTML=CONNECTIONS.map(name=>`<label class="connection-row"><span><strong>${esc(name)}</strong><small>Preference saved locally; secure connection not active in this static trial.</small></span><input type="checkbox" data-connection="${esc(name)}" ${ext.connections[name]?"checked":""}></label>`).join("");}
 by("save-family")?.addEventListener("click",()=>{ext.family={enabled:by("family-sharing-enabled").checked,name:by("household-name").value,email:by("family-email").value};saveExt();showActionToast("Household-sharing preferences saved locally.",null,5500);});
@@ -707,15 +721,16 @@ document.addEventListener("click",event=>{const b=event.target.closest("[data-he
 
 // Initial setup and integration
 function init(){
-  // Postal address behaviour and Alpha 0.6 profile extensions
+  // Postal address behaviour and Alpha 0.6.1 profile extensions
   const postalSame=by("postal-same"),postalFields=by("postal-fields");const togglePostal=()=>postalFields?.classList.toggle("hidden",postalSame?.checked);postalSame?.addEventListener("change",togglePostal);togglePostal();
-  const dietaryIds=["food-allergies","food-intolerances","medical-restrictions","eating-pattern","pregnancy-status","cultural-restrictions","foods-love","foods-like","foods-dislike","foods-never","food-context"];
+  const dietaryIds=["food-allergies","food-intolerances","medical-restrictions","eating-pattern","pregnancy-status","cultural-restrictions"];
   by("personal-next")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.personal=Object.assign(d.personal||{},{postalSame:postalSame?.checked,postalCountry:by("postal-country")?.value,postalRegion:by("postal-region")?.value,postalPostcode:by("postal-postcode")?.value,postalSuburb:by("postal-suburb")?.value,postalStreet:by("postal-street")?.value});localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
-  by("calculate-button")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.dietary=Object.fromEntries(dietaryIds.map(id=>[id,by(id)?.value||""]));localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
+  by("calculate-button")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.dietary=Object.assign({},d.dietary||{},Object.fromEntries(dietaryIds.map(id=>[id,by(id)?.value||""])));localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
   const d=mainData(),p=d.personal||{};if(postalSame){postalSame.checked=p.postalSame!==false;[["postal-country","postalCountry"],["postal-region","postalRegion"],["postal-postcode","postalPostcode"],["postal-suburb","postalSuburb"],["postal-street","postalStreet"]].forEach(([id,key])=>{if(by(id))by(id).value=p[key]||""});togglePostal();}dietaryIds.forEach(id=>{if(by(id))by(id).value=d.dietary?.[id]||""});
   renderRecipeSelectOptions();renderScanSelect();renderHomeSummary();
-  // Ensure Alpha 0.4 profile can migrate without losing functional data.
+  // Ensure earlier founder profiles can migrate without losing functional data.
   saveExt();
+  if(mainData().completed) openFeature("daily-progress");
 }
 init();
 })();

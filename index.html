@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.1</title>
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.2</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.1</div>
+      <div class="badge">Founder Trial · Alpha 0.6.2</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.1 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.2 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,7 +120,7 @@
           <div class="section-heading"><div><h3>Meet the Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.1 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
+          <p class="fine">The Alpha 0.6.2 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
@@ -325,68 +325,85 @@
   </section>
 
   <section id="home" class="screen home-screen">
-    <header class="home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.1</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
-      <button id="reset-trial" class="small-button">Reset trial</button>
+    <header class="home-header compact-home-header">
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.2</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
-    <main class="home-main">
-      <div class="home-message" aria-label="Daily food thought">
-        <span id="message-avatar">🐵</span>
-        <div><strong id="message-name">Healthy Eating Companion</strong><span id="message-type" class="eyebrow">Today’s thought</span><p id="message-text">Small changes are easier to repeat than perfect days.</p></div>
-        <button id="speak-home" class="speak-note companion-only" aria-label="Speak today’s thought">🔊</button>
-      </div>
-
-      <div class="circle" aria-label="Healthy Eating Companion Home navigation">
+    <main class="home-main home-main-centred">
+      <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
         <div class="orbit"></div>
         <button class="room r1" data-room="daily-progress"><span>📊</span><b>Daily Progress</b><small>Today at a glance</small></button>
         <button class="room r2" data-room="diary"><span>🍽️</span><b>Diary</b><small>Plan and log</small></button>
         <button class="room r3" data-room="database"><span>🥕</span><b>Food Library</b><small>Find, save and scan</small></button>
-        <button class="room r4" data-room="meal-planner"><span>🗓️</span><b>Meal Planner</b><small>Normal and fasting days</small></button>
-        <button class="room r5" data-room="progress-weight"><span>📈</span><b>Progress &amp; Weight</b><small>Trends and check-ins</small></button>
-        <button class="room r6" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your choices</small></button>
+        <button class="room r4" data-room="meal-planner"><span>🗓️</span><b>Meal Planner</b><small>Suggestions for selected meals</small></button>
+        <button class="room r5" data-room="shopping-list"><span>🛒</span><b>Shopping List</b><small>Groceries and ingredients</small></button>
+        <button class="room r6" data-room="progress-weight"><span>📈</span><b>Progress &amp; Weight</b><small>Trends and check-ins</small></button>
+        <button class="room r7" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your choices</small></button>
         <button id="home-companion" class="companion-centre"><img id="home-avatar-image" class="home-avatar-image hidden" alt=""><span id="home-avatar">🐦</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small></button>
+      </div>
+
+      <div class="home-message daily-inspiration-card" aria-label="Daily food thought">
+        <span id="message-avatar">🐵</span>
+        <div><strong id="message-name">Healthy Eating Companion</strong><span id="message-type" class="eyebrow">Today’s thought</span><p id="message-text">Small changes are easier to repeat than perfect days.</p></div>
+        <button id="speak-home" class="speak-note companion-only" aria-label="Speak today’s thought">🔊</button>
       </div>
     </main>
   </section>
 
   <section id="food-diary" class="screen content-screen">
-    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Food Diary & Day Plan</h2><p>Plan first, then record what actually happened.</p></div><button class="help-button" data-help="food-diary">Help With This Screen</button></header>
-    <main class="page">
-      <div class="card">
-        <div class="date-toolbar"><button data-diary-shift="-1">← Previous</button><label>Date<input id="diary-date" type="date"></label><button id="diary-today">Today</button><button data-diary-shift="1">Next →</button></div>
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Diary &amp; Day Plan</h2></div><button class="icon-help-button" data-help="food-diary" aria-label="Help with Diary">?</button></header>
+    <main class="page diary-page">
+      <div class="swipe-date-control" id="diary-date-control" data-date-context="diary" tabindex="0" aria-label="Swipe or use arrows to change diary date">
+        <button type="button" class="date-chevron" data-date-shift="-1" data-date-target="diary">‹</button>
+        <button type="button" class="date-label-button" data-date-picker="diary"><strong id="diary-date-label">Today</strong><small>Swipe to change day · tap for calendar</small></button>
+        <button type="button" class="date-chevron" data-date-shift="1" data-date-target="diary">›</button>
+        <input id="diary-date" class="visually-hidden-date" type="date" aria-label="Diary date">
+      </div>
+
+      <div class="card compact-day-settings">
         <div class="day-settings-grid">
           <label>Day Type<select id="day-type"><option value="normal">Normal Day</option><option value="fasting">Flexible Fasting Day</option></select></label>
           <label>Daily Energy Target (Cal)<input id="day-cal-target" type="number" min="300" max="10000" step="1"></label>
-          <button id="save-day-settings" class="secondary">Save Day Settings</button>
+          <button id="save-day-settings" class="primary hidden">Save Day Settings</button>
         </div>
         <p id="day-settings-note" class="fine"></p>
-        <div id="diary-day-summary" class="progress-grid compact-progress"></div>
-        <div id="diary-calculation-status" class="calculation-status" role="status"></div>
       </div>
-      <div class="card quick-log-card">
-        <h3>Quick Add</h3>
-        <div class="quick-action-row">
-          <button data-open-feature="food-library" class="primary">Find a Food</button>
-          <button data-open-feature="quick-log" class="secondary">Voice or Text Log</button>
-          <button data-open-feature="scan-centre" class="secondary">Scan & Review</button>
-          <button data-open-feature="meal-planner" class="secondary">Use Meal Planner</button>
+
+      <div class="diary-summary-carousel" id="diary-day-summary" aria-label="Swipeable diary summary"></div>
+      <div class="diary-view-bar">
+        <span>Show</span>
+        <div class="segmented diary-view-toggle" role="group" aria-label="Diary entry status">
+          <button type="button" data-diary-view="all" class="active">All</button>
+          <button type="button" data-diary-view="eaten">Eaten</button>
+          <button type="button" data-diary-view="planned">Planned</button>
         </div>
       </div>
-      <div id="diary-meals"></div>
+      <div id="diary-calculation-status" class="calculation-status" role="status"></div>
+      <div id="diary-meals" class="diary-meal-list"></div>
+      <button class="floating-mic" data-open-feature="quick-log" aria-label="Voice or text food log">🎙️</button>
     </main>
   </section>
 
   <section id="food-library" class="screen content-screen">
-    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Australian Food Library</h2><p>Relevant local matches first, with transparent serving sizes and data sources.</p></div><button class="help-button" data-help="food-library">Help With This Screen</button></header>
-    <main class="page">
-      <div class="card">
-        <div class="food-search-row"><label class="grow">Search Foods<input id="food-search" type="search" placeholder="Try Weet-Bix, light milk, rissole or banana"></label><button id="clear-food-search" class="secondary">Clear</button></div>
-        <div class="library-tabs" role="tablist">
-          <button class="active" data-library-tab="all">Australian Foods</button><button data-library-tab="saved">Saved Foods</button><button data-library-tab="custom">My Foods</button><button data-library-tab="recipes">Recipes</button><button data-library-tab="meals">Saved Meals</button>
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Food Library</h2></div><button class="icon-help-button" data-help="food-library" aria-label="Help with Food Library">?</button></header>
+    <main class="page resource-page">
+      <div id="library-entry-context" class="entry-context-banner hidden"></div>
+      <div class="resource-search-shell">
+        <label class="resource-search"><span>⌕</span><input id="food-search" type="search" placeholder="Search foods, saved meals and recipes"><button id="clear-food-search" type="button" aria-label="Clear search">×</button></label>
+        <div class="library-tabs resource-tabs" role="tablist">
+          <button class="active" data-library-tab="all">All Resources</button>
+          <button data-library-tab="saved">Saved Foods</button>
+          <button data-library-tab="custom">My Foods</button>
+          <button data-library-tab="recipes">My Recipes</button>
+          <button data-library-tab="meals">Saved Meals</button>
         </div>
-        <div class="quick-action-row"><button data-open-feature="custom-food" class="secondary">＋ Create Custom Food</button><button data-open-feature="recipe-builder" class="secondary">＋ Create Recipe</button><button data-open-feature="scan-centre" class="secondary">📷 Scan & Review</button></div>
       </div>
-      <div id="food-results"></div>
+      <div id="food-results" class="resource-list"></div>
+      <button id="resource-add-button" class="floating-add" aria-label="Create or scan a food">＋</button>
+      <div id="resource-add-menu" class="floating-action-menu hidden">
+        <button data-open-feature="custom-food">Create Custom Food</button>
+        <button data-open-feature="recipe-builder">Create Recipe</button>
+        <button data-open-feature="scan-centre">Scan &amp; Review</button>
+      </div>
     </main>
   </section>
 
@@ -447,15 +464,40 @@
   <section id="scan-centre" class="screen content-screen">
     <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Scan & Review Centre</h2><p>Capture first, review second, add only after confirmation.</p></div><button class="help-button" data-help="scan-centre">Help With This Screen</button></header>
     <main class="page">
-      <div class="card"><div class="scan-mode-grid"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Label</button></div><label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label><div id="scan-preview" class="scan-preview empty-state">No image selected.</div><p id="scan-status" class="fine">Automatic AI recognition and live product lookup require secure online services. Alpha 0.6.1 provides the safe capture-and-review workflow without silently logging anything.</p></div>
+      <div class="card"><div class="scan-mode-grid"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Label</button></div><label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label><div id="scan-preview" class="scan-preview empty-state">No image selected.</div><p id="scan-status" class="fine">Automatic AI recognition and live product lookup require secure online services. Alpha 0.6.2 provides the safe capture-and-review workflow without silently logging anything.</p></div>
       <div id="scan-review-card" class="card hidden"><h3>Review Captured Item</h3><label>Choose the matching food from the local trial library<select id="scan-food-select"></select></label><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review Quantity Before Adding</button></div>
     </main>
   </section>
 
   <section id="meal-planner" class="screen content-screen">
-    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Meal Planner</h2><p>Helpful suggestions—not rules—matched to your day.</p></div><button class="help-button" data-help="meal-planner">Help With This Screen</button></header>
-    <main class="page">
-      <div class="card"><div class="form-grid"><label>Plan Date<input id="planner-date" type="date"></label><label>Meal<select id="planner-meal"><option>Breakfast</option><option>Morning Smoko</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Supper</option></select></label><label>Prefer a Health Score of<select id="planner-min-score"><option value="0">No Minimum</option><option value="6">6/10 or Higher</option><option value="7" selected>7/10 or Higher</option><option value="8">8/10 or Higher</option></select></label><label>Approximate Meal Energy<select id="planner-energy"><option value="300">Around 300 Cal</option><option value="450" selected>Around 450 Cal</option><option value="600">Around 600 Cal</option><option value="800">Around 800 Cal</option></select></label></div><button id="generate-meal-suggestions" class="primary wide">Show Suitable Suggestions</button></div>
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Meal Planner</h2></div><button class="icon-help-button" data-help="meal-planner" aria-label="Help with Meal Planner">?</button></header>
+    <main class="page planner-page">
+      <div class="swipe-date-control" id="planner-date-control" data-date-context="planner" tabindex="0" aria-label="Swipe or use arrows to change planning date">
+        <button type="button" class="date-chevron" data-date-shift="-1" data-date-target="planner">‹</button>
+        <button type="button" class="date-label-button" data-date-picker="planner"><strong id="planner-date-label">Today</strong><small>Swipe to change day · tap for calendar</small></button>
+        <button type="button" class="date-chevron" data-date-shift="1" data-date-target="planner">›</button>
+        <input id="planner-date" class="visually-hidden-date" type="date" aria-label="Meal plan date">
+      </div>
+
+      <div class="card planner-controls-card">
+        <fieldset class="planner-meal-fieldset">
+          <legend>Which meals would you like planned?</legend>
+          <label class="select-all-meals"><input id="planner-select-all" type="checkbox"> Select all meals</label>
+          <div id="planner-meal-options" class="planner-meal-options">
+            <label><input type="checkbox" name="planner-meal" value="Breakfast" checked> Breakfast</label>
+            <label><input type="checkbox" name="planner-meal" value="Morning Smoko"> Morning Smoko</label>
+            <label><input type="checkbox" name="planner-meal" value="Lunch"> Lunch</label>
+            <label><input type="checkbox" name="planner-meal" value="Afternoon Tea"> Afternoon Tea</label>
+            <label><input type="checkbox" name="planner-meal" value="Dinner"> Dinner</label>
+            <label><input type="checkbox" name="planner-meal" value="Supper"> Supper</label>
+          </div>
+        </fieldset>
+        <div class="form-grid planner-preferences-grid">
+          <label>Prefer a Health Score of<select id="planner-min-score"><option value="0">No Minimum</option><option value="6">6/10 or Higher</option><option value="7" selected>7/10 or Higher</option><option value="8">8/10 or Higher</option></select></label>
+          <label>Approximate Energy per Meal<select id="planner-energy"><option value="300">Around 300 Cal</option><option value="450" selected>Around 450 Cal</option><option value="600">Around 600 Cal</option><option value="800">Around 800 Cal</option></select></label>
+        </div>
+        <div class="planner-action-row"><button id="generate-meal-suggestions" class="primary">Plan Selected Meals</button><button id="try-all-meal-suggestions" class="secondary hidden">Try Again for Selected Meals</button></div>
+      </div>
       <div id="meal-suggestions"></div>
     </main>
   </section>
@@ -472,11 +514,24 @@
   <div id="a05-action-toast" class="a05-action-toast" role="status" aria-live="polite"><span id="a05-toast-copy"></span><button id="a05-toast-action">Undo</button></div>
 
   <section id="daily-progress" class="screen content-screen">
-    <header class="topbar sticky"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Daily Progress</h2><p>Your opening screen for today’s food, water, activity and nutrient progress.</p></div><button class="help-button" data-help="daily-progress">Help With This Screen</button></header>
-    <main class="page">
-      <div class="card"><div class="date-toolbar"><button data-day-shift="-1">← Previous</button><label>Date<input id="progress-date" type="date"></label><button data-day-today>Today</button><button data-day-shift="1">Next →</button></div><div id="daily-progress-grid" class="progress-grid"></div></div>
-      <div class="card"><h3>Water, Steps & Notes</h3><div class="form-grid"><label>Water (mL)<input id="today-water" type="number" min="0" step="50"></label><label>Steps<input id="today-steps" type="number" min="0" step="100"></label><label class="full">Daily note<textarea id="today-note" rows="3" placeholder="Optional note about today"></textarea></label></div><button id="save-daily-progress" class="primary wide">Save Today’s Update</button></div>
-      <div id="daily-progress-explanation" class="card"></div>
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Daily Progress</h2></div><button class="icon-help-button" data-help="daily-progress" aria-label="Help with Daily Progress">?</button></header>
+    <main class="page daily-progress-page">
+      <div class="swipe-date-control" id="progress-date-control" data-date-context="progress" tabindex="0" aria-label="Swipe or use arrows to change progress date">
+        <button type="button" class="date-chevron" data-date-shift="-1" data-date-target="progress">‹</button>
+        <button type="button" class="date-label-button" data-date-picker="progress"><strong id="progress-date-label">Today</strong><small>Swipe to change day · tap for calendar</small></button>
+        <button type="button" class="date-chevron" data-date-shift="1" data-date-target="progress">›</button>
+        <input id="progress-date" class="visually-hidden-date" type="date" aria-label="Daily progress date">
+      </div>
+
+      <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Nutrition Progress</h3><p>Calculated from food and drink marked as eaten.</p></div></div><div id="daily-progress-grid" class="progress-grid"></div></section>
+      <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Five Food Groups</h3><p>Personalised Australian daily serve targets.</p></div></div><div id="daily-food-group-progress" class="food-group-progress-grid"></div><div id="weekly-food-group-progress" class="weekly-food-groups"></div></section>
+      <section class="compact-update-strip" aria-label="Quick hydration and steps update">
+        <label>Additional drinks not already logged (mL)<input id="today-water" type="number" min="0" step="50" inputmode="numeric"></label>
+        <label>Steps<input id="today-steps" type="number" min="0" step="100" inputmode="numeric"></label>
+        <small>These two fields save automatically. Drinks entered in the Diary are counted automatically.</small>
+      </section>
+      <div id="daily-progress-explanation" class="card compact-summary-card"></div>
+      <button class="floating-mic" data-open-feature="quick-log" aria-label="Voice or text food log">🎙️</button>
     </main>
   </section>
 
@@ -486,7 +541,7 @@
     <header class="topbar sticky"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Progress &amp; Weight</h2><p>Review trends, record weight and prepare reports.</p></div></header>
     <main class="page">
       <div class="subroom-grid">
-        <button data-open-feature="progress-history"><span>📈</span><strong>Progress History</strong><small>Weight, food, water and activity trends</small></button>
+        <button data-open-feature="progress-history"><span>📈</span><strong>Progress History</strong><small>Weight, food, hydration and activity trends</small></button>
         <button data-go="weight-checkin"><span>⚖️</span><strong>Weight Check-in</strong><small>Record your current weight and goal</small></button>
         <button data-open-feature="printable-report"><span>🖨️</span><strong>Printable Report</strong><small>Preview, print or save a PDF</small></button>
       </div>
@@ -494,7 +549,7 @@
   </section>
 
   <section id="progress-history" class="screen content-screen">
-    <header class="topbar"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Progress History</h2><p>Weight, food, water and activity trends—without badges or game-style streaks.</p></div><button class="help-button" data-help="progress-history">Help With This Screen</button></header>
+    <header class="topbar"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Progress History</h2><p>Weight, food, hydration and activity trends—without badges or game-style streaks.</p></div><button class="help-button" data-help="progress-history">Help With This Screen</button></header>
     <main class="page">
       <div class="card"><div class="segmented history-period"><button data-period="7">Weekly</button><button data-period="14">Fortnightly</button><button data-period="30" class="active">Monthly</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">Yearly</button><button data-period="all">All Time</button></div><div id="history-summary" class="status-box"></div></div>
       <div class="card"><h3>Weight Trend</h3><div id="history-bars" class="history-bars"></div></div>
@@ -537,6 +592,7 @@
         <button id="toggle-speech" class="secondary">Turn spoken guidance off</button>
         <button data-open-feature="food-preferences" class="secondary">Food Preferences</button>
         <button data-open-feature="family-connections" class="secondary">Family & Connections</button>
+        <button id="reset-trial" class="danger-button">Reset Founder Trial</button>
       </div>
     </main>
   </section>

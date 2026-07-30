@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.1",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.2",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -52,6 +52,31 @@ const FOODS = [
   {id:"cappuccino",name:"Cappuccino With Light Milk",brand:"Café Estimate",category:"Drinks",country:"Australia",aliases:["cappuccino","capp","coffee with milk"],defaultAmount:250,defaultUnit:"mL",units:{mL:1/250,cup:1,serving:1},unitLabels:{mL:"mL",cup:"regular cup",serving:"250 mL cup"},serving:"250 mL",nutrients:nutrient(90,6,10,2.5,1.6,0,9,85),score:7,source:"Australian Café Estimate",verified:false,ingredients:"Espresso coffee and light milk",allergens:["milk","dairy"]},
   {id:"water",name:"Water",brand:"",category:"Drinks",country:"Australia",aliases:["water","glass of water"],defaultAmount:250,defaultUnit:"mL",units:{mL:1/250,glass:1},unitLabels:{mL:"mL",glass:"glass (250 mL)"},serving:"250 mL",nutrients:nutrient(0,0,0,0,0,0,0,0),score:10,source:"Confirmed",verified:true,ingredients:"Water",allergens:[]}
 ];
+const FOOD_GROUP_KEYS = ["vegetables","fruit","grains","proteinFoods","dairy"];
+const FOOD_GROUP_LABELS = {vegetables:"Veges & Legumes",fruit:"Fruit",grains:"Grains",proteinFoods:"Protein Foods",dairy:"Dairy & Alternatives"};
+const FOOD_METADATA = {
+  "weetbix-au":{waterMl:2,foodGroups:{grains:1}},
+  "light-milk-au":{waterMl:180,hydrationType:"drink",foodGroups:{dairy:.8}},
+  "baby-carrot":{waterMl:28,foodGroups:{vegetables:.4}},
+  banana:{waterMl:88,foodGroups:{fruit:1}},
+  apple:{waterMl:155,foodGroups:{fruit:1}},
+  berries:{waterMl:86,foodGroups:{fruit:.7}},
+  "wholemeal-bread":{waterMl:15,foodGroups:{grains:1}},
+  egg:{waterMl:38,foodGroups:{proteinFoods:.5}},
+  "chicken-breast":{waterMl:65,foodGroups:{proteinFoods:1.25}},
+  tuna:{waterMl:70,foodGroups:{proteinFoods:1}},
+  "brown-rice":{waterMl:105,foodGroups:{grains:1.25}},
+  potato:{waterMl:120,foodGroups:{vegetables:2}},
+  broccoli:{waterMl:90,foodGroups:{vegetables:1.3}},
+  salad:{waterMl:135,foodGroups:{vegetables:2}},
+  avocado:{waterMl:36,foodGroups:{vegetables:.7}},
+  "greek-yoghurt":{waterMl:135,foodGroups:{dairy:.85}},
+  oats:{waterMl:4,foodGroups:{grains:1}},
+  "beef-rissole":{waterMl:60,foodGroups:{proteinFoods:1.2,grains:.15}},
+  cappuccino:{waterMl:230,hydrationType:"drink",foodGroups:{dairy:1}},
+  water:{waterMl:250,hydrationType:"drink",foodGroups:{}}
+};
+FOODS.forEach(food => Object.assign(food, FOOD_METADATA[food.id] || {waterMl:0,foodGroups:{}}));
 const FOOD_BY_ID = new Map(FOODS.map(f => [f.id,f]));
 
 const MEAL_SUGGESTIONS = [
@@ -62,13 +87,18 @@ const MEAL_SUGGESTIONS = [
   {id:"suggest-dinner-1",name:"Chicken, Potato & Broccoli",meal:"Dinner",score:9,reason:"A straightforward balanced plate with lean protein and vegetables.",items:[{foodId:"chicken-breast",amount:150,unit:"g"},{foodId:"potato",amount:180,unit:"g"},{foodId:"broccoli",amount:150,unit:"g"}]},
   {id:"suggest-dinner-2",name:"Beef Rissole & Vegetables",meal:"Dinner",score:7,reason:"A familiar Australian dinner; a saved homemade recipe will improve accuracy.",items:[{foodId:"beef-rissole",amount:1,unit:"item"},{foodId:"potato",amount:150,unit:"g"},{foodId:"broccoli",amount:150,unit:"g"}]},
   {id:"suggest-snack-1",name:"Greek Yoghurt & Berries",meal:"Afternoon Tea",score:8,reason:"Protein, calcium and fruit in a practical snack.",items:[{foodId:"greek-yoghurt",amount:170,unit:"g"},{foodId:"berries",amount:100,unit:"g"}]},
-  {id:"suggest-snack-2",name:"Apple",meal:"Morning Smoko",score:8,reason:"Simple fruit snack with fibre.",items:[{foodId:"apple",amount:1,unit:"item"}]}
+  {id:"suggest-snack-2",name:"Apple",meal:"Morning Smoko",score:8,reason:"Simple fruit snack with fibre.",items:[{foodId:"apple",amount:1,unit:"item"}]},
+  {id:"suggest-breakfast-3",name:"Oats, Milk & Banana",meal:"Breakfast",score:9,reason:"Wholegrain breakfast with fruit and dairy.",items:[{foodId:"oats",amount:40,unit:"g"},{foodId:"light-milk-au",amount:200,unit:"mL"},{foodId:"banana",amount:1,unit:"item"}]},
+  {id:"suggest-smoko-2",name:"Yoghurt & Berries",meal:"Morning Smoko",score:8,reason:"Fruit, dairy and protein in a practical snack.",items:[{foodId:"greek-yoghurt",amount:120,unit:"g"},{foodId:"berries",amount:80,unit:"g"}]},
+  {id:"suggest-afternoon-2",name:"Apple & Yoghurt",meal:"Afternoon Tea",score:8,reason:"Fruit and dairy with useful fibre and protein.",items:[{foodId:"apple",amount:1,unit:"item"},{foodId:"greek-yoghurt",amount:100,unit:"g"}]},
+  {id:"suggest-supper-1",name:"Light Milk & Banana",meal:"Supper",score:8,reason:"Simple fruit and dairy option for a lighter supper.",items:[{foodId:"light-milk-au",amount:200,unit:"mL"},{foodId:"banana",amount:1,unit:"item"}]},
+  {id:"suggest-supper-2",name:"Greek Yoghurt & Berries",meal:"Supper",score:8,reason:"A modest dairy and fruit option.",items:[{foodId:"greek-yoghurt",amount:120,unit:"g"},{foodId:"berries",amount:80,unit:"g"}]}
 ];
 
 const EXT_DEFAULTS = {
-  version:"0.6.1", diary:{}, daySettings:{}, water:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[],
+  version:"0.6.2", diary:{}, daySettings:{}, water:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[],
   family:{enabled:false,name:"",email:""}, connections:{}, customFoods:[], savedFoodIds:[], recipes:[], mealTemplates:[],
-  ui:{diaryDate:isoToday(), libraryTab:"all", scanMode:"food"}
+  ui:{diaryDate:isoToday(),progressDate:isoToday(),plannerDate:isoToday(),diaryView:"all",libraryTab:"all",scanMode:"food",pendingMeal:"",plannerResults:{},plannerRejected:{}}
 };
 function merge(target, source){
   if(!source || typeof source !== "object") return target;
@@ -87,7 +117,7 @@ function loadExt(){
       const legacy = JSON.parse(localStorage.getItem(legacyKey));
       if(legacy){
         const migrated = merge(clone(EXT_DEFAULTS),legacy);
-        migrated.version = "0.6.1";
+        migrated.version = "0.6.2";
         if(legacy.daily?.date){
           migrated.water[legacy.daily.date] = legacy.daily.water || 0;
           migrated.steps[legacy.daily.date] = legacy.daily.steps || 0;
@@ -124,10 +154,48 @@ function scaledNutrients(food,amount,unit){
   });
   return result;
 }
+function scaledFoodGroups(food,amount,unit){
+  const multiplier = foodMultiplier(food,amount,unit);
+  const result = Object.fromEntries(FOOD_GROUP_KEYS.map(key => [key,0]));
+  FOOD_GROUP_KEYS.forEach(key => { result[key] = n(food?.foodGroups?.[key]) * multiplier; });
+  return result;
+}
+function scaledWaterMl(food,amount,unit){ return Math.max(0,n(food?.waterMl) * foodMultiplier(food,amount,unit)); }
 function sumNutrients(items){
   const totals = {...ZERO_NUTRIENTS};
   items.forEach(item => NUTRIENT_KEYS.forEach(key => { if(item?.nutrients?.[key] !== null && item?.nutrients?.[key] !== undefined) totals[key] += Number(item.nutrients[key]) || 0; }));
   return totals;
+}
+function sumGroupValues(items){
+  const totals = Object.fromEntries(FOOD_GROUP_KEYS.map(key => [key,0]));
+  items.forEach(item => FOOD_GROUP_KEYS.forEach(key => { totals[key] += n(item?.foodGroups?.[key]); }));
+  return totals;
+}
+function ageForProfile(){
+  const dob=mainData().personal?.dob;if(!dob)return 40;
+  const born=new Date(`${dob}T12:00:00`),now=new Date();let age=now.getFullYear()-born.getFullYear();
+  if(now.getMonth()<born.getMonth()||(now.getMonth()===born.getMonth()&&now.getDate()<born.getDate()))age--;
+  return age;
+}
+function foodGroupGoals(){
+  const main=mainData(),age=ageForProfile(),sex=main.health?.sex,status=String(main.dietary?.["pregnancy-status"]||"").toLowerCase();
+  if(status.includes("pregnant")) return {vegetables:5,fruit:2,grains:8.5,proteinFoods:3.5,dairy:2.5};
+  if(status.includes("breast")) return {vegetables:7.5,fruit:2,grains:9,proteinFoods:2.5,dairy:2.5};
+  if(sex==="male"){
+    if(age>=71)return {vegetables:5,fruit:2,grains:4.5,proteinFoods:2.5,dairy:3.5};
+    if(age>=51)return {vegetables:5.5,fruit:2,grains:6,proteinFoods:2.5,dairy:2.5};
+    return {vegetables:6,fruit:2,grains:6,proteinFoods:3,dairy:2.5};
+  }
+  if(age>=71)return {vegetables:5,fruit:2,grains:3,proteinFoods:2,dairy:4};
+  if(age>=51)return {vegetables:5,fruit:2,grains:4,proteinFoods:2,dairy:4};
+  return {vegetables:5,fruit:2,grains:6,proteinFoods:2.5,dairy:2.5};
+}
+function hydrationReference(){
+  const main=mainData(),status=String(main.dietary?.["pregnancy-status"]||"").toLowerCase();
+  if(status.includes("breast"))return {total:3500,fluids:2600};
+  if(status.includes("pregnant"))return {total:3100,fluids:2300};
+  if(main.health?.sex==="male")return {total:3400,fluids:2600};
+  return {total:2800,fluids:2100};
 }
 function hasEnergyValue(value){ return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value)); }
 function energyText(value){ return hasEnergyValue(value) ? `${formatNumber(value)} Cal` : "Energy Not Available"; }
@@ -161,24 +229,45 @@ function scoreExplanation(score){
   if(score >= 5) return "Can fit, but serving size or meal balance may need attention.";
   return "Review the portion, ingredients and how it fits your day.";
 }
+function recipeProfile(recipe){
+  const servings=Math.max(1,n(recipe.servings)||1);
+  const items=(recipe.ingredients||[]).map(i=>{const food=getFood(i.foodId);return {foodGroups:scaledFoodGroups(food,i.amount,i.unit),waterMl:scaledWaterMl(food,i.amount,i.unit),hydrationType:food?.hydrationType||"food"};});
+  const groups=sumGroupValues(items);FOOD_GROUP_KEYS.forEach(key=>groups[key]/=servings);
+  return {foodGroups:groups,waterMl:items.reduce((sum,i)=>sum+n(i.waterMl),0)/servings,hydrationType:"food"};
+}
 function recipeAsFood(recipe){
-  return {id:recipe.id,name:recipe.name,brand:"My Recipe",category:"Recipe",country:"Australia",aliases:[recipe.name],defaultAmount:1,defaultUnit:"serve",units:{serve:1},unitLabels:{serve:"recipe serving"},serving:`1 of ${recipe.servings} servings`,nutrients:recipe.perServe,score:recipe.score || 7,source:"User Recipe",verified:false,ingredients:recipe.ingredients.map(i => i.name).join(", "),allergens:[]};
+  const profile=recipeProfile(recipe);
+  return {id:recipe.id,name:recipe.name,brand:"My Recipe",category:"Recipe",country:"Australia",aliases:[recipe.name],defaultAmount:1,defaultUnit:"serve",units:{serve:1},unitLabels:{serve:"recipe serving"},serving:`1 of ${recipe.servings} servings`,nutrients:recipe.perServe,foodGroups:recipe.foodGroups||profile.foodGroups,waterMl:n(recipe.waterMl)||profile.waterMl,hydrationType:"food",score:recipe.score || 7,source:"User Recipe",verified:false,ingredients:recipe.ingredients.map(i => i.name).join(", "),allergens:[]};
 }
 function currentGoals(date=isoToday()){
   const main = mainData();
   const r = main.recommendations || {};
-  const energy = main.personal?.energyUnit === "Cal" ? n(r.energyKj)/4.184 : n(r.energyKj)/4.184;
+  const energy = n(r.energyKj)/4.184;
   const settings = ext.daySettings[date] || {};
   const exerciseCredit = (ext.exercise || []).filter(x => x.date?.slice(0,10) === date).reduce((sum,x) => sum + n(x.credit),0);
   const calTarget = n(settings.targetCal) || whole(energy) || 2000;
-  return {calories:calTarget + exerciseCredit,baseCalories:calTarget,exerciseCredit,water:n(r.waterMl)||2200,protein:n(r.protein)||100,fat:n(r.fat)||70,carbs:n(r.carbs)||250,fibre:30,sugar:50,sodium:2000,steps:10000};
+  const hydration=hydrationReference();
+  return {calories:calTarget + exerciseCredit,baseCalories:calTarget,exerciseCredit,hydration:hydration.total,fluids:hydration.fluids,protein:n(r.protein)||100,fat:n(r.fat)||70,carbs:n(r.carbs)||250,fibre:30,sugar:50,sodium:2000,steps:10000,foodGroups:foodGroupGoals()};
 }
 function entriesForDate(date){ return ext.diary[date] || []; }
 function dayNutrition(date,statuses=["eaten"]){ return sumNutrients(entriesForDate(date).filter(e => statuses.includes(e.status))); }
+function entryFoodProfile(entry){
+  if(entry.foodGroups || entry.waterMl !== undefined)return {foodGroups:entry.foodGroups||{},waterMl:n(entry.waterMl),hydrationType:entry.hydrationType||"food"};
+  const food=getFood(entry.foodId);return {foodGroups:scaledFoodGroups(food,entry.amount,entry.unit),waterMl:scaledWaterMl(food,entry.amount,entry.unit),hydrationType:food?.hydrationType||"food"};
+}
+function dayFoodGroups(date,statuses=["eaten"]){
+  return sumGroupValues(entriesForDate(date).filter(e=>statuses.includes(e.status)).map(entry=>entryFoodProfile(entry)));
+}
+function dayHydration(date){
+  const manual=n(ext.water[date]);let drinks=manual,foodMoisture=0;
+  entriesForDate(date).filter(e=>e.status==="eaten").forEach(entry=>{const profile=entryFoodProfile(entry);if(profile.hydrationType==="drink")drinks+=profile.waterMl;else foodMoisture+=profile.waterMl;});
+  return {manual,drinks,foodMoisture,total:drinks+foodMoisture};
+}
 function daySummary(date){
   const nutrients = dayNutrition(date,["eaten"]);
   const planned = dayNutrition(date,["planned"]);
-  return {nutrients,planned,water:n(ext.water[date]),steps:n(ext.steps[date]),goals:currentGoals(date)};
+  const hydration=dayHydration(date);
+  return {nutrients,planned,hydration,water:hydration.total,steps:n(ext.steps[date]),foodGroups:dayFoodGroups(date,["eaten"]),plannedFoodGroups:dayFoodGroups(date,["planned"]),goals:currentGoals(date)};
 }
 
 function openFeature(id){
@@ -208,18 +297,64 @@ document.addEventListener("click",event => {
 
 function shiftISO(date,days){ const d = new Date((date || isoToday()) + "T12:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); }
 function mealNames(){ return ["Breakfast","Morning Smoko","Lunch","Afternoon Tea","Dinner","Supper","Other"]; }
+function plannerMealNames(){ return ["Breakfast","Morning Smoko","Lunch","Afternoon Tea","Dinner","Supper"]; }
 function statusLabel(status){ return status === "planned" ? "Planned" : "Eaten / Drunk"; }
+function relativeDateLabel(value){
+  const today=isoToday(),tomorrow=shiftISO(today,1),yesterday=shiftISO(today,-1),formatted=formatDate(value);
+  if(value===today)return `Today · ${formatted}`;
+  if(value===tomorrow)return `Tomorrow · ${formatted}`;
+  if(value===yesterday)return `Yesterday · ${formatted}`;
+  return formatted;
+}
+function contextDate(context){
+  if(context==="diary")return by("diary-date")?.value||ext.ui.diaryDate||isoToday();
+  if(context==="planner")return by("planner-date")?.value||ext.ui.plannerDate||ext.ui.diaryDate||isoToday();
+  return by("progress-date")?.value||ext.ui.progressDate||ext.ui.diaryDate||isoToday();
+}
+function updateDateControl(context,value){
+  const input=by(`${context}-date`),label=by(`${context}-date-label`);if(input)input.value=value;if(label)label.textContent=relativeDateLabel(value);
+}
+let daySettingsDirty=false;
+let daySettingsBaseline={type:"normal",targetCal:0};
+function setDaySettingsDirty(dirty){daySettingsDirty=!!dirty;by("save-day-settings")?.classList.toggle("hidden",!daySettingsDirty);}
+function updateDaySettingsDirty(){
+  const current={type:by("day-type")?.value||"normal",targetCal:whole(by("day-cal-target")?.value)};
+  setDaySettingsDirty(current.type!==daySettingsBaseline.type||current.targetCal!==daySettingsBaseline.targetCal);
+}
+function applyContextDate(context,value){
+  if(context==="diary"){ext.ui.diaryDate=value;updateDateControl("diary",value);renderDiary();}
+  else if(context==="planner"){ext.ui.plannerDate=value;updateDateControl("planner",value);clearPlannerResults();}
+  else{ext.ui.progressDate=value;updateDateControl("progress",value);renderDailyProgress();}
+  saveExt();
+}
+function requestContextDate(context,value){
+  if(context==="diary"&&daySettingsDirty){promptUnsavedDaySettings(()=>applyContextDate(context,value));return;}
+  applyContextDate(context,value);
+}
+function initialiseDateControls(){
+  ["diary","planner","progress"].forEach(context=>{
+    const control=by(`${context}-date-control`),input=by(`${context}-date`);if(!control||!input)return;
+    let startX=null;
+    control.addEventListener("touchstart",event=>{startX=event.changedTouches?.[0]?.clientX??null;},{passive:true});
+    control.addEventListener("touchend",event=>{if(startX===null)return;const endX=event.changedTouches?.[0]?.clientX??startX,delta=endX-startX;startX=null;if(Math.abs(delta)>45)requestContextDate(context,shiftISO(contextDate(context),delta<0?1:-1));},{passive:true});
+    input.addEventListener("change",()=>requestContextDate(context,input.value||isoToday()));
+  });
+}
+document.addEventListener("click",event=>{
+  const shift=event.target.closest("[data-date-shift]");if(shift){const context=shift.dataset.dateTarget;requestContextDate(context,shiftISO(contextDate(context),n(shift.dataset.dateShift)));return;}
+  const picker=event.target.closest("[data-date-picker]");if(picker){const input=by(`${picker.dataset.datePicker}-date`);if(input?.showPicker)input.showPicker();else input?.click();}
+});
 
 function renderHomeSummary(){
   if(!by("a05-home-summary")) return;
   const date = isoToday();
-  const {nutrients,water,steps,goals} = daySummary(date);
+  const {nutrients,hydration,steps,goals} = daySummary(date);
   by("a05-home-date").textContent = formatDate(date);
   const settings = ext.daySettings[date];
   by("a05-home-context").textContent = settings?.type === "fasting" ? `Flexible fasting day · ${goals.baseCalories} Cal target` : "Your live progress comes directly from your diary entries.";
   const cards = [
     ["Energy",nutrients.calories,goals.calories,"Cal",false],["Protein",nutrients.protein,goals.protein,"g",false],
-    ["Water",water,goals.water,"mL",false],["Steps",steps,goals.steps,"",false]
+    ["Hydration",hydration.total,goals.hydration,"mL",false],["Steps",steps,goals.steps,"",false]
   ];
   by("a05-home-summary").innerHTML = cards.map(([label,value,target,unit]) => progressCard(label,value,target,unit,label === "Energy" ? "energy" : "positive",date)).join("");
 }
@@ -241,49 +376,37 @@ function progressCard(label,value,target,unit,type,date){
   const pct = Math.min(100,Math.max(0,target ? value/target*100 : 0));
   return `<div class="progress-card ${state}"><div><strong>${esc(label)}</strong><span>${formatNumber(value)} / ${formatNumber(target)} ${esc(unit)}</span></div><div class="progress-track"><i style="width:${pct}%"></i></div><small>${text}</small></div>`;
 }
+function foodGroupCard(key,value,target,date){
+  const pct=Math.min(100,Math.max(0,target?value/target*100:0));
+  return `<div class="food-group-card"><div><strong>${esc(FOOD_GROUP_LABELS[key])}</strong><span>${formatNumber(value,true)} of ${formatNumber(target,true)} serves</span></div><div class="progress-track"><i style="width:${pct}%"></i></div></div>`;
+}
 
 // Diary and entries
 function diaryDate(){ return by("diary-date")?.value || ext.ui.diaryDate || isoToday(); }
 function renderDiary(){
-  const dateInput = by("diary-date");
-  if(!dateInput) return;
-  dateInput.value = ext.ui.diaryDate || isoToday();
-  const date = dateInput.value;
-  ext.ui.diaryDate = date;
-  saveExt();
-  const goals = currentGoals(date);
-  const settings = ext.daySettings[date] || {type:"normal",targetCal:goals.baseCalories};
-  by("day-type").value = settings.type || "normal";
-  by("day-cal-target").value = n(settings.targetCal) || goals.baseCalories;
-  by("day-settings-note").textContent = settings.type === "fasting" ? "This is a flexible fasting day for this date only. Change the target whenever your plan changes." : "Normal day. Exercise calorie credit is shown separately and only added according to your selected preference.";
-  const summary = daySummary(date);
-  by("diary-day-summary").innerHTML = [
-    ["Energy Eaten",summary.nutrients.calories,summary.goals.calories,"Cal","energy"],
-    ["Protein",summary.nutrients.protein,summary.goals.protein,"g","positive"],
-    ["Fibre",summary.nutrients.fibre,summary.goals.fibre,"g","positive"],
-    ["Sodium",summary.nutrients.sodium,summary.goals.sodium,"mg","limit"]
-  ].map(x => progressCard(...x,date)).join("");
-  const diagnostics = calculationDiagnostics(date);
-  const diagnosticBox = by("diary-calculation-status");
-  if(diagnosticBox){
-    diagnosticBox.className = `calculation-status ${diagnostics.missing.length ? "warning" : diagnostics.eaten.length ? "ok" : "neutral"}`;
-    diagnosticBox.innerHTML = diagnostics.missing.length
-      ? `<strong>Daily total needs attention</strong><span>${diagnostics.missing.length} eaten ${diagnostics.missing.length===1?"entry has":"entries have"} no usable energy value and ${diagnostics.missing.length===1?"is":"are"} excluded from the total.</span>`
-      : diagnostics.eaten.length
-        ? `<strong>Calculation check passed</strong><span>${diagnostics.eaten.length} eaten ${diagnostics.eaten.length===1?"entry":"entries"} counted · ${formatNumber(diagnostics.total)} Cal total.</span>`
-        : `<strong>No food counted yet</strong><span>Planned food remains visible but does not count as eaten.</span>`;
-  }
-  const entries = entriesForDate(date);
-  by("diary-meals").innerHTML = mealNames().map(meal => {
-    const mealEntries = entries.filter(e => e.meal === meal);
-    const totals = sumNutrients(mealEntries.filter(e => e.status === "eaten"));
-    return `<section class="card meal-section"><div class="meal-heading"><div><h3>${esc(meal)}</h3><p>${mealEntries.length ? `${mealEntries.length} ${mealEntries.length === 1 ? "entry" : "entries"} · ${formatNumber(totals.calories)} Cal eaten` : "Nothing planned or logged yet."}</p></div><div class="quick-action-row"><button data-add-to-meal="${esc(meal)}" class="secondary">Add Food</button>${mealEntries.length ? `<button data-save-meal-template="${esc(meal)}" class="secondary">Save This Meal</button>` : ""}</div></div><div class="meal-entry-list">${mealEntries.length ? mealEntries.map(entryCard).join("") : `<div class="empty-state">Use Add Food, Voice or Text Log, or Meal Planner.</div>`}</div></section>`;
+  const date=ext.ui.diaryDate||by("diary-date")?.value||isoToday();ext.ui.diaryDate=date;updateDateControl("diary",date);
+  const goals=currentGoals(date),settings=ext.daySettings[date]||{type:"normal",targetCal:goals.baseCalories};
+  by("day-type").value=settings.type||"normal";by("day-cal-target").value=n(settings.targetCal)||goals.baseCalories;
+  daySettingsBaseline={type:by("day-type").value,targetCal:whole(by("day-cal-target").value)};setDaySettingsDirty(false);
+  by("day-settings-note").textContent=settings.type==="fasting"?"Flexible fasting day for this date only.":"Normal day. Separately logged exercise is credited according to your profile choice.";
+  const summary=daySummary(date),consumed=summary.nutrients.calories,remaining=Math.max(0,summary.goals.calories-consumed);
+  by("diary-day-summary").innerHTML=`
+    <article class="summary-slide"><span>Today’s Energy</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${formatNumber(summary.goals.calories)} Cal</strong></div><div><small>Consumed</small><strong>${formatNumber(consumed)} Cal</strong></div><div><small>Remaining</small><strong>${formatNumber(remaining)} Cal</strong></div></div></article>
+    <article class="summary-slide"><span>Macronutrients</span><div class="diary-kpi-row"><div><small>Protein</small><strong>${formatNumber(summary.nutrients.protein)} g</strong></div><div><small>Fat</small><strong>${formatNumber(summary.nutrients.fat)} g</strong></div><div><small>Carbs</small><strong>${formatNumber(summary.nutrients.carbs)} g</strong></div></div></article>
+    <article class="summary-slide"><span>Five Food Groups</span><div class="mini-food-groups">${FOOD_GROUP_KEYS.map(key=>`<div><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(summary.foodGroups[key],true)}/${formatNumber(summary.goals.foodGroups[key],true)}</strong></div>`).join("")}</div></article>`;
+  const view=ext.ui.diaryView||"all";qa("[data-diary-view]").forEach(button=>button.classList.toggle("active",button.dataset.diaryView===view));
+  const diagnostics=calculationDiagnostics(date),diagnosticBox=by("diary-calculation-status");
+  diagnosticBox.className=`calculation-status ${diagnostics.missing.length?"warning":diagnostics.eaten.length?"ok":"neutral"}`;
+  diagnosticBox.innerHTML=diagnostics.missing.length?`<strong>Total needs attention</strong><span>${diagnostics.missing.length} eaten ${diagnostics.missing.length===1?"entry is":"entries are"} excluded because energy is unavailable.</span>`:diagnostics.eaten.length?`<strong>${formatNumber(diagnostics.total)} Cal eaten</strong><span>${diagnostics.eaten.length} ${diagnostics.eaten.length===1?"entry":"entries"} counted.</span>`:`<strong>No food counted yet</strong><span>Planned food stays separate until marked eaten.</span>`;
+  const entries=entriesForDate(date);
+  by("diary-meals").innerHTML=mealNames().map(meal=>{
+    const allMealEntries=entries.filter(e=>e.meal===meal),shown=allMealEntries.filter(e=>view==="all"||e.status===view),eatenTotals=sumNutrients(allMealEntries.filter(e=>e.status==="eaten"));
+    return `<section class="meal-list-section"><header class="meal-list-heading"><div><h3>${esc(meal)}</h3><strong>${formatNumber(eatenTotals.calories)} Cal</strong></div></header><div class="meal-simple-list">${shown.length?shown.map(entryCard).join(""):`<p class="meal-empty">${view==="all"?"No entries yet.":`No ${view} entries.`}</p>`}</div><footer class="meal-list-actions"><button data-add-to-meal="${esc(meal)}" aria-label="Add food to ${esc(meal)}">＋</button><button data-meal-menu="${esc(meal)}" aria-label="More ${esc(meal)} actions">•••</button></footer><div class="meal-menu-actions hidden" data-meal-actions="${esc(meal)}">${allMealEntries.length?`<button data-save-meal-template="${esc(meal)}">Save as Reusable Meal</button><button data-mark-meal-eaten="${esc(meal)}">Mark Planned Items Eaten</button>`:`<span>No meal actions yet.</span>`}</div></section>`;
   }).join("");
+  saveExt();
 }
 function entryCard(entry){
-  const source = entry.source || "Diary Entry";
-  const score = n(entry.score) || 0;
-  return `<article class="diary-entry ${entry.status === "planned" ? "planned-entry" : ""}" data-entry-id="${esc(entry.id)}"><div class="entry-main"><span class="entry-icon">${entry.status === "planned" ? "🗓️" : "✓"}</span><div><strong>${esc(entry.name)}</strong><small>${formatNumber(entry.amount,true)} ${esc(entry.unitLabel || entry.unit)} · ${statusLabel(entry.status)} · ${esc(energyText(entry.nutrients?.calories))}</small><p>${esc(source)}${score ? ` · Health Score ${score}/10` : ""}</p></div></div><div class="entry-actions">${entry.status === "planned" ? `<button data-entry-eaten="${esc(entry.id)}" class="primary small-action">Mark Eaten</button>` : ""}<button data-entry-edit="${esc(entry.id)}">Edit</button><button data-entry-copy="${esc(entry.id)}">Copy</button><button data-entry-delete="${esc(entry.id)}" class="delete-action">Delete</button></div></article>`;
+  return `<article class="simple-diary-entry ${entry.status==="planned"?"planned-entry":""}" data-entry-id="${esc(entry.id)}"><button class="entry-open" data-entry-edit="${esc(entry.id)}"><span><strong>${esc(entry.name)}</strong><small>${formatNumber(entry.amount,true)} ${esc(entry.unitLabel||entry.unit)}${entry.status==="planned"?" · Planned":""}</small></span><b>${formatNumber(entry.nutrients?.calories)} Cal</b></button><button class="entry-more" data-entry-menu="${esc(entry.id)}" aria-label="More actions for ${esc(entry.name)}">•••</button><div class="entry-inline-actions hidden" data-entry-actions="${esc(entry.id)}">${entry.status==="planned"?`<button data-entry-eaten="${esc(entry.id)}">Mark Eaten</button>`:""}<button data-entry-copy="${esc(entry.id)}">Copy</button><button data-entry-delete="${esc(entry.id)}" class="delete-action">Delete</button></div></article>`;
 }
 function addEntry(entry){
   const date = entry.date || isoToday();
@@ -345,7 +468,7 @@ function saveEditorEntry(andSaveFood=false){
   }
   const record = {
     id:editorState.entryId || uid("entry"),foodId:food.id,name:food.name,brand:food.brand || "",date,meal:by("entry-meal").value,status:by("entry-status").value,
-    amount,unit,unitLabel:unitLabel(food,unit),time:by("entry-time").value,notes:by("entry-notes").value,nutrients:values,score:food.score,source:editorState.source || food.source,createdAt:new Date().toISOString()
+    amount,unit,unitLabel:unitLabel(food,unit),time:by("entry-time").value,notes:by("entry-notes").value,nutrients:values,foodGroups:scaledFoodGroups(food,amount,unit),waterMl:scaledWaterMl(food,amount,unit),hydrationType:food.hydrationType||"food",score:food.score,source:editorState.source || food.source,createdAt:new Date().toISOString()
   };
   if(editorState.entryId){
     const found = findEntry(editorState.entryId);
@@ -366,17 +489,22 @@ function saveEditorEntry(andSaveFood=false){
 by("save-food-entry")?.addEventListener("click",() => saveEditorEntry(false));
 by("save-food-entry-and-food")?.addEventListener("click",() => saveEditorEntry(true));
 
-by("diary-date")?.addEventListener("change",() => {ext.ui.diaryDate=by("diary-date").value;saveExt();renderDiary();});
-by("diary-today")?.addEventListener("click",() => {ext.ui.diaryDate=isoToday();saveExt();renderDiary();});
+by("day-type")?.addEventListener("change",updateDaySettingsDirty);
+by("day-cal-target")?.addEventListener("input",updateDaySettingsDirty);
+qa("[data-diary-view]").forEach(button=>button.addEventListener("click",()=>{ext.ui.diaryView=button.dataset.diaryView;saveExt();renderDiary();}));
 document.addEventListener("click",event => {
-  const shift = event.target.closest("[data-diary-shift]");
-  if(shift){ ext.ui.diaryDate=shiftISO(diaryDate(),n(shift.dataset.diaryShift));saveExt();renderDiary();return; }
   const add = event.target.closest("[data-add-to-meal]");
   if(add){ ext.ui.pendingMeal=add.dataset.addToMeal;ext.ui.libraryTab="all";saveExt();openFeature("food-library");return; }
   const edit = event.target.closest("[data-entry-edit]");
   if(edit){ const found=findEntry(edit.dataset.entryEdit); if(found) prepareEntry(getFood(found.entry.foodId) || snapshotFood(found.entry),{entry:found.entry}); return; }
+  const menu=event.target.closest("[data-entry-menu]");
+  if(menu){const panel=q(`[data-entry-actions="${CSS.escape(menu.dataset.entryMenu)}"]`);panel?.classList.toggle("hidden");return;}
+  const mealMenu=event.target.closest("[data-meal-menu]");
+  if(mealMenu){q(`[data-meal-actions="${CSS.escape(mealMenu.dataset.mealMenu)}"]`)?.classList.toggle("hidden");return;}
   const eaten = event.target.closest("[data-entry-eaten]");
   if(eaten){ const found=findEntry(eaten.dataset.entryEaten);if(found){found.entry.status="eaten";saveExt();renderDiary();const total=dayNutrition(found.entry.date,["eaten"]).calories;showActionToast(`${found.entry.name} marked as eaten — ${energyText(found.entry.nutrients?.calories)}. New daily total: ${formatNumber(total)} Cal.`,null,8000);}return; }
+  const markMeal=event.target.closest("[data-mark-meal-eaten]");
+  if(markMeal){const date=diaryDate(),items=entriesForDate(date).filter(e=>e.meal===markMeal.dataset.markMealEaten&&e.status==="planned");items.forEach(e=>e.status="eaten");saveExt();renderDiary();showActionToast(items.length?`${items.length} planned ${items.length===1?"item":"items"} marked eaten.`:"There were no planned items to mark eaten.",null,5500);return;}
   const del = event.target.closest("[data-entry-delete]");
   if(del){ requestDeleteEntry(del.dataset.entryDelete);return; }
   const copy = event.target.closest("[data-entry-copy]");
@@ -384,12 +512,13 @@ document.addEventListener("click",event => {
   const template = event.target.closest("[data-save-meal-template]");
   if(template){ saveMealTemplatePrompt(template.dataset.saveMealTemplate);return; }
 });
-by("save-day-settings")?.addEventListener("click",() => {
-  const date=diaryDate();ext.daySettings[date]={type:by("day-type").value,targetCal:whole(by("day-cal-target").value)};saveExt();renderDiary();showActionToast("Day settings saved.",null,5000);
-});
+function saveDaySettings(showMessage=true){
+  const date=diaryDate();ext.daySettings[date]={type:by("day-type").value,targetCal:whole(by("day-cal-target").value)};saveExt();daySettingsBaseline=clone(ext.daySettings[date]);setDaySettingsDirty(false);renderDiary();if(showMessage)showActionToast("Day settings saved.",null,5000);
+}
+by("save-day-settings")?.addEventListener("click",()=>saveDaySettings(true));
 
 function snapshotFood(entry){
-  return {id:entry.foodId || uid("snapshot"),name:entry.name,brand:entry.brand,defaultAmount:entry.amount,defaultUnit:entry.unit,units:{[entry.unit]:1/entry.amount},unitLabels:{[entry.unit]:entry.unitLabel},serving:`${entry.amount} ${entry.unitLabel}`,nutrients:entry.nutrients,score:entry.score,source:entry.source};
+  return {id:entry.foodId || uid("snapshot"),name:entry.name,brand:entry.brand,defaultAmount:entry.amount,defaultUnit:entry.unit,units:{[entry.unit]:1/entry.amount},unitLabels:{[entry.unit]:entry.unitLabel},serving:`${entry.amount} ${entry.unitLabel}`,nutrients:entry.nutrients,foodGroups:entry.foodGroups||{},waterMl:n(entry.waterMl),hydrationType:entry.hydrationType||"food",score:entry.score,source:entry.source};
 }
 function requestDeleteEntry(id){
   const found=findEntry(id);if(!found)return;
@@ -419,7 +548,12 @@ let modalConfirm = null;
 function openModal(title,copy,confirmLabel,onConfirm,extra=""){
   by("a05-modal-title").textContent=title;by("a05-modal-copy").textContent=copy;by("a05-modal-extra").innerHTML=extra;by("a05-modal-confirm").textContent=confirmLabel;by("a05-modal-confirm").className=confirmLabel.toLowerCase().includes("delete")?"danger-button":"primary";modalConfirm=onConfirm;by("a05-modal").classList.remove("hidden");
 }
-function closeModal(){by("a05-modal").classList.add("hidden");modalConfirm=null;}
+function closeModal(){by("a05-modal").classList.add("hidden");modalConfirm=null;if(by("a05-modal-cancel"))by("a05-modal-cancel").textContent="Cancel";}
+function promptUnsavedDaySettings(next){
+  openModal("Unsaved Day Settings","You changed the day type or energy target.","Save",()=>{saveDaySettings(false);next();},`<button id="discard-day-settings" class="secondary wide" type="button">Discard Changes</button>`);
+  by("a05-modal-cancel").textContent="Stay Here";
+  by("discard-day-settings")?.addEventListener("click",()=>{setDaySettingsDirty(false);closeModal();next();},{once:true});
+}
 by("a05-modal-cancel")?.addEventListener("click",closeModal);
 by("a05-modal-confirm")?.addEventListener("click",() => {const fn=modalConfirm;closeModal();fn?.();});
 let toastUndo=null,toastTimer=null;
@@ -466,23 +600,22 @@ function activeLibraryTab(){ return ext.ui.libraryTab || "all"; }
 function renderLibrary(){
   qa("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab===activeLibraryTab()));
   by("food-search").value=ext.ui.foodSearch||"";
+  const context=by("library-entry-context");
+  if(context){const pending=ext.ui.pendingMeal;context.classList.toggle("hidden",!pending);context.innerHTML=pending?`<span>Adding to <strong>${esc(pending)}</strong> on ${esc(relativeDateLabel(ext.ui.diaryDate||isoToday()))}</span><button data-clear-pending-meal>Clear</button>`:"";}
   const tab=activeLibraryTab(),query=by("food-search").value;
-  let content=[];
-  if(tab==="all"||tab==="saved"||tab==="custom"){
-    const ranked=allFoods().filter(food=>tab==="saved"?ext.savedFoodIds.includes(food.id):tab==="custom"?(food.source==="User Created"):food.category!=="Recipe").map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
-    const strongMatch=ranked.some(item=>item.rank>=760);
-    const visible=ranked.filter(item=>item.rank>=(strongMatch?760:620));
-    content=visible.map(item=>item.food);
-    const closeNote=query&&visible.length&&!strongMatch?`<div class="card search-guidance"><strong>Showing close spelling matches for “${esc(query)}”</strong><p>Review the food name carefully. Unrelated loose matches are excluded.</p></div>`:"";
-    by("food-results").innerHTML=content.length?`${closeNote}<div class="food-card-grid">${content.map(foodCard).join("")}</div>`:`<div class="card empty-state"><strong>No close match found.</strong><p>Try fewer words, check the spelling, search another food area, or create a private My Food entry.</p></div>`;
-  } else if(tab==="recipes") renderRecipeLibrary();
-  else renderMealLibrary();
+  if(tab==="recipes"){renderRecipeLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}
+  if(tab==="meals"){renderMealLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}
+  const ranked=allFoods().filter(food=>food.category!=="Recipe").filter(food=>tab==="saved"?ext.savedFoodIds.includes(food.id):tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
+  const strongMatch=ranked.some(item=>item.rank>=760),visible=query?ranked.filter(item=>item.rank>=(strongMatch?760:620)):ranked;
+  const closeNote=query&&visible.length&&!strongMatch?`<div class="search-guidance compact-search-guidance"><strong>Showing close spelling matches for “${esc(query)}”</strong></div>`:"";
+  by("food-results").innerHTML=visible.length?`${closeNote}${visible.map(item=>resourceFoodRow(item.food)).join("")}`:`<div class="resource-empty"><strong>No close match found.</strong><p>Try fewer words or create a private My Food entry.</p></div>`;
   renderRecipeSelectOptions();renderScanSelect();
 }
-function foodCard(food){
-  const safety=foodSafety(food);const saved=ext.savedFoodIds.includes(food.id);
-  return `<article class="food-card ${safety.blocked?"food-warning":""}"><div class="food-card-head"><div><span class="source-chip ${food.verified?"verified":"estimated"}">${esc(foodRecordType(food))}</span><h3>${esc(food.name)}</h3><p>${esc(food.brand||"")} ${food.country?`· ${esc(food.country)}`:""}</p></div><span class="health-score">${whole(food.score)}/10</span></div><p><strong>${esc(food.serving)}</strong> · ${formatNumber(food.nutrients.calories)} Cal</p><p class="macro-line">P ${nutrientText(food.nutrients.protein,"g",true)} · C ${nutrientText(food.nutrients.carbs,"g",true)} · F ${nutrientText(food.nutrients.fat,"g",true)}</p><p class="fine">${esc(food.source)}${safety.blocked?`<br><b class="danger-text">${esc(safety.message)}</b>`:""}</p><div class="food-card-actions"><button data-food-add="${esc(food.id)}" class="primary">Review & Add</button><button data-food-save="${esc(food.id)}" class="secondary">${saved?"Saved ✓":"Save Food"}</button><button data-food-details="${esc(food.id)}" class="secondary">Nutrition Details</button></div></article>`;
+function resourceFoodRow(food){
+  const saved=ext.savedFoodIds.includes(food.id),safety=foodSafety(food);
+  return `<article class="resource-row ${safety.blocked?"food-warning":""}"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}</strong><small>${esc([food.brand,food.serving,energyText(food.nutrients?.calories)].filter(Boolean).join(" · "))}</small></button><button class="resource-save ${saved?"saved":""}" data-food-save="${esc(food.id)}" aria-label="${saved?"Remove from":"Save to"} Saved Foods">${saved?"✓":"☆"}</button><button class="resource-add" data-food-add="${esc(food.id)}" aria-label="Review and add ${esc(food.name)}">＋</button></article>`;
 }
+function foodCard(food){return resourceFoodRow(food);}
 document.addEventListener("click",event=>{
   const tab=event.target.closest("[data-library-tab]");if(tab){ext.ui.libraryTab=tab.dataset.libraryTab;saveExt();renderLibrary();return;}
   const add=event.target.closest("[data-food-add]");if(add){const food=getFood(add.dataset.foodAdd);prepareEntry(food,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Breakfast",status:"eaten"});return;}
@@ -491,9 +624,11 @@ document.addEventListener("click",event=>{
   const recipeAdd=event.target.closest("[data-recipe-add]");if(recipeAdd){prepareEntry(getFood(recipeAdd.dataset.recipeAdd),{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Dinner"});return;}
   const mealAdd=event.target.closest("[data-meal-add]");if(mealAdd){addMealTemplate(mealAdd.dataset.mealAdd);return;}
   const mealDelete=event.target.closest("[data-meal-delete]");if(mealDelete){deleteMealTemplate(mealDelete.dataset.mealDelete);return;}
+  if(event.target.closest("[data-clear-pending-meal]")){ext.ui.pendingMeal="";saveExt();renderLibrary();return;}
 });
 by("food-search")?.addEventListener("input",()=>{ext.ui.foodSearch=by("food-search").value;saveExt();renderLibrary();});
 by("clear-food-search")?.addEventListener("click",()=>{ext.ui.foodSearch="";by("food-search").value="";saveExt();renderLibrary();});
+by("resource-add-button")?.addEventListener("click",()=>by("resource-add-menu")?.classList.toggle("hidden"));
 function toggleSavedFood(id){
   const food=getFood(id);if(!food)return;
   const idx=ext.savedFoodIds.indexOf(id);
@@ -501,15 +636,17 @@ function toggleSavedFood(id){
 }
 function showFoodDetails(id){
   const food=getFood(id);if(!food)return;
-  const safety=foodSafety(food);
-  openModal(food.name,`${food.serving} · ${food.source}`,"Close",()=>{},`${nutritionCards(food.nutrients)}<p><strong>Ingredients:</strong> ${esc(food.ingredients||"Not Available")}</p><p><strong>Health Score ${whole(food.score)}/10:</strong> ${esc(scoreExplanation(food.score))}</p>${safety.blocked?`<p class="danger-text"><strong>Profile warning:</strong> ${esc(safety.message)}</p>`:""}`);
+  const safety=foodSafety(food),groups=scaledFoodGroups(food,defaultAmount(food),defaultUnit(food));
+  openModal(food.name,`${food.serving} · ${food.source}`,"Close",()=>{},`${nutritionCards(food.nutrients)}<p><strong>Food-group contribution:</strong> ${FOOD_GROUP_KEYS.filter(key=>groups[key]>0).map(key=>`${esc(FOOD_GROUP_LABELS[key])} ${formatNumber(groups[key],true)} serve`).join(" · ")||"Not yet classified"}</p><p><strong>Estimated water:</strong> ${formatNumber(food.waterMl)} mL per listed serving</p><p><strong>Ingredients:</strong> ${esc(food.ingredients||"Not Available")}</p><p><strong>Health Score ${whole(food.score)}/10:</strong> ${esc(scoreExplanation(food.score))}</p>${safety.blocked?`<p class="danger-text"><strong>Profile warning:</strong> ${esc(safety.message)}</p>`:""}`);
   by("a05-modal-confirm").className="primary";
 }
-function renderRecipeLibrary(){
-  by("food-results").innerHTML=ext.recipes.length?`<div class="food-card-grid">${ext.recipes.map(r=>foodCard(recipeAsFood(r))).join("")}</div>`:`<div class="card empty-state">No recipes saved yet. Use Create Recipe for mixed homemade foods such as rissoles, casseroles or soups.</div>`;
+function renderRecipeLibrary(query=""){
+  const recipes=ext.recipes.filter(r=>!query||searchRank(recipeAsFood(r),query)>0);
+  by("food-results").innerHTML=recipes.length?recipes.map(r=>{const food=recipeAsFood(r);return `<article class="resource-row"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}</strong><small>${esc(food.serving)} · ${energyText(food.nutrients.calories)}</small></button><button class="resource-add" data-recipe-add="${esc(food.id)}">＋</button></article>`;}).join(""):`<div class="resource-empty">No recipes saved yet.</div>`;
 }
-function renderMealLibrary(){
-  by("food-results").innerHTML=ext.mealTemplates.length?`<div class="food-card-grid">${ext.mealTemplates.map(meal=>{const totals=sumNutrients(meal.items);return `<article class="food-card"><h3>${esc(meal.name)}</h3><p>${meal.items.length} ${meal.items.length===1?"item":"items"} · ${formatNumber(totals.calories)} Cal</p><ul class="compact-list">${meal.items.map(i=>`<li>${esc(i.name)} — ${formatNumber(i.amount,true)} ${esc(i.unitLabel||i.unit)}</li>`).join("")}</ul><div class="food-card-actions"><button data-meal-add="${esc(meal.id)}" class="primary">Review & Add Meal</button><button data-meal-delete="${esc(meal.id)}" class="delete-action">Delete Saved Meal</button></div></article>`}).join("")}</div>`:`<div class="card empty-state">No saved meals yet. Save any meal from the Food Diary.</div>`;
+function renderMealLibrary(query=""){
+  const meals=ext.mealTemplates.filter(meal=>!query||normalise(meal.name).includes(normalise(query)));
+  by("food-results").innerHTML=meals.length?meals.map(meal=>{const totals=sumNutrients(meal.items);return `<article class="resource-row"><button class="resource-main" data-meal-add="${esc(meal.id)}"><strong>${esc(meal.name)}</strong><small>${meal.items.length} ${meal.items.length===1?"item":"items"} · ${formatNumber(totals.calories)} Cal</small></button><button class="resource-delete" data-meal-delete="${esc(meal.id)}">•••</button><button class="resource-add" data-meal-add="${esc(meal.id)}">＋</button></article>`;}).join(""):`<div class="resource-empty">No saved meals yet. Save a meal from the Diary.</div>`;
 }
 function addMealTemplate(id){
   const template=ext.mealTemplates.find(m=>m.id===id);if(!template)return;
@@ -527,7 +664,7 @@ by("save-custom-food")?.addEventListener("click",()=>{
   if(!name||cal===""){by("custom-food-error").textContent="Enter a food name and Calories.";return;}
   const nutrientValue=id=>by(id).value===""?null:Number(by(id).value);
   const amount=n(by("custom-serving-amount").value)||1,unit=by("custom-serving-unit").value;
-  const food={id:uid("custom"),name,brand:by("custom-food-brand").value.trim(),category:"Custom Food",country:"Australia",aliases:[name],defaultAmount:amount,defaultUnit:unit,units:{[unit]:1/amount},unitLabels:{[unit]:unit},serving:`${amount} ${unit}`,nutrients:{calories:Number(cal),protein:nutrientValue("custom-protein"),carbs:nutrientValue("custom-carbs"),fat:nutrientValue("custom-fat"),satFat:nutrientValue("custom-sat-fat"),fibre:nutrientValue("custom-fibre"),sugar:nutrientValue("custom-sugar"),sodium:nutrientValue("custom-sodium")},score:7,source:"User Created",verified:false,ingredients:by("custom-ingredients").value.trim(),allergens:[]};
+  const food={id:uid("custom"),name,brand:by("custom-food-brand").value.trim(),category:"Custom Food",country:"Australia",aliases:[name],defaultAmount:amount,defaultUnit:unit,units:{[unit]:1/amount},unitLabels:{[unit]:unit},serving:`${amount} ${unit}`,nutrients:{calories:Number(cal),protein:nutrientValue("custom-protein"),carbs:nutrientValue("custom-carbs"),fat:nutrientValue("custom-fat"),satFat:nutrientValue("custom-sat-fat"),fibre:nutrientValue("custom-fibre"),sugar:nutrientValue("custom-sugar"),sodium:nutrientValue("custom-sodium")},foodGroups:{},waterMl:0,hydrationType:"food",score:7,source:"User Created",verified:false,ingredients:by("custom-ingredients").value.trim(),allergens:[]};
   ext.customFoods.push(food);ext.savedFoodIds.push(food.id);saveExt();["custom-food-name","custom-food-brand","custom-cal","custom-protein","custom-carbs","custom-fat","custom-sat-fat","custom-fibre","custom-sugar","custom-sodium","custom-ingredients"].forEach(id=>by(id).value="");ext.ui.libraryTab="custom";openFeature("food-library");showActionToast(`${food.name} saved to My Foods.`,null,6000);
 });
 
@@ -554,7 +691,7 @@ by("recipe-servings")?.addEventListener("input",renderRecipeDraft);
 by("save-recipe")?.addEventListener("click",()=>{
   const name=by("recipe-name").value.trim(),servings=Math.max(1,whole(by("recipe-servings").value));if(!name||!recipeDraft.length){by("recipe-error").textContent="Enter a recipe name and at least one ingredient.";return;}
   const total=sumNutrients(recipeDraft),per=Object.fromEntries(Object.entries(total).map(([k,v])=>[k,v/servings]));const score=Math.max(1,Math.min(10,round1(recipeDraft.reduce((sum,i)=>sum+n(i.score),0)/recipeDraft.length)));
-  const recipe={id:uid("recipe"),name,servings,notes:by("recipe-notes").value,ingredients:clone(recipeDraft),perServe:per,score,createdAt:new Date().toISOString()};ext.recipes.push(recipe);ext.savedFoodIds.push(recipe.id);saveExt();recipeDraft=[];by("recipe-name").value="";by("recipe-notes").value="";ext.ui.libraryTab="recipes";openFeature("food-library");showActionToast(`${recipe.name} saved as a recipe.`,null,6000);
+  const profile=recipeProfile({servings,ingredients:recipeDraft});const recipe={id:uid("recipe"),name,servings,notes:by("recipe-notes").value,ingredients:clone(recipeDraft),perServe:per,foodGroups:profile.foodGroups,waterMl:profile.waterMl,score,createdAt:new Date().toISOString()};ext.recipes.push(recipe);ext.savedFoodIds.push(recipe.id);saveExt();recipeDraft=[];by("recipe-name").value="";by("recipe-notes").value="";ext.ui.libraryTab="recipes";openFeature("food-library");showActionToast(`${recipe.name} saved as a recipe.`,null,6000);
 });
 
 // Voice and text logging
@@ -599,7 +736,7 @@ document.addEventListener("click",event=>{const b=event.target.closest("[data-re
 by("cancel-voice-review")?.addEventListener("click",()=>by("voice-review").classList.add("hidden"));
 by("confirm-voice-log")?.addEventListener("click",()=>{
   if(!voiceParsed.items?.length)return;const date=by("voice-date").value||isoToday(),meal=by("voice-meal").value;ext.diary[date] ||= [];
-  voiceParsed.items.forEach(item=>{const food=getFood(item.foodId);ext.diary[date].push({id:uid("entry"),foodId:food.id,name:food.name,brand:food.brand,date,meal,status:"eaten",amount:item.amount,unit:item.unit,unitLabel:unitLabel(food,item.unit),time:new Date().toTimeString().slice(0,5),notes:"Added after voice/text review",nutrients:scaledNutrients(food,item.amount,item.unit),score:food.score,source:`Voice/Text Review · ${food.source}`,createdAt:new Date().toISOString()});});saveExt();ext.ui.diaryDate=date;openFeature("food-diary");showActionToast(`${voiceParsed.items.length} ${voiceParsed.items.length===1?"item":"items"} added after review.`,null,6500);voiceParsed=[];by("voice-transcript").value="";
+  voiceParsed.items.forEach(item=>{const food=getFood(item.foodId);ext.diary[date].push({id:uid("entry"),foodId:food.id,name:food.name,brand:food.brand,date,meal,status:"eaten",amount:item.amount,unit:item.unit,unitLabel:unitLabel(food,item.unit),time:new Date().toTimeString().slice(0,5),notes:"Added after voice/text review",nutrients:scaledNutrients(food,item.amount,item.unit),foodGroups:scaledFoodGroups(food,item.amount,item.unit),waterMl:scaledWaterMl(food,item.amount,item.unit),hydrationType:food.hydrationType||"food",score:food.score,source:`Voice/Text Review · ${food.source}`,createdAt:new Date().toISOString()});});saveExt();ext.ui.diaryDate=date;openFeature("food-diary");showActionToast(`${voiceParsed.items.length} ${voiceParsed.items.length===1?"item":"items"} added after review.`,null,6500);voiceParsed=[];by("voice-transcript").value="";
 });
 
 // Scan capture and review
@@ -613,31 +750,80 @@ function updateScanPreview(){const food=getFood(by("scan-food-select")?.value);i
 by("review-scan-food")?.addEventListener("click",()=>{const food=getFood(by("scan-food-select").value);prepareEntry(food,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Other",source:`Scan Review · ${food.source}`});});
 
 // Meal planner
-function initialisePlanner(){by("planner-date").value=ext.ui.diaryDate||isoToday();renderMealSuggestions([]);}
+function selectedPlannerMeals(){return qa('input[name="planner-meal"]:checked').map(input=>input.value);}
+function updatePlannerSelectAll(){const boxes=qa('input[name="planner-meal"]'),selected=boxes.filter(x=>x.checked).length,all=by("planner-select-all");if(all){all.checked=boxes.length>0&&selected===boxes.length;all.indeterminate=selected>0&&selected<boxes.length;}}
+function clearPlannerResults(){ext.ui.plannerResults={};ext.ui.plannerRejected={};saveExt();renderMealSuggestions();}
+function initialisePlanner(){const date=ext.ui.plannerDate||ext.ui.diaryDate||isoToday();ext.ui.plannerDate=date;updateDateControl("planner",date);updatePlannerSelectAll();renderMealSuggestions();}
 function suggestionNutrition(suggestion){return sumNutrients(suggestion.items.map(i=>({nutrients:scaledNutrients(getFood(i.foodId),i.amount,i.unit)})));}
+function suggestionGroups(suggestion){return sumGroupValues(suggestion.items.map(i=>({foodGroups:scaledFoodGroups(getFood(i.foodId),i.amount,i.unit)})));}
 function suggestionSafety(suggestion){return suggestion.items.map(i=>foodSafety(getFood(i.foodId))).filter(x=>x.blocked).map(x=>x.message);}
-function renderMealSuggestions(list){
-  by("meal-suggestions").innerHTML=list.length?`<div class="food-card-grid">${list.map(s=>{const total=suggestionNutrition(s),warnings=suggestionSafety(s);return `<article class="food-card ${warnings.length?"food-warning":""}"><div class="food-card-head"><div><h3>${esc(s.name)}</h3><p>${esc(s.meal)} · ${formatNumber(total.calories)} Cal</p></div><span class="health-score">${s.score}/10</span></div><p>${esc(s.reason)}</p><ul class="compact-list">${s.items.map(i=>{const f=getFood(i.foodId);return `<li>${esc(f.name)} — ${formatNumber(i.amount,true)} ${esc(unitLabel(f,i.unit))}</li>`}).join("")}</ul>${warnings.length?`<p class="danger-text"><strong>Profile check:</strong> ${esc([...new Set(warnings)].join(" "))}</p>`:""}<button data-add-suggestion="${esc(s.id)}" class="primary wide" ${warnings.length?"disabled":""}>Add as Planned Meal</button></article>`}).join("")}</div>`:`<div class="card empty-state">Choose your preferences and select Show Suitable Suggestions.</div>`;
+function plannerChoice(meal,retry=false){
+  const min=n(by("planner-min-score")?.value),target=n(by("planner-energy")?.value)||450;
+  const current=ext.ui.plannerResults?.[meal],rejected=ext.ui.plannerRejected?.[meal]||[];
+  let candidates=MEAL_SUGGESTIONS.filter(s=>s.meal===meal&&s.score>=min&&!suggestionSafety(s).length);
+  candidates.sort((a,b)=>Math.abs(suggestionNutrition(a).calories-target)-Math.abs(suggestionNutrition(b).calories-target));
+  if(retry&&current&&!rejected.includes(current))rejected.push(current);
+  let choice=candidates.find(s=>s.id!==current&&!rejected.includes(s.id));
+  if(!choice){rejected.length=0;if(current)rejected.push(current);choice=candidates.find(s=>s.id!==current)||candidates[0];}
+  if(choice)ext.ui.plannerResults[meal]=choice.id;
+  ext.ui.plannerRejected[meal]=rejected;
+  return choice;
 }
-by("generate-meal-suggestions")?.addEventListener("click",()=>{
-  const meal=by("planner-meal").value,min=n(by("planner-min-score").value),target=n(by("planner-energy").value);let list=MEAL_SUGGESTIONS.filter(s=>s.meal===meal&&s.score>=min);list.sort((a,b)=>Math.abs(suggestionNutrition(a).calories-target)-Math.abs(suggestionNutrition(b).calories-target));renderMealSuggestions(list);
-});
-document.addEventListener("click",event=>{const b=event.target.closest("[data-add-suggestion]");if(!b)return;const s=MEAL_SUGGESTIONS.find(x=>x.id===b.dataset.addSuggestion);if(!s)return;const date=by("planner-date").value||isoToday();ext.diary[date] ||= [];s.items.forEach(i=>{const f=getFood(i.foodId);ext.diary[date].push({id:uid("entry"),foodId:f.id,name:f.name,brand:f.brand,date,meal:by("planner-meal").value,status:"planned",amount:i.amount,unit:i.unit,unitLabel:unitLabel(f,i.unit),time:"",notes:`Meal Planner · ${s.name}`,nutrients:scaledNutrients(f,i.amount,i.unit),score:f.score,source:`Meal Planner · ${f.source}`,createdAt:new Date().toISOString()});});ext.ui.diaryDate=date;saveExt();openFeature("food-diary");showActionToast(`${s.name} added as a planned meal.`,null,6500);});
+function renderMealSuggestions(){
+  const results=ext.ui.plannerResults||{},meals=Object.keys(results).filter(meal=>MEAL_SUGGESTIONS.some(s=>s.id===results[meal]));
+  const target=by("meal-suggestions");if(!target)return;
+  target.innerHTML=meals.length?`<div class="planner-results">${meals.map(meal=>{const s=MEAL_SUGGESTIONS.find(x=>x.id===results[meal]),total=suggestionNutrition(s),groups=suggestionGroups(s);return `<article class="planner-result-card"><header><div><span class="eyebrow">${esc(meal)}</span><h3>${esc(s.name)}</h3><p>${formatNumber(total.calories)} Cal · Health Score ${s.score}/10</p></div><span class="health-score">${s.score}/10</span></header><p>${esc(s.reason)}</p><ul class="compact-list">${s.items.map(i=>{const f=getFood(i.foodId);return `<li>${esc(f.name)} — ${formatNumber(i.amount,true)} ${esc(unitLabel(f,i.unit))}</li>`}).join("")}</ul><div class="planner-group-line">${FOOD_GROUP_KEYS.filter(k=>groups[k]>0).map(k=>`<span>${esc(FOOD_GROUP_LABELS[k])}: ${formatNumber(groups[k],true)}</span>`).join("")}</div><div class="planner-card-actions"><button class="primary" data-plan-accept="${esc(meal)}">Accept Meal</button><button class="secondary" data-plan-retry="${esc(meal)}">Try Again</button></div></article>`}).join("")}</div>`:`<div class="card empty-state">Tick one or more meals, then choose Plan Selected Meals.</div>`;
+  by("try-all-meal-suggestions")?.classList.toggle("hidden",!meals.length);
+}
+function generatePlannerResults(retryAll=false){
+  const meals=selectedPlannerMeals();if(!meals.length){showActionToast("Choose at least one meal to plan.",null,5000);return;}
+  ext.ui.plannerResults ||= {};ext.ui.plannerRejected ||= {};
+  meals.forEach(meal=>plannerChoice(meal,retryAll));
+  Object.keys(ext.ui.plannerResults).forEach(meal=>{if(!meals.includes(meal))delete ext.ui.plannerResults[meal];});
+  saveExt();renderMealSuggestions();
+}
+function addPlannedSuggestion(meal,mode="add"){
+  const suggestion=MEAL_SUGGESTIONS.find(s=>s.id===ext.ui.plannerResults?.[meal]);if(!suggestion)return;
+  const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday();ext.diary[date] ||= [];
+  if(mode==="replace")ext.diary[date]=ext.diary[date].filter(e=>!(e.meal===meal&&e.status==="planned"));
+  suggestion.items.forEach(i=>{const f=getFood(i.foodId);ext.diary[date].push({id:uid("entry"),foodId:f.id,name:f.name,brand:f.brand,date,meal,status:"planned",amount:i.amount,unit:i.unit,unitLabel:unitLabel(f,i.unit),time:"",notes:`Meal Planner · ${suggestion.name}`,nutrients:scaledNutrients(f,i.amount,i.unit),foodGroups:scaledFoodGroups(f,i.amount,i.unit),waterMl:scaledWaterMl(f,i.amount,i.unit),hydrationType:f.hydrationType||"food",score:f.score,source:`Meal Planner · ${f.source}`,createdAt:new Date().toISOString()});});
+  ext.ui.diaryDate=date;saveExt();showActionToast(`${suggestion.name} added to ${meal} as Planned.`,null,6500);renderMealSuggestions();
+}
+function acceptPlannedSuggestion(meal){
+  const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday(),existing=entriesForDate(date).filter(e=>e.meal===meal);
+  if(!existing.length){addPlannedSuggestion(meal);return;}
+  openModal(`${meal} already has entries`,`Choose how to use this suggestion. Existing eaten entries will never be removed.`,`Add Alongside Existing`,()=>addPlannedSuggestion(meal,"add"),`<button id="replace-planned-meal" class="secondary wide" type="button">Replace Existing Planned Items</button>`);
+  by("replace-planned-meal")?.addEventListener("click",()=>{closeModal();addPlannedSuggestion(meal,"replace");},{once:true});
+}
+by("planner-select-all")?.addEventListener("change",event=>{qa('input[name="planner-meal"]').forEach(x=>x.checked=event.target.checked);updatePlannerSelectAll();});
+qa('input[name="planner-meal"]').forEach(input=>input.addEventListener("change",updatePlannerSelectAll));
+by("generate-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(false));
+by("try-all-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(true));
+document.addEventListener("click",event=>{const retry=event.target.closest("[data-plan-retry]");if(retry){plannerChoice(retry.dataset.planRetry,true);saveExt();renderMealSuggestions();return;}const accept=event.target.closest("[data-plan-accept]");if(accept)acceptPlannedSuggestion(accept.dataset.planAccept);});
 
 // Daily progress
+function weeklyFoodGroupAverages(endDate){const totals=Object.fromEntries(FOOD_GROUP_KEYS.map(k=>[k,0]));for(let i=0;i<7;i++){const groups=dayFoodGroups(shiftISO(endDate,-i),["eaten"]);FOOD_GROUP_KEYS.forEach(k=>totals[k]+=n(groups[k]));}FOOD_GROUP_KEYS.forEach(k=>totals[k]/=7);return totals;}
 function renderDailyProgress(){
-  const date=by("progress-date").value||ext.ui.diaryDate||isoToday();by("progress-date").value=date;ext.ui.diaryDate=date;
-  const {nutrients,planned,water,steps,goals}=daySummary(date);
-  by("today-water").value=water||"";by("today-steps").value=steps||"";by("today-note").value=ext.dailyNotes[date]||"";
+  const date=ext.ui.progressDate||by("progress-date")?.value||isoToday();ext.ui.progressDate=date;updateDateControl("progress",date);
+  const summary=daySummary(date),{nutrients,planned,hydration,steps,goals,foodGroups}=summary;
+  by("today-water").value=ext.water[date]||"";by("today-steps").value=steps||"";
   by("daily-progress-grid").innerHTML=[
     ["Energy",nutrients.calories,goals.calories,"Cal","energy"],["Protein",nutrients.protein,goals.protein,"g","positive"],["Carbohydrate",nutrients.carbs,goals.carbs,"g","positive"],["Fat",nutrients.fat,goals.fat,"g","positive"],
-    ["Fibre",nutrients.fibre,goals.fibre,"g","positive"],["Sugars",nutrients.sugar,goals.sugar,"g","limit"],["Sodium",nutrients.sodium,goals.sodium,"mg","limit"],["Water",water,goals.water,"mL","positive"],["Steps",steps,goals.steps,"","positive"]
+    ["Fibre",nutrients.fibre,goals.fibre,"g","positive"],["Sugars",nutrients.sugar,goals.sugar,"g","limit"],["Sodium",nutrients.sodium,goals.sodium,"mg","limit"],["Hydration",hydration.total,goals.hydration,"mL","positive"],["Steps",steps,goals.steps,"","positive"]
   ].map(x=>progressCard(...x,date)).join("");
-  by("daily-progress-explanation").innerHTML=`<h3>Plain-English Summary</h3><p>${entriesForDate(date).length ? `This page uses ${entriesForDate(date).length} diary ${entriesForDate(date).length===1?"entry":"entries"}. Planned food is shown in the diary but is not counted as eaten until you mark it eaten.` : "No food has been recorded for this date. The app does not treat an unrecorded day as a zero-calorie day."}</p><p>Planned energy not yet eaten: <strong>${formatNumber(planned.calories)} Cal</strong>. Exercise credit included in today’s allowance: <strong>${formatNumber(goals.exerciseCredit)} Cal</strong>.</p>`;
+  by("daily-food-group-progress").innerHTML=FOOD_GROUP_KEYS.map(key=>foodGroupCard(key,foodGroups[key],goals.foodGroups[key],date)).join("");
+  const weekly=weeklyFoodGroupAverages(date);by("weekly-food-group-progress").innerHTML=`<h4>Seven-day average</h4><div>${FOOD_GROUP_KEYS.map(key=>`<span><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(weekly[key],true)} / ${formatNumber(goals.foodGroups[key],true)}</strong></span>`).join("")}</div><p>Food-group balance can vary from day to day. The weekly view helps put fasting or unusual days in context.</p>`;
+  const count=entriesForDate(date).filter(e=>e.status==="eaten").length,parts=[];
+  if(!count)parts.push("Nothing has been recorded yet for this date.");else parts.push(`${count} ${count===1?"eaten or drunk entry has":"eaten or drunk entries have"} been counted.`);
+  if(hydration.total>0)parts.push(`Hydration: ${formatNumber(hydration.drinks)} mL from drinks and ${formatNumber(hydration.foodMoisture)} mL estimated from food.`);
+  if(planned.calories>0)parts.push(`${formatNumber(planned.calories)} Cal remains planned but not yet marked eaten.`);
+  if(goals.exerciseCredit>0)parts.push(`${formatNumber(goals.exerciseCredit)} Cal of separately logged exercise credit is included.`);
+  by("daily-progress-explanation").innerHTML=`<h3>Today’s Summary</h3><p>${parts.join(" ")}</p>`;
+  saveExt();
 }
-by("progress-date")?.addEventListener("change",renderDailyProgress);
-document.addEventListener("click",event=>{const shift=event.target.closest("[data-day-shift]");if(shift){by("progress-date").value=shiftISO(by("progress-date").value,n(shift.dataset.dayShift));renderDailyProgress();}if(event.target.closest("[data-day-today]")){by("progress-date").value=isoToday();renderDailyProgress();}});
-by("save-daily-progress")?.addEventListener("click",()=>{const date=by("progress-date").value||isoToday();ext.water[date]=n(by("today-water").value);ext.steps[date]=n(by("today-steps").value);ext.dailyNotes[date]=by("today-note").value;saveExt();renderDailyProgress();showActionToast("Water, steps and daily note saved.",null,5000);});
+let progressSaveTimer=null;
+function autoSaveProgressFields(){clearTimeout(progressSaveTimer);progressSaveTimer=setTimeout(()=>{const date=ext.ui.progressDate||isoToday();ext.water[date]=Math.max(0,n(by("today-water")?.value));ext.steps[date]=Math.max(0,whole(by("today-steps")?.value));saveExt();renderDailyProgress();showActionToast("Hydration and steps updated.",null,2500);},350);}
+by("today-water")?.addEventListener("change",autoSaveProgressFields);by("today-steps")?.addEventListener("change",autoSaveProgressFields);
 
 // Exercise and activity
 function renderExercise(){
@@ -692,7 +878,7 @@ function renderHistory(period){
   by("history-bars").innerHTML=weights.length?weights.map(x=>`<div class="history-column"><i style="height:${35+(n(x.weightKg)-min)/span*145}px"></i><small>${formatNumber(x.weightKg,true)} kg<br>${esc(x.date)}</small></div>`).join(""):`<p class="empty-state">Add weight check-ins to build your weight trend.</p>`;
   by("nutrition-history").innerHTML=recorded.length?`<div class="summary-grid"><div class="summary-item"><span>Average Energy on Recorded Days</span><strong>${formatNumber(average("calories"))} Cal</strong></div><div class="summary-item"><span>Average Protein</span><strong>${formatNumber(average("protein"))} g</strong></div><div class="summary-item"><span>Average Fibre</span><strong>${formatNumber(average("fibre"))} g</strong></div><div class="summary-item"><span>Average Sodium</span><strong>${formatNumber(average("sodium"))} mg</strong></div></div><div class="history-list">${totals.map(x=>`<div><span>${formatDate(x.date)}</span><strong>${formatNumber(x.nutrients.calories)} Cal · ${entriesForDate(x.date).filter(e=>e.status==="eaten").length} entries</strong></div>`).join("")}</div>`:`<p class="empty-state">No recorded food days in this period.</p>`;
   const totalActivity=activities.reduce((sum,x)=>sum+n(x.calories),0),waterDates=Object.keys(ext.water).filter(within),avgWater=waterDates.length?waterDates.reduce((sum,d)=>sum+n(ext.water[d]),0)/waterDates.length:0;
-  by("activity-history-summary").innerHTML=`<div class="summary-grid"><div class="summary-item"><span>Activity Recorded</span><strong>${formatNumber(totalActivity)} Cal Estimated</strong></div><div class="summary-item"><span>Average Water on Recorded Days</span><strong>${formatNumber(avgWater)} mL</strong></div></div>`;
+  by("activity-history-summary").innerHTML=`<div class="summary-grid"><div class="summary-item"><span>Activity Recorded</span><strong>${formatNumber(totalActivity)} Cal Estimated</strong></div><div class="summary-item"><span>Average Additional Drinks on Recorded Days</span><strong>${formatNumber(avgWater)} mL</strong></div></div>`;
 }
 q(".history-period")?.addEventListener("click",event=>{const b=event.target.closest("[data-period]");if(!b)return;qa(".history-period button").forEach(x=>x.classList.toggle("active",x===b));renderHistory(b.dataset.period);});
 
@@ -702,32 +888,32 @@ function reportRows(from,to){return Object.keys(ext.diary).filter(d=>d>=from&&d<
 function buildReport(){
   const from=by("report-from").value,to=by("report-to").value;if(!from||!to||from>to){showActionToast("Choose a valid report date range.",null,5000);return;}
   const main=mainData(),rows=reportRows(from,to),foodOn=by("report-food").checked,weightOn=by("report-weight").checked,activityOn=by("report-activity").checked,waterOn=by("report-water").checked;const weights=(main.weightHistory||[]).filter(x=>x.date>=from&&x.date<=to);const activities=ext.exercise.filter(x=>x.date.slice(0,10)>=from&&x.date.slice(0,10)<=to);
-  by("report-preview").innerHTML=`<header class="report-title"><h1>Healthy Eating Companion Progress Report</h1><p>${formatDate(from)} to ${formatDate(to)}</p><p>${esc(main.personal?.preferredName||main.personal?.fullName||"Founder Tester")}</p></header><section><h2>Plain-English Summary</h2><p>${rows.filter(r=>r.entries.some(e=>e.status==="eaten")).length} days contain food records. Unrecorded days are not counted as zero intake. This founder report is for personal review and is not medical advice.</p></section>${foodOn?`<section><h2>Food & Nutrition</h2>${rows.length?rows.map(r=>`<h3>${formatDate(r.date)}</h3><p><strong>${formatNumber(r.summary.nutrients.calories)} Cal</strong> · Protein ${formatNumber(r.summary.nutrients.protein)} g · Fibre ${formatNumber(r.summary.nutrients.fibre)} g · Sodium ${formatNumber(r.summary.nutrients.sodium)} mg</p><table><thead><tr><th>Meal</th><th>Food</th><th>Status</th><th>Amount</th><th>Cal</th></tr></thead><tbody>${r.entries.map(e=>`<tr><td>${esc(e.meal)}</td><td>${esc(e.name)}</td><td>${esc(statusLabel(e.status))}</td><td>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)}</td><td>${formatNumber(e.nutrients.calories)}</td></tr>`).join("")}</tbody></table>`).join(""):`<p>No food records in this period.</p>`}</section>`:""}${weightOn?`<section><h2>Weight</h2>${weights.length?`<table><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${weights.map(w=>`<tr><td>${esc(w.date)}</td><td>${formatNumber(w.weightKg,true)} kg</td><td>${esc(w.note||"")}</td></tr>`).join("")}</tbody></table>`:`<p>No weight entries in this period.</p>`}</section>`:""}${activityOn?`<section><h2>Activity</h2>${activities.length?`<table><thead><tr><th>Date</th><th>Activity</th><th>Minutes</th><th>Burned</th><th>Credited</th></tr></thead><tbody>${activities.map(a=>`<tr><td>${esc(a.date.slice(0,10))}</td><td>${esc(a.name)}</td><td>${formatNumber(a.minutes)}</td><td>${formatNumber(a.calories)} Cal</td><td>${formatNumber(a.credit)} Cal</td></tr>`).join("")}</tbody></table>`:`<p>No activity entries in this period.</p>`}</section>`:""}${waterOn?`<section><h2>Water & Steps</h2><table><thead><tr><th>Date</th><th>Water</th><th>Steps</th></tr></thead><tbody>${Object.keys({...ext.water,...ext.steps}).filter(d=>d>=from&&d<=to).sort().map(d=>`<tr><td>${esc(d)}</td><td>${formatNumber(ext.water[d])} mL</td><td>${formatNumber(ext.steps[d])}</td></tr>`).join("")}</tbody></table></section>`:""}`;
+  by("report-preview").innerHTML=`<header class="report-title"><h1>Healthy Eating Companion Progress Report</h1><p>${formatDate(from)} to ${formatDate(to)}</p><p>${esc(main.personal?.preferredName||main.personal?.fullName||"Founder Tester")}</p></header><section><h2>Plain-English Summary</h2><p>${rows.filter(r=>r.entries.some(e=>e.status==="eaten")).length} days contain food records. Unrecorded days are not counted as zero intake. This founder report is for personal review and is not medical advice.</p></section>${foodOn?`<section><h2>Food & Nutrition</h2>${rows.length?rows.map(r=>`<h3>${formatDate(r.date)}</h3><p><strong>${formatNumber(r.summary.nutrients.calories)} Cal</strong> · Protein ${formatNumber(r.summary.nutrients.protein)} g · Fibre ${formatNumber(r.summary.nutrients.fibre)} g · Sodium ${formatNumber(r.summary.nutrients.sodium)} mg</p><table><thead><tr><th>Meal</th><th>Food</th><th>Status</th><th>Amount</th><th>Cal</th></tr></thead><tbody>${r.entries.map(e=>`<tr><td>${esc(e.meal)}</td><td>${esc(e.name)}</td><td>${esc(statusLabel(e.status))}</td><td>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)}</td><td>${formatNumber(e.nutrients.calories)}</td></tr>`).join("")}</tbody></table>`).join(""):`<p>No food records in this period.</p>`}</section>`:""}${weightOn?`<section><h2>Weight</h2>${weights.length?`<table><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${weights.map(w=>`<tr><td>${esc(w.date)}</td><td>${formatNumber(w.weightKg,true)} kg</td><td>${esc(w.note||"")}</td></tr>`).join("")}</tbody></table>`:`<p>No weight entries in this period.</p>`}</section>`:""}${activityOn?`<section><h2>Activity</h2>${activities.length?`<table><thead><tr><th>Date</th><th>Activity</th><th>Minutes</th><th>Burned</th><th>Credited</th></tr></thead><tbody>${activities.map(a=>`<tr><td>${esc(a.date.slice(0,10))}</td><td>${esc(a.name)}</td><td>${formatNumber(a.minutes)}</td><td>${formatNumber(a.calories)} Cal</td><td>${formatNumber(a.credit)} Cal</td></tr>`).join("")}</tbody></table>`:`<p>No activity entries in this period.</p>`}</section>`:""}${waterOn?`<section><h2>Hydration & Steps</h2><table><thead><tr><th>Date</th><th>Total Hydration</th><th>Steps</th></tr></thead><tbody>${Object.keys({...ext.diary,...ext.water,...ext.steps}).filter(d=>d>=from&&d<=to).sort().map(d=>`<tr><td>${esc(d)}</td><td>${formatNumber(dayHydration(d).total)} mL</td><td>${formatNumber(ext.steps[d])}</td></tr>`).join("")}</tbody></table></section>`:""}`;
 }
 by("preview-report")?.addEventListener("click",buildReport);by("print-report")?.addEventListener("click",()=>{buildReport();setTimeout(()=>window.print(),80);});
-by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-alpha-0-5-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
+by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-companion-alpha-0-6-2-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
 
 // Contextual help
 const HELP={
-  "food-diary":"Use the date controls to plan ahead or review the past. Planned food is kept separate from food actually eaten. Every entry has visible Edit, Copy and Delete buttons, and deletion provides confirmation and Undo.",
+  "food-diary":"Swipe the date card to move through days, or tap it for a calendar. Use the plus beside a meal to add food. Planned food stays separate from food actually eaten. The Day Settings save button appears only after a change.",
   "food-library":"Search prioritises exact Australian matches and your own foods. Review the serving size and source before adding. Save Food is labelled in words rather than relying on a bookmark icon.",
   "quick-log":"Speak or type naturally, correct the transcript, then review the identified foods. Nothing is logged automatically. Accent recognition depends on the device speech service, while the food vocabulary and confirmation flow are controlled here.",
   "scan-centre":"This static trial demonstrates the safe workflow: capture, review, choose the matching item and confirm the quantity. Live barcode lookup and AI recognition will need secure online services later.",
-  "meal-planner":"Suggestions respect the selected minimum Health Score and check the saved allergy and never-eat fields. Scores are explained and are guidance only.",
-  "daily-progress":"Food totals are calculated from diary entries. Water and steps are entered here. The colours include words and do not judge an incomplete morning as a failed day.",
+  "meal-planner":"Tick one or more meals for the app to plan. Accept a suggestion or choose Try Again for just that meal. Existing plans are protected before anything is replaced.",
+  "daily-progress":"Nutrition, hydration and five-food-group progress are calculated from diary entries marked eaten. Hydration includes logged drinks, estimated food moisture and any additional drinks entered here. Swipe the date card to change day.",
   "progress-history":"Averages use days with actual records only. There are no flames, game badges or leaderboards—only meaningful progress information."
 };
 document.addEventListener("click",event=>{const b=event.target.closest("[data-help]");if(!b)return;const copy=HELP[b.dataset.help]||"Help is available for this screen.";openModal("Help With This Screen",copy,"Close",()=>{});by("a05-modal-confirm").className="primary";if(mainData().companion?.enabled&&typeof window.speakText==="function")window.speakText(copy);});
 
 // Initial setup and integration
 function init(){
-  // Postal address behaviour and Alpha 0.6.1 profile extensions
+  // Postal address behaviour and Alpha 0.6.2 profile extensions
   const postalSame=by("postal-same"),postalFields=by("postal-fields");const togglePostal=()=>postalFields?.classList.toggle("hidden",postalSame?.checked);postalSame?.addEventListener("change",togglePostal);togglePostal();
   const dietaryIds=["food-allergies","food-intolerances","medical-restrictions","eating-pattern","pregnancy-status","cultural-restrictions"];
   by("personal-next")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.personal=Object.assign(d.personal||{},{postalSame:postalSame?.checked,postalCountry:by("postal-country")?.value,postalRegion:by("postal-region")?.value,postalPostcode:by("postal-postcode")?.value,postalSuburb:by("postal-suburb")?.value,postalStreet:by("postal-street")?.value});localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
   by("calculate-button")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.dietary=Object.assign({},d.dietary||{},Object.fromEntries(dietaryIds.map(id=>[id,by(id)?.value||""])));localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
   const d=mainData(),p=d.personal||{};if(postalSame){postalSame.checked=p.postalSame!==false;[["postal-country","postalCountry"],["postal-region","postalRegion"],["postal-postcode","postalPostcode"],["postal-suburb","postalSuburb"],["postal-street","postalStreet"]].forEach(([id,key])=>{if(by(id))by(id).value=p[key]||""});togglePostal();}dietaryIds.forEach(id=>{if(by(id))by(id).value=d.dietary?.[id]||""});
-  renderRecipeSelectOptions();renderScanSelect();renderHomeSummary();
+  initialiseDateControls();renderRecipeSelectOptions();renderScanSelect();renderHomeSummary();
   // Ensure earlier founder profiles can migrate without losing functional data.
   saveExt();
   if(mainData().completed) openFeature("daily-progress");

@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.1",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.2",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -818,6 +818,16 @@ $("calculate-button").addEventListener("click", () => {
   show("recommendations");
 });
 
+
+function hydrationReference(){
+  const status = String(data.dietary?.["pregnancy-status"] || "none").toLowerCase();
+  if(status.includes("breast")) return {totalMl:3500, fluidsMl:2600, label:"Breastfeeding reference"};
+  if(status.includes("pregnant")) return {totalMl:3100, fluidsMl:2300, label:"Pregnancy reference"};
+  if(data.health.sex === "female") return {totalMl:2800, fluidsMl:2100, label:"Adult women reference"};
+  if(data.health.sex === "male") return {totalMl:3400, fluidsMl:2600, label:"Adult men reference"};
+  return {totalMl:2800, fluidsMl:2100, label:"General adult starting reference"};
+}
+
 function renderRecommendations(){
   const r = data.recommendations;
   if(!r || !Object.keys(r).length) return;
@@ -844,10 +854,12 @@ function renderRecommendations(){
   }
   if($("micronutrient-grid")){
     const age = ageFromDob(data.personal.dob);
-    const waterMl = roundWhole(Math.max(1800, data.health.currentWeightKg * 30));
-    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Water", `${waterMl.toLocaleString()} mL`, "Base estimate; activity, heat and medical restrictions may change it"],["Sodium limit", "2,000 mg"],["Added sugar limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
+    const hydration = hydrationReference();
+    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Hydration", `${hydration.totalMl.toLocaleString()} mL`, `Total water from drinks and food · about ${hydration.fluidsMl.toLocaleString()} mL usually comes from fluids`],["Sodium limit", "2,000 mg"],["Added sugar limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
     $("micronutrient-grid").innerHTML = micros.map(x=>`<div class="recommendation"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]||"General daily reference"}</small></div>`).join("");
-    data.recommendations.waterMl=waterMl;
+    data.recommendations.waterMl=hydration.totalMl;
+    data.recommendations.fluidsMl=hydration.fluidsMl;
+    data.recommendations.hydrationReference=hydration.label;
   }
   $("recommended-goal-display").textContent = `${formatWeight(r.recommendedGoalWeight)} kg`;
   $("review-selected-goal").value = formatWeight(data.health.selectedGoalWeight || r.selectedGoalWeight);
@@ -1044,12 +1056,14 @@ document.querySelectorAll(".room").forEach(button => button.addEventListener("cl
     if(room === "diary"){ window.openAlpha05Feature("food-diary"); return; }
     if(room === "database"){ window.openAlpha05Feature("food-library"); return; }
     if(room === "meal-planner"){ window.openAlpha05Feature("meal-planner"); return; }
+    if(room === "shopping-list"){ window.openAlpha05Feature("shopping-list"); return; }
   }
   const map = {
     "daily-progress":["Daily Progress","📊","Today’s progress is loading."],
     diary:["Food Diary & Day Plan","🍽️","Meal planning and food logging are loading."],
     database:["Australian Food Library","🥕","The food library is loading."],
-    "meal-planner":["Meal Planner","🗓️","Meal planning is loading."]
+    "meal-planner":["Meal Planner","🗓️","Meal planning is loading."],
+    "shopping-list":["Shopping List","🛒","Your shopping list is loading."]
   };
   const [title,icon,copy] = map[room] || ["Healthy Eating Companion","🧭","This room is being prepared."];
   $("placeholder-title").textContent = title;

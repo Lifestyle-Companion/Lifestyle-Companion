@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.2",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.3",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -821,11 +821,11 @@ $("calculate-button").addEventListener("click", () => {
 
 function hydrationReference(){
   const status = String(data.dietary?.["pregnancy-status"] || "none").toLowerCase();
-  if(status.includes("breast")) return {totalMl:3500, fluidsMl:2600, label:"Breastfeeding reference"};
-  if(status.includes("pregnant")) return {totalMl:3100, fluidsMl:2300, label:"Pregnancy reference"};
-  if(data.health.sex === "female") return {totalMl:2800, fluidsMl:2100, label:"Adult women reference"};
-  if(data.health.sex === "male") return {totalMl:3400, fluidsMl:2600, label:"Adult men reference"};
-  return {totalMl:2800, fluidsMl:2100, label:"General adult starting reference"};
+  if(status.includes("breast")) return {totalMl:2600, fluidsMl:2600, foodWaterMl:900, label:"Breastfeeding fluids reference"};
+  if(status.includes("pregnant")) return {totalMl:2300, fluidsMl:2300, foodWaterMl:800, label:"Pregnancy fluids reference"};
+  if(data.health.sex === "female") return {totalMl:2100, fluidsMl:2100, foodWaterMl:700, label:"Adult women fluids reference"};
+  if(data.health.sex === "male") return {totalMl:2600, fluidsMl:2600, foodWaterMl:800, label:"Adult men fluids reference"};
+  return {totalMl:2100, fluidsMl:2100, foodWaterMl:700, label:"General adult fluids reference"};
 }
 
 function renderRecommendations(){
@@ -855,7 +855,7 @@ function renderRecommendations(){
   if($("micronutrient-grid")){
     const age = ageFromDob(data.personal.dob);
     const hydration = hydrationReference();
-    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Hydration", `${hydration.totalMl.toLocaleString()} mL`, `Total water from drinks and food · about ${hydration.fluidsMl.toLocaleString()} mL usually comes from fluids`],["Sodium limit", "2,000 mg"],["Added sugar limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
+    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Daily fluids", `${hydration.fluidsMl.toLocaleString()} mL`, "Includes water and other logged drinks. Estimated moisture in solid food is shown separately."],["Sodium limit", "2,000 mg"],["Added sugar limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
     $("micronutrient-grid").innerHTML = micros.map(x=>`<div class="recommendation"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]||"General daily reference"}</small></div>`).join("");
     data.recommendations.waterMl=hydration.totalMl;
     data.recommendations.fluidsMl=hydration.fluidsMl;
@@ -956,6 +956,7 @@ $("finish-setup").addEventListener("click", () => {
   data.recommendations.manual = manual;
   data.goalMilestones = [];
   data.completed = true;
+  data.firstHomePending = false;
   if(!data.weightHistory.length){
     data.weightHistory.push({date:todayISO(),weightKg:data.health.startingWeightKg,note:"Starting weight"});
   }
@@ -964,8 +965,8 @@ $("finish-setup").addEventListener("click", () => {
     returnToSettingsAfterRecommendations = false;
     editMode = null;
     show("settings", {speak:false});
-  }else if(typeof window.openAlpha05Feature === "function") window.openAlpha05Feature("daily-progress");
-  else show("daily-progress", {speak:false});
+   }else if(typeof window.openAlpha05Feature === "function") window.openAlpha05Feature("home");
+  else show("home", {speak:false});
 });
 
 function greeting(){

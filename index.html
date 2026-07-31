@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.2</title>
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.3</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.2</div>
+      <div class="badge">Founder Trial · Alpha 0.6.3</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.2 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.3 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,7 +120,7 @@
           <div class="section-heading"><div><h3>Meet the Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.2 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
+          <p class="fine">The Alpha 0.6.3 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
@@ -326,7 +326,7 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header compact-home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.2</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.3</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
     <main class="home-main home-main-centred">
       <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
@@ -395,7 +395,13 @@
           <button data-library-tab="custom">My Foods</button>
           <button data-library-tab="recipes">My Recipes</button>
           <button data-library-tab="meals">Saved Meals</button>
+          <button data-library-tab="online">Online Foods</button>
         </div>
+        <div id="online-search-actions" class="online-search-actions hidden">
+          <button id="search-online-foods" type="button" class="secondary">Search Online Databases</button>
+          <a class="secondary button-link" href="https://www.foodstandards.gov.au/science-data/food-nutrient-databases/afcd/search" target="_blank" rel="noopener">Open Australian AFCD</a>
+        </div>
+        <p id="online-food-status" class="fine online-food-status hidden">Local foods search immediately. Online searches run only when you tap the button, to respect database limits.</p>
       </div>
       <div id="food-results" class="resource-list"></div>
       <button id="resource-add-button" class="floating-add" aria-label="Create or scan a food">＋</button>
@@ -414,13 +420,14 @@
       <div class="card">
         <div class="form-grid">
           <label>Date<input id="entry-date" type="date"></label>
-          <label>Meal<select id="entry-meal"><option>Breakfast</option><option>Morning Smoko</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Supper</option><option>Other</option></select></label>
+          <label>Meal<select id="entry-meal"><option>Breakfast</option><option>Morning Tea</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label>
           <label>Status<select id="entry-status"><option value="eaten">Eaten / Drunk</option><option value="planned">Planned</option></select></label>
           <label>Amount<input id="entry-amount" type="number" min="0.01" step="0.1"></label>
           <label>Unit<select id="entry-unit"></select></label>
           <label>Time<input id="entry-time" type="time"></label>
           <label class="full">Notes<textarea id="entry-notes" rows="2" placeholder="Optional preparation or context note"></textarea></label>
         </div>
+        <div id="entry-variant-options" class="variant-options hidden"></div>
         <div id="entry-nutrition-preview" class="nutrition-preview"></div>
         <div class="quick-action-row"><button id="save-food-entry" class="primary">Add to Diary</button><button id="save-food-entry-and-food" class="secondary">Add & Save Food</button></div>
       </div>
@@ -457,15 +464,46 @@
     <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Voice or Text Log</h2><p>Review what was understood before adding anything.</p></div><button class="help-button" data-help="quick-log">Help With This Screen</button></header>
     <main class="page narrow">
       <div class="card"><label>Say or Type Your Food<textarea id="voice-transcript" rows="4" placeholder="Example: Add two Weet-Bix with 200 millilitres of light milk for breakfast"></textarea></label><div class="quick-action-row"><button id="start-voice-log" class="primary">🎙️ Start Listening</button><button id="stop-voice-log" class="secondary">Stop</button><button id="parse-voice-log" class="secondary">Review Request</button></div><p id="voice-status" class="fine">Voice recognition depends on your browser and device. You can always edit the text before review.</p></div>
-      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal<select id="voice-meal"><option>Breakfast</option><option>Morning Smoko</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Supper</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
+      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal<select id="voice-meal"><option>Breakfast</option><option>Morning Tea</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
     </main>
   </section>
 
   <section id="scan-centre" class="screen content-screen">
-    <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Scan & Review Centre</h2><p>Capture first, review second, add only after confirmation.</p></div><button class="help-button" data-help="scan-centre">Help With This Screen</button></header>
-    <main class="page">
-      <div class="card"><div class="scan-mode-grid"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Label</button></div><label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label><div id="scan-preview" class="scan-preview empty-state">No image selected.</div><p id="scan-status" class="fine">Automatic AI recognition and live product lookup require secure online services. Alpha 0.6.2 provides the safe capture-and-review workflow without silently logging anything.</p></div>
-      <div id="scan-review-card" class="card hidden"><h3>Review Captured Item</h3><label>Choose the matching food from the local trial library<select id="scan-food-select"></select></label><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review Quantity Before Adding</button></div>
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Scan &amp; Review Centre</h2></div><button class="icon-help-button" data-help="scan-centre" aria-label="Help with Scan Centre">?</button></header>
+    <main class="page scan-centre-page">
+      <div class="card">
+        <div class="scan-mode-grid" role="tablist"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Panel</button></div>
+        <p id="scan-mode-copy" class="fine">Take a meal photo, then identify and confirm every food before anything is logged.</p>
+        <label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label>
+        <div id="scan-preview" class="scan-preview empty-state">No image selected.</div>
+      </div>
+      <div id="barcode-tools" class="card hidden">
+        <h3>Barcode Lookup</h3>
+        <div class="form-grid"><label>Barcode number<input id="scan-barcode-input" inputmode="numeric" autocomplete="off" placeholder="Scan or enter EAN / UPC"></label></div>
+        <div class="quick-action-row"><button id="start-barcode-camera" class="primary" type="button">Use Camera</button><button id="lookup-barcode" class="secondary" type="button">Look Up Barcode</button><button id="stop-barcode-camera" class="secondary hidden" type="button">Stop Camera</button></div>
+        <video id="barcode-video" class="barcode-video hidden" playsinline muted></video>
+        <p id="barcode-status" class="fine">Products are looked up in Open Food Facts. Manual barcode entry remains available on browsers that cannot scan live video.</p>
+      </div>
+      <div id="label-tools" class="card hidden">
+        <h3>Nutrition Panel Recognition</h3>
+        <p class="fine">The photo is processed on this device using OCR. Always compare recognised values with the package before saving.</p>
+        <button id="run-label-ocr" class="primary wide" type="button" disabled>Read Nutrition Panel</button>
+        <div id="ocr-progress" class="status-box hidden"></div>
+        <div id="ocr-review" class="hidden">
+          <label>Recognised text<textarea id="ocr-text" rows="8"></textarea></label>
+          <div class="form-grid">
+            <label>Food name<input id="ocr-food-name"></label><label>Serving amount<input id="ocr-serving-amount" type="number" step="0.1" value="100"></label><label>Serving unit<select id="ocr-serving-unit"><option>g</option><option>mL</option><option>serving</option></select></label>
+            <label>Calories<input id="ocr-calories" type="number" step="0.1"></label><label>Protein (g)<input id="ocr-protein" type="number" step="0.1"></label><label>Carbohydrate (g)<input id="ocr-carbs" type="number" step="0.1"></label><label>Fat (g)<input id="ocr-fat" type="number" step="0.1"></label><label>Saturated fat (g)<input id="ocr-sat-fat" type="number" step="0.1"></label><label>Fibre (g)<input id="ocr-fibre" type="number" step="0.1"></label><label>Sugars (g)<input id="ocr-sugar" type="number" step="0.1"></label><label>Sodium (mg)<input id="ocr-sodium" type="number" step="1"></label>
+          </div>
+          <button id="use-ocr-values" class="primary wide" type="button">Review as a Custom Food</button>
+        </div>
+      </div>
+      <div id="photo-tools" class="card">
+        <h3>Meal Photo Review</h3>
+        <p>Photo recognition must never guess calories silently. Describe or search for each visible food, then confirm quantities in the Food Library.</p>
+        <div class="quick-action-row"><button id="photo-find-food" class="primary" type="button">Find Foods in This Meal</button><button id="photo-add-note" class="secondary" type="button">Keep Photo as a Diary Note</button></div>
+      </div>
+      <div id="scan-review-card" class="card hidden"><h3>Review Scanned Product</h3><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review Quantity Before Adding</button></div>
     </main>
   </section>
 
@@ -485,16 +523,16 @@
           <label class="select-all-meals"><input id="planner-select-all" type="checkbox"> Select all meals</label>
           <div id="planner-meal-options" class="planner-meal-options">
             <label><input type="checkbox" name="planner-meal" value="Breakfast" checked> Breakfast</label>
-            <label><input type="checkbox" name="planner-meal" value="Morning Smoko"> Morning Smoko</label>
+            <label><input type="checkbox" name="planner-meal" value="Morning Tea"> Morning Tea</label>
             <label><input type="checkbox" name="planner-meal" value="Lunch"> Lunch</label>
             <label><input type="checkbox" name="planner-meal" value="Afternoon Tea"> Afternoon Tea</label>
             <label><input type="checkbox" name="planner-meal" value="Dinner"> Dinner</label>
-            <label><input type="checkbox" name="planner-meal" value="Supper"> Supper</label>
+            <label><input type="checkbox" name="planner-meal" value="Snacks"> Snacks</label>
           </div>
         </fieldset>
         <div class="form-grid planner-preferences-grid">
           <label>Prefer a Health Score of<select id="planner-min-score"><option value="0">No Minimum</option><option value="6">6/10 or Higher</option><option value="7" selected>7/10 or Higher</option><option value="8">8/10 or Higher</option></select></label>
-          <label>Approximate Energy per Meal<select id="planner-energy"><option value="300">Around 300 Cal</option><option value="450" selected>Around 450 Cal</option><option value="600">Around 600 Cal</option><option value="800">Around 800 Cal</option></select></label>
+          <div id="planner-energy-summary" class="planner-energy-summary" aria-live="polite"></div>
         </div>
         <div class="planner-action-row"><button id="generate-meal-suggestions" class="primary">Plan Selected Meals</button><button id="try-all-meal-suggestions" class="secondary hidden">Try Again for Selected Meals</button></div>
       </div>
@@ -523,7 +561,7 @@
         <input id="progress-date" class="visually-hidden-date" type="date" aria-label="Daily progress date">
       </div>
 
-      <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Nutrition Progress</h3><p>Calculated from food and drink marked as eaten.</p></div></div><div id="daily-progress-grid" class="progress-grid"></div></section>
+      <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Nutrition Progress</h3><p>Solid bars show eaten amounts; lighter bars show food and drinks still planned.</p></div></div><div id="daily-progress-grid" class="progress-grid"></div></section>
       <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Five Food Groups</h3><p>Personalised Australian daily serve targets.</p></div></div><div id="daily-food-group-progress" class="food-group-progress-grid"></div><div id="weekly-food-group-progress" class="weekly-food-groups"></div></section>
       <section class="compact-update-strip" aria-label="Quick hydration and steps update">
         <label>Additional drinks not already logged (mL)<input id="today-water" type="number" min="0" step="50" inputmode="numeric"></label>
@@ -554,11 +592,25 @@
       <div class="card"><div class="segmented history-period"><button data-period="7">Weekly</button><button data-period="14">Fortnightly</button><button data-period="30" class="active">Monthly</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">Yearly</button><button data-period="all">All Time</button></div><div id="history-summary" class="status-box"></div></div>
       <div class="card"><h3>Weight Trend</h3><div id="history-bars" class="history-bars"></div></div>
       <div class="card"><h3>Recorded-Day Nutrition</h3><div id="nutrition-history"></div></div>
-      <div class="card"><h3>Activity & Water</h3><div id="activity-history-summary"></div></div>
+      <div class="card"><h3>Activity &amp; Fluids</h3><div id="activity-history-summary"></div></div>
     </main>
   </section>
 
-  <section id="shopping-list" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Grocery Shopping List</h2><p>For everyday supermarket groceries</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Item<input id="shopping-item" placeholder="Milk, bananas, wholemeal bread..."></label><label>Quantity or size<input id="shopping-quantity" placeholder="2 litres, 1 bunch..."></label><label>Category<select id="shopping-category"><option>Fruit & vegetables</option><option>Meat & seafood</option><option>Dairy & eggs</option><option>Bakery</option><option>Pantry</option><option>Frozen</option><option>Drinks</option><option>Other</option></select></label><label>Preferred brand or substitute<input id="shopping-brand"></label></div><button id="add-shopping-item" class="primary wide">Add grocery item</button></div><div class="card"><h3>My List</h3><div id="shopping-items"></div></div></main></section>
+  <section id="shopping-list" class="screen content-screen">
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Shopping List</h2></div><div class="quick-action-row compact-header-actions"><button id="print-shopping-list" class="secondary" type="button">Print</button><button id="share-shopping-list" class="secondary" type="button">Share</button></div></header>
+    <main class="page shopping-page">
+      <div class="card shopping-list-card"><div class="shopping-list-heading"><div><h3>My List</h3><p class="fine">Tap an item to edit its name, quantity, category, brand or notes.</p></div><button id="clear-checked-shopping" class="secondary" type="button">Clear Checked</button></div><div id="shopping-items"></div></div>
+      <div class="card smart-shopping-add">
+        <h3>Add an item</h3>
+        <label>Item<input id="shopping-item" list="shopping-suggestions" autocomplete="off" placeholder="Start typing or use the microphone"><datalist id="shopping-suggestions"></datalist></label>
+        <div class="form-grid"><label>Quantity or size<input id="shopping-quantity" placeholder="2, 500 g, 1 litre..."></label><label>Preferred brand or substitute<input id="shopping-brand"></label></div>
+        <details><summary>More details</summary><div class="form-grid"><label>Category<select id="shopping-category"><option value="auto">Choose automatically</option><option>Fruit &amp; vegetables</option><option>Meat &amp; seafood</option><option>Dairy &amp; eggs</option><option>Bakery</option><option>Pantry</option><option>Frozen</option><option>Drinks</option><option>Household</option><option>Other</option></select></label><label>Notes<input id="shopping-notes"></label></div></details>
+        <div class="quick-action-row"><button id="add-shopping-item" class="primary" type="button">Add Item</button><button id="speak-shopping-item" class="secondary" type="button">🎙️ Speak</button></div>
+        <p id="shopping-add-status" class="fine">The app will suggest spelling and a supermarket category before adding.</p>
+      </div>
+      <article id="shopping-print-area" class="shopping-print-area"></article>
+    </main>
+  </section>
 
   <section id="food-preferences" class="screen content-screen">
     <header class="topbar sticky"><button class="back" data-go="settings">← Settings</button><div class="grow"><h2>Food Preferences</h2><p>Optional choices that improve future suggestions.</p></div></header>
@@ -592,6 +644,7 @@
         <button id="toggle-speech" class="secondary">Turn spoken guidance off</button>
         <button data-open-feature="food-preferences" class="secondary">Food Preferences</button>
         <button data-open-feature="family-connections" class="secondary">Family & Connections</button>
+        <button id="food-data-settings" class="secondary">Food Data Sources</button>
         <button id="reset-trial" class="danger-button">Reset Founder Trial</button>
       </div>
     </main>
@@ -628,6 +681,9 @@
 <script src="config.js"></script>
 <script src="companions.js"></script>
 <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/umd/zxing-browser.min.js" defer crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js" defer crossorigin="anonymous"></script>
 <script src="alpha06.js"></script>
 </body>
 </html>

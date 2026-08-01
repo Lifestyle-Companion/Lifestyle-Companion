@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.3",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.4",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -12,10 +12,12 @@ const esc = value => String(value ?? "").replace(/[&<>\"']/g, c => ({"&":"&amp;"
 const n = value => Number(value) || 0;
 const round1 = value => Math.round((Number(value) || 0) * 10) / 10;
 const whole = value => Math.round(Number(value) || 0);
-const isoToday = () => new Date().toISOString().slice(0,10);
+const isoToday = () => window.HECDate?.todayISO?.() || `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-${String(new Date().getDate()).padStart(2,"0")}`;
+const activeTimeZone = () => window.HECDate?.activeTimeZone?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || "Australia/Brisbane";
+const localClock = () => { const z=window.HECDate?.zonedParts?.() || {}; return `${String(z.hour ?? new Date().getHours()).padStart(2,"0")}:${String(z.minute ?? new Date().getMinutes()).padStart(2,"0")}`; };
 const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
 const clone = value => JSON.parse(JSON.stringify(value));
-const formatDate = value => value ? new Intl.DateTimeFormat("en-AU", {weekday:"short", day:"numeric", month:"short", year:"numeric"}).format(new Date(value + "T12:00:00")) : "";
+const formatDate = value => value ? new Intl.DateTimeFormat("en-AU", {weekday:"short", day:"numeric", month:"short", year:"numeric"}).format(new Date(value + "T12:00:00")).replace(",","") : "";
 const formatNumber = (value, precise=false) => {
   const num = Number(value) || 0;
   if(precise && Math.abs(num) < 10 && !Number.isInteger(round1(num))) return round1(num).toFixed(1);
@@ -76,7 +78,17 @@ const FOOD_METADATA = {
   cappuccino:{waterMl:230,hydrationType:"drink",foodGroups:{dairy:1}},
   water:{waterMl:250,hydrationType:"drink",foodGroups:{}}
 };
-FOODS.forEach(food => Object.assign(food, FOOD_METADATA[food.id] || {waterMl:0,foodGroups:{}}));
+
+FOODS.push(
+  {id:"english-muffin",name:"English Muffin",brand:"Generic Australian",category:"Bakery",country:"Australia",aliases:["muffin","english muffin"],defaultAmount:1,defaultUnit:"item",units:{item:1,g:1/65},unitLabels:{item:"1 Muffin (65 g)",g:"g"},serving:"1 Muffin (65 g)",nutrients:nutrient(160,5.5,30,1.5,.4,2,2.5,320),score:7,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Wheat flour, water, yeast, salt",allergens:["wheat","gluten"],waterMl:20,foodGroups:{grains:2}},
+  {id:"shortcut-bacon",name:"Shortcut Bacon, Cooked",brand:"Generic Australian",category:"Meat & Seafood",country:"Australia",aliases:["bacon","shortcut bacon","bacon rasher"],defaultAmount:1,defaultUnit:"rasher",units:{rasher:1,g:1/35},unitLabels:{rasher:"1 Rasher (35 g)",g:"g"},serving:"1 Rasher (35 g)",nutrients:nutrient(95,10,.5,6,2.2,0,.3,520),score:5,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Pork, salt, curing ingredients",allergens:[],waterMl:18,foodGroups:{proteinFoods:.5}},
+  {id:"cheddar-cheese",name:"Cheddar Cheese",brand:"Generic Australian",category:"Dairy & Eggs",country:"Australia",aliases:["cheese","cheddar","cheese slice"],defaultAmount:1,defaultUnit:"slice",units:{slice:1,g:1/25},unitLabels:{slice:"1 Slice (25 g)",g:"g"},serving:"1 Slice (25 g)",nutrients:nutrient(101,6.3,.3,8.4,5.3,0,.1,155),score:6,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Milk, cultures, salt, enzyme",allergens:["milk","dairy"],waterMl:9,foodGroups:{dairy:.5}},
+  {id:"tomato-sauce",name:"Tomato Sauce",brand:"Generic Australian",category:"Pantry",country:"Australia",aliases:["tomato sauce","ketchup","sauce"],defaultAmount:15,defaultUnit:"mL",units:{mL:1/15,teaspoon:1/3,tablespoon:1},unitLabels:{mL:"mL",teaspoon:"1 Teaspoon (5 mL)",tablespoon:"1 Tablespoon (15 mL)"},serving:"1 Tablespoon (15 mL)",nutrients:nutrient(18,.2,4.2,0,0,.1,3.5,180),score:5,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Tomato, sugar, vinegar, salt, spices",allergens:[],waterMl:10,foodGroups:{vegetables:.1}},
+  {id:"margarine",name:"Margarine",brand:"Generic Australian",category:"Dairy & Eggs",country:"Australia",aliases:["margarine","spread","table spread"],defaultAmount:5,defaultUnit:"g",units:{g:1/5,teaspoon:1},unitLabels:{g:"g",teaspoon:"1 Teaspoon (5 g)"},serving:"1 Teaspoon (5 g)",nutrients:nutrient(27,0,0,3,.7,0,0,30),score:5,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Vegetable oils, water, salt",allergens:[],waterMl:1,foodGroups:{}},
+  {id:"beef-sausage",name:"Beef Sausage, Cooked",brand:"Generic Australian",category:"Meat & Seafood",country:"Australia",aliases:["sausage","beef sausage","snag"],defaultAmount:1,defaultUnit:"medium",units:{thin:.72,medium:1,large:1.45,g:1/75},unitLabels:{thin:"1 Long Thin Sausage (54 g)",medium:"1 Medium Sausage (75 g)",large:"1 Large Thick Sausage (109 g)",g:"g"},serving:"1 Medium Sausage (75 g)",nutrients:nutrient(210,12,5,16,6,0,1,620),score:4,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Beef, water, cereal, seasoning",allergens:["wheat","gluten"],waterMl:35,foodGroups:{proteinFoods:.8,grains:.1}},
+  {id:"beef-steak",name:"Beef Steak, Grilled",brand:"Generic Australian",category:"Meat & Seafood",country:"Australia",aliases:["steak","beef steak","grilled steak"],defaultAmount:1,defaultUnit:"medium",units:{small:.67,medium:1,large:1.5,g:1/150},unitLabels:{small:"1 Small Steak (100 g)",medium:"1 Medium Steak (150 g)",large:"1 Large Steak (225 g)",g:"g"},serving:"1 Medium Steak (150 g)",nutrients:nutrient(330,42,0,18,7,0,0,110),score:7,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Beef",allergens:[],waterMl:85,foodGroups:{proteinFoods:2}}
+);
+FOODS.forEach(food => Object.assign(food, FOOD_METADATA[food.id] || {waterMl:food.waterMl||0,foodGroups:food.foodGroups||{}}));
 const FOOD_BY_ID = new Map(FOODS.map(f => [f.id,f]));
 
 const MEAL_SUGGESTIONS = [
@@ -96,9 +108,9 @@ const MEAL_SUGGESTIONS = [
 ];
 
 const EXT_DEFAULTS = {
-  version:"0.6.3", diary:{}, daySettings:{}, water:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
+  version:"0.6.4", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
   family:{enabled:false,name:"",email:""}, connections:{}, customFoods:[], savedFoodIds:[], recipes:[], mealTemplates:[],
-  ui:{diaryDate:isoToday(),progressDate:isoToday(),plannerDate:isoToday(),diaryView:"all",libraryTab:"all",scanMode:"food",pendingMeal:"",plannerResults:{},plannerRejected:{},plannerAccepted:{}}
+  ui:{diaryDate:isoToday(),progressDate:isoToday(),plannerDate:isoToday(),diaryView:"all",libraryTab:"all",scanMode:"food",pendingMeal:"",plannerResults:{},plannerRejected:{},plannerAccepted:{},recipeDraft:[],recipeName:"",recipeServings:4,recipeNotes:"",returnToRecipe:false,replacingEntryId:""}
 };
 function merge(target, source){
   if(!source || typeof source !== "object") return target;
@@ -111,13 +123,13 @@ function merge(target, source){
 function loadExt(){
   let current = null;
   try { current = JSON.parse(localStorage.getItem(EXT_KEY)); } catch {}
-  if(current) return merge(clone(EXT_DEFAULTS),current);
+  if(current){ const loaded=merge(clone(EXT_DEFAULTS),current); loaded.version="0.6.4"; return loaded; }
   for(const legacyKey of LEGACY_EXT_KEYS){
     try {
       const legacy = JSON.parse(localStorage.getItem(legacyKey));
       if(legacy){
         const migrated = merge(clone(EXT_DEFAULTS),legacy);
-        migrated.version = "0.6.3";
+        migrated.version = "0.6.4";
         if(legacy.daily?.date){
           migrated.water[legacy.daily.date] = legacy.daily.water || 0;
           migrated.steps[legacy.daily.date] = legacy.daily.steps || 0;
@@ -131,16 +143,19 @@ function loadExt(){
 const ext = loadExt();
 const saveExt = () => localStorage.setItem(EXT_KEY,JSON.stringify(ext));
 
-function allFoods(){
+function nonRecipeFoods(){
   const custom = (ext.customFoods || []).map(f => ({...f,source:f.source || "User Created",verified:false}));
+  return [...FOODS,...custom,...(ext.onlineFoods||[])];
+}
+function allFoods(){
   const recipes = (ext.recipes || []).map(r => recipeAsFood(r));
-  return [...FOODS,...custom,...recipes,...(ext.onlineFoods||[])];
+  return [...nonRecipeFoods(),...recipes];
 }
 function getFood(id){ return allFoods().find(f => f.id === id); }
 function unitOptions(food){ return food?.units || {serving:1}; }
 function defaultAmount(food){ return food?.defaultAmount ?? 1; }
 function defaultUnit(food){ return food?.defaultUnit || Object.keys(unitOptions(food))[0] || "serving"; }
-function unitLabel(food,unit){ return food?.unitLabels?.[unit] || unit; }
+function unitLabel(food,unit){ return titleUnit(food?.unitLabels?.[unit] || unit); }
 function foodMultiplier(food,amount,unit){ return Math.max(0,n(amount)) * (unitOptions(food)[unit] ?? 1); }
 function scaledNutrients(food,amount,unit){
   const multiplier = foodMultiplier(food,amount,unit);
@@ -231,7 +246,7 @@ function scoreExplanation(score){
 }
 function recipeProfile(recipe){
   const servings=Math.max(1,n(recipe.servings)||1);
-  const items=(recipe.ingredients||[]).map(i=>{const food=getFood(i.foodId);return {foodGroups:scaledFoodGroups(food,i.amount,i.unit),waterMl:scaledWaterMl(food,i.amount,i.unit),hydrationType:food?.hydrationType||"food"};});
+  const items=(recipe.ingredients||[]).map(i=>{const food=nonRecipeFoods().find(f=>f.id===i.foodId);return {foodGroups:scaledFoodGroups(food,i.amount,i.unit),waterMl:scaledWaterMl(food,i.amount,i.unit),hydrationType:food?.hydrationType||"food"};});
   const groups=sumGroupValues(items);FOOD_GROUP_KEYS.forEach(key=>groups[key]/=servings);
   return {foodGroups:groups,waterMl:items.reduce((sum,i)=>sum+n(i.waterMl),0)/servings,hydrationType:"food"};
 }
@@ -270,7 +285,15 @@ function daySummary(date){
   return {nutrients,planned,hydration,plannedHydration,water:hydration.drinks,steps:n(ext.steps[date]),foodGroups:dayFoodGroups(date,["eaten"]),plannedFoodGroups:dayFoodGroups(date,["planned"]),goals:currentGoals(date)};
 }
 
-function openFeature(id){
+function openFeature(id,options={}){
+  if(options.fromHome){
+    const today=isoToday();
+    if(id==="food-diary")ext.ui.diaryDate=today;
+    if(id==="daily-progress")ext.ui.progressDate=today;
+    if(id==="meal-planner")ext.ui.plannerDate=today;
+    if(id==="food-library"){ext.ui.pendingMeal="";ext.ui.foodSearch="";ext.ui.libraryTab="all";}
+    saveExt();
+  }
   if(typeof window.show === "function") window.show(id,{speak:false});
   else { qa(".screen").forEach(s => s.classList.remove("active")); by(id)?.classList.add("active"); window.scrollTo(0,0); }
   if(id === "home") renderHomeSummary();
@@ -295,7 +318,7 @@ document.addEventListener("click",event => {
   if(button){ event.preventDefault(); openFeature(button.dataset.openFeature); }
 });
 
-function shiftISO(date,days){ const d = new Date((date || isoToday()) + "T12:00:00"); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10); }
+function shiftISO(date,days){ const d=new Date((date||isoToday())+"T12:00:00");d.setDate(d.getDate()+days);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function mealNames(){ return ["Breakfast","Morning Tea","Lunch","Afternoon Tea","Dinner","Snacks","Other"]; }
 function plannerMealNames(){ return ["Breakfast","Morning Tea","Lunch","Afternoon Tea","Dinner","Snacks"]; }
 
@@ -339,7 +362,7 @@ function renderVariantOptions(food,existing={}){
   qa("[data-variant-key]").forEach(el=>el.addEventListener("change",updateEntryPreview));
 }
 
-function statusLabel(status){ return status === "planned" ? "Planned" : "Eaten / Drunk"; }
+function statusLabel(status){ return status === "planned" ? "Planned" : status === "skipped" ? "Skipped" : "Eaten / Drunk"; }
 function relativeDateLabel(value){
   const today=isoToday(),tomorrow=shiftISO(today,1),yesterday=shiftISO(today,-1),formatted=formatDate(value);
   if(value===today)return `Today · ${formatted}`;
@@ -474,7 +497,7 @@ function prepareEntry(food,{entry=null,date=null,meal=null,status="eaten",source
   by("entry-meal").value = entry?.meal || meal || "Breakfast";
   by("entry-status").value = entry?.status || status;
   by("entry-amount").value = entry?.amount ?? defaultAmount(food);
-  by("entry-time").value = entry?.time || `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  by("entry-time").value = entry?.time || localClock();
   by("entry-notes").value = entry?.notes || "";
   by("entry-unit").innerHTML = Object.keys(unitOptions(food)).map(unit => `<option value="${esc(unit)}">${esc(unitLabel(food,unit))}</option>`).join("");
   by("entry-unit").value = entry?.unit || defaultUnit(food);
@@ -512,11 +535,15 @@ function saveEditorEntry(andSaveFood=false){
   }
   const record = {
     id:editorState.entryId || uid("entry"),foodId:baseFood.id,name:food.name,brand:food.brand || "",date,meal:by("entry-meal").value,status:by("entry-status").value,
-    amount,unit,unitLabel:unitLabel(food,unit),time:by("entry-time").value,notes:by("entry-notes").value,nutrients:values,foodGroups:scaledFoodGroups(food,amount,unit),waterMl:scaledWaterMl(food,amount,unit),hydrationType:food.hydrationType||"food",score:food.score,source:food.source || editorState.source,variantSelections:food.variantSelections||{},createdAt:new Date().toISOString()
+    amount,unit,unitLabel:unitLabel(food,unit),time:by("entry-time").value,notes:by("entry-notes").value,nutrients:values,foodGroups:scaledFoodGroups(food,amount,unit),waterMl:scaledWaterMl(food,amount,unit),hydrationType:food.hydrationType||"food",score:food.score,source:food.source || editorState.source,variantSelections:food.variantSelections||{},createdAt:new Date().toISOString(),localDate:date,timeZone:activeTimeZone()
   };
   if(editorState.entryId){
     const found = findEntry(editorState.entryId);
     if(found){ ext.diary[found.date].splice(found.index,1); if(!ext.diary[found.date].length) delete ext.diary[found.date]; }
+  }
+  if(ext.ui.replacingEntryId && !editorState.entryId){
+    const replaced=findEntry(ext.ui.replacingEntryId);if(replaced){ext.diary[replaced.date].splice(replaced.index,1);if(!ext.diary[replaced.date].length)delete ext.diary[replaced.date];}
+    ext.ui.replacingEntryId="";ext.ui.pendingMeal="";
   }
   addEntry(record);
   if(andSaveFood && !ext.savedFoodIds.includes(food.id)) ext.savedFoodIds.push(food.id);
@@ -575,7 +602,7 @@ function requestCopyEntry(id){
   const target=shiftISO(found.date,1);
   openModal(`Copy ${found.entry.name}`,`Choose the date for the independent copy.`,`Copy`,() => {
     const date=by("modal-copy-date")?.value || target;
-    const copy={...clone(found.entry),id:uid("entry"),date,createdAt:new Date().toISOString()};
+    const copy={...clone(found.entry),id:uid("entry"),date,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()};
     ext.diary[date] ||= [];ext.diary[date].push(copy);saveExt();showActionToast(`${copy.name} copied to ${formatDate(date)}.`,() => {ext.diary[date]=ext.diary[date].filter(e=>e.id!==copy.id);saveExt();},8000);
   },`<label>Copy To Date<input id="modal-copy-date" type="date" value="${target}"></label>`);
 }
@@ -645,14 +672,15 @@ function renderLibrary(){
   qa("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab===activeLibraryTab()));
   by("food-search").value=ext.ui.foodSearch||"";
   const context=by("library-entry-context");
-  if(context){const pending=ext.ui.pendingMeal;context.classList.toggle("hidden",!pending);context.innerHTML=pending?`<span>Adding to <strong>${esc(pending)}</strong> on ${esc(relativeDateLabel(ext.ui.diaryDate||isoToday()))}</span><button data-clear-pending-meal>Clear</button>`:"";}
+  if(context){const pending=ext.ui.pendingMeal;context.classList.toggle("hidden",!pending);context.innerHTML=pending?`<span>Adding to <strong>${esc(pending)}</strong> on ${esc(relativeDateLabel(ext.ui.diaryDate||isoToday()))}</span><button data-clear-pending-meal>Cancel Adding to ${esc(pending)}</button>`:"";}
   const tab=activeLibraryTab(),query=by("food-search").value;
   by("online-search-actions")?.classList.toggle("hidden",tab!=="online");
   by("online-food-status")?.classList.toggle("hidden",tab!=="online");
   if(tab==="recipes"){renderRecipeLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}
   if(tab==="meals"){renderMealLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}
   if(tab==="online"){renderOnlineLibrary(query);return;}
-  const ranked=allFoods().filter(food=>food.category!=="Recipe").filter(food=>tab==="saved"?ext.savedFoodIds.includes(food.id):tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
+  const libraryFoods=tab==="saved"?allFoods().filter(food=>ext.savedFoodIds.includes(food.id)):allFoods().filter(food=>food.category!=="Recipe");
+  const ranked=libraryFoods.filter(food=>tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
   const strongMatch=ranked.some(item=>item.rank>=760),visible=query?ranked.filter(item=>item.rank>=(strongMatch?760:620)):ranked;
   const closeNote=query&&visible.length&&!strongMatch?`<div class="search-guidance compact-search-guidance"><strong>Showing close spelling matches for “${esc(query)}”</strong></div>`:"";
   by("food-results").innerHTML=visible.length?`${closeNote}${visible.map(item=>resourceFoodRow(item.food)).join("")}`:`<div class="resource-empty"><strong>No close match found.</strong><p>Try fewer words or create a private My Food entry.</p></div>`;
@@ -660,12 +688,12 @@ function renderLibrary(){
 }
 function resourceFoodRow(food){
   const saved=ext.savedFoodIds.includes(food.id),safety=foodSafety(food);
-  return `<article class="resource-row ${safety.blocked?"food-warning":""}"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}</strong><small>${esc([food.brand,food.serving,energyText(food.nutrients?.calories)].filter(Boolean).join(" · "))}</small></button><button class="resource-save ${saved?"saved":""}" data-food-save="${esc(food.id)}" aria-label="${saved?"Remove from":"Save to"} Saved Foods">${saved?"✓":"☆"}</button><button class="resource-add" data-food-add="${esc(food.id)}" aria-label="Review and add ${esc(food.name)}">＋</button></article>`;
+  return `<article class="resource-row ${safety.blocked?"food-warning":""}"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}</strong><small>${esc([food.brand,food.serving,energyText(food.nutrients?.calories)].filter(Boolean).join(" · "))}</small></button><button class="resource-save ${saved?"saved":""}" data-food-save="${esc(food.id)}" aria-label="${saved?"Remove from":"Save to"} Favourite Foods">${saved?"✓":"☆"}</button><button class="resource-add" data-food-add="${esc(food.id)}" aria-label="Review and add ${esc(food.name)}">＋</button></article>`;
 }
 function foodCard(food){return resourceFoodRow(food);}
 document.addEventListener("click",event=>{
-  const tab=event.target.closest("[data-library-tab]");if(tab){ext.ui.libraryTab=tab.dataset.libraryTab;saveExt();renderLibrary();return;}
-  const add=event.target.closest("[data-food-add]");if(add){const food=getFood(add.dataset.foodAdd);prepareEntry(food,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Breakfast",status:"eaten"});return;}
+  const tab=event.target.closest("[data-library-tab]");if(tab){ext.ui.libraryTab=tab.dataset.libraryTab;by("resource-add-menu")?.classList.add("hidden");saveExt();renderLibrary();return;}
+  const add=event.target.closest("[data-food-add]");if(add){const food=getFood(add.dataset.foodAdd);prepareEntry(food,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Breakfast",status:ext.ui.pendingMeal?"planned":"eaten"});return;}
   const save=event.target.closest("[data-food-save]");if(save){toggleSavedFood(save.dataset.foodSave);return;}
   const details=event.target.closest("[data-food-details]");if(details){showFoodDetails(details.dataset.foodDetails);return;}
   const recipeAdd=event.target.closest("[data-recipe-add]");if(recipeAdd){prepareEntry(getFood(recipeAdd.dataset.recipeAdd),{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Dinner"});return;}
@@ -675,7 +703,9 @@ document.addEventListener("click",event=>{
 });
 by("food-search")?.addEventListener("input",()=>{ext.ui.foodSearch=by("food-search").value;saveExt();renderLibrary();});
 by("clear-food-search")?.addEventListener("click",()=>{ext.ui.foodSearch="";by("food-search").value="";saveExt();renderLibrary();});
-by("resource-add-button")?.addEventListener("click",()=>by("resource-add-menu")?.classList.toggle("hidden"));
+by("resource-add-button")?.addEventListener("click",event=>{event.stopPropagation();by("resource-add-menu")?.classList.toggle("hidden");});
+by("close-resource-menu")?.addEventListener("click",()=>by("resource-add-menu")?.classList.add("hidden"));
+document.addEventListener("click",event=>{const menu=by("resource-add-menu");if(menu&&!menu.classList.contains("hidden")&&!event.target.closest("#resource-add-menu")&&!event.target.closest("#resource-add-button"))menu.classList.add("hidden");});
 
 function onlineNutrientRecord(list,names,preferredUnits=[]){
   const wanted=names.map(normalise),units=preferredUnits.map(x=>String(x).toUpperCase());
@@ -715,17 +745,20 @@ function renderOnlineLibrary(query=""){
   const items=(ext.onlineFoods||[]).filter(food=>!query||searchRank(food,query)>0).sort((a,b)=>Number(b.country==="Australia")-Number(a.country==="Australia")||a.name.localeCompare(b.name));
   by("food-results").innerHTML=items.length?`<div class="online-source-banner"><strong>Online results require review.</strong><p>Open Food Facts is community supplied. USDA values may not match an Australian brand. Package labels and Australian verified data take priority.</p></div>${items.map(resourceFoodRow).join("")}`:`<div class="resource-empty"><strong>No online results loaded.</strong><p>Enter at least three letters, then tap Search Online Databases.</p></div>`;
 }
+let onlineSearchToken=0;
 async function runOnlineFoodSearch(){
-  const query=by("food-search")?.value.trim();if(!query||query.length<3){showActionToast("Enter at least three letters before searching online.",null,5000);return;}
+  const query=by("food-search")?.value.trim();const token=++onlineSearchToken;if(!query||query.length<3){showActionToast("Enter at least three letters before searching online.",null,5000);return;}
   ext.ui.libraryTab="online";qa("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab==="online"));const status=by("online-food-status"),button=by("search-online-foods");button.disabled=true;status.textContent="Searching Open Food Facts and FoodData Central…";by("food-results").innerHTML='<div class="resource-empty">Searching online databases…</div>';
-  const results=await Promise.allSettled([searchOpenFoodFacts(query),searchUsda(query)]);const foods=results.flatMap(r=>r.status==="fulfilled"?r.value:[]);upsertOnlineFoods(foods);status.textContent=`Loaded ${foods.length} reviewable result${foods.length===1?"":"s"}. Online records are cached on this device.`;button.disabled=false;renderOnlineLibrary(query);if(!foods.length)showActionToast("No online matches were returned. Try a broader search or scan a barcode.",null,6500);
+  try{
+    const results=await Promise.allSettled([searchOpenFoodFacts(query),searchUsda(query)]);if(token!==onlineSearchToken||activeLibraryTab()!=="online")return;const foods=results.flatMap(r=>r.status==="fulfilled"?r.value:[]);upsertOnlineFoods(foods);status.textContent=`Loaded ${foods.length} reviewable result${foods.length===1?"":"s"}. Online records are cached on this device.`;renderOnlineLibrary(query);if(!foods.length)showActionToast("No online matches were returned. Try a broader search or scan a barcode.",null,6500);
+  }finally{button.disabled=false;}
 }
 by("search-online-foods")?.addEventListener("click",runOnlineFoodSearch);
 
 function toggleSavedFood(id){
   const food=getFood(id);if(!food)return;
   const idx=ext.savedFoodIds.indexOf(id);
-  if(idx>=0){ext.savedFoodIds.splice(idx,1);showActionToast(`${food.name} removed from Saved Foods.`,()=>{ext.savedFoodIds.push(id);saveExt();renderLibrary();},8000);}else{ext.savedFoodIds.push(id);showActionToast(`${food.name} saved to Saved Foods.`,()=>{ext.savedFoodIds=ext.savedFoodIds.filter(x=>x!==id);saveExt();renderLibrary();},8000);}saveExt();renderLibrary();
+  if(idx>=0){ext.savedFoodIds.splice(idx,1);showActionToast(`${food.name} removed from Favourite Foods.`,()=>{ext.savedFoodIds.push(id);saveExt();renderLibrary();},8000);}else{ext.savedFoodIds.push(id);showActionToast(`${food.name} saved to Favourite Foods.`,()=>{ext.savedFoodIds=ext.savedFoodIds.filter(x=>x!==id);saveExt();renderLibrary();},8000);}saveExt();renderLibrary();
 }
 function showFoodDetails(id){
   const food=getFood(id);if(!food)return;
@@ -735,7 +768,7 @@ function showFoodDetails(id){
 }
 function renderRecipeLibrary(query=""){
   const recipes=ext.recipes.filter(r=>!query||searchRank(recipeAsFood(r),query)>0);
-  by("food-results").innerHTML=recipes.length?recipes.map(r=>{const food=recipeAsFood(r);return `<article class="resource-row"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}</strong><small>${esc(food.serving)} · ${energyText(food.nutrients.calories)}</small></button><button class="resource-add" data-recipe-add="${esc(food.id)}">＋</button></article>`;}).join(""):`<div class="resource-empty">No recipes saved yet.</div>`;
+  by("food-results").innerHTML=recipes.length?recipes.map(r=>resourceFoodRow(recipeAsFood(r))).join(""):`<div class="resource-empty">No Recipes Saved Yet.</div>`;
 }
 function renderMealLibrary(query=""){
   const meals=ext.mealTemplates.filter(meal=>!query||normalise(meal.name).includes(normalise(query)));
@@ -746,7 +779,7 @@ function addMealTemplate(id){
   const date=ext.ui.diaryDate||isoToday();const meal=ext.ui.pendingMeal||"Breakfast";
   openModal(`Add ${template.name}?`,`This creates independent planned entries on ${formatDate(date)}.`,"Add to Plan",()=>{
     ext.diary[date] ||= [];
-    template.items.forEach(item=>ext.diary[date].push({...clone(item),id:uid("entry"),date,meal,status:"planned",createdAt:new Date().toISOString()}));saveExt();openFeature("food-diary");showActionToast(`${template.name} added to the plan.`,null,6000);
+    template.items.forEach(item=>ext.diary[date].push({...clone(item),id:uid("entry"),date,meal,status:"planned",localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()}));saveExt();openFeature("food-diary");showActionToast(`${template.name} added to the plan.`,null,6000);
   });
 }
 function deleteMealTemplate(id){const template=ext.mealTemplates.find(m=>m.id===id);if(!template)return;openModal(`Delete ${template.name}?`,`Past diary entries will not be changed.`,`Delete`,()=>{const idx=ext.mealTemplates.findIndex(m=>m.id===id);const removed=ext.mealTemplates.splice(idx,1)[0];saveExt();renderLibrary();showActionToast(`${removed.name} deleted from Saved Meals.`,()=>{ext.mealTemplates.splice(idx,0,removed);saveExt();renderLibrary();},8000);});}
@@ -758,33 +791,64 @@ by("save-custom-food")?.addEventListener("click",()=>{
   const nutrientValue=id=>by(id).value===""?null:Number(by(id).value);
   const amount=n(by("custom-serving-amount").value)||1,unit=by("custom-serving-unit").value;
   const food={id:uid("custom"),name,brand:by("custom-food-brand").value.trim(),category:"Custom Food",country:"Australia",aliases:[name],defaultAmount:amount,defaultUnit:unit,units:{[unit]:1/amount},unitLabels:{[unit]:unit},serving:`${amount} ${unit}`,nutrients:{calories:Number(cal),protein:nutrientValue("custom-protein"),carbs:nutrientValue("custom-carbs"),fat:nutrientValue("custom-fat"),satFat:nutrientValue("custom-sat-fat"),fibre:nutrientValue("custom-fibre"),sugar:nutrientValue("custom-sugar"),sodium:nutrientValue("custom-sodium")},foodGroups:{},waterMl:0,hydrationType:"food",score:7,source:"User Created",verified:false,ingredients:by("custom-ingredients").value.trim(),allergens:[]};
-  ext.customFoods.push(food);ext.savedFoodIds.push(food.id);saveExt();["custom-food-name","custom-food-brand","custom-cal","custom-protein","custom-carbs","custom-fat","custom-sat-fat","custom-fibre","custom-sugar","custom-sodium","custom-ingredients"].forEach(id=>by(id).value="");ext.ui.libraryTab="custom";openFeature("food-library");showActionToast(`${food.name} saved to My Foods.`,null,6000);
+  ext.customFoods.push(food);saveExt();["custom-food-name","custom-food-brand","custom-cal","custom-protein","custom-carbs","custom-fat","custom-sat-fat","custom-fibre","custom-sugar","custom-sodium","custom-ingredients"].forEach(id=>by(id).value="");if(ext.ui.returnToRecipe){ext.ui.returnToRecipe=false;ext.ui.recipeSelectedFoodId=food.id;saveExt();openFeature("recipe-builder");showActionToast(`${food.name} created and ready to add to your recipe.`,null,6000);}else{ext.ui.libraryTab="custom";openFeature("food-library");showActionToast(`${food.name} saved to Foods I Created.`,null,6000);}
 });
 
 // Recipe builder
-let recipeDraft=[];
-function renderRecipeSelectOptions(){
-  const select=by("recipe-food-select");if(!select)return;const foods=[...FOODS,...ext.customFoods];select.innerHTML=foods.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} — ${esc(f.serving)}</option>`).join("");updateRecipeUnits();
+let recipeDraft=Array.isArray(ext.ui.recipeDraft)?ext.ui.recipeDraft:[];
+let recipeSelectedFoodId=ext.ui.recipeSelectedFoodId||"";
+function saveRecipeDraft(){ext.ui.recipeDraft=recipeDraft;ext.ui.recipeSelectedFoodId=recipeSelectedFoodId;saveExt();}
+function renderRecipeSelectOptions(){renderRecipeSearch();}
+function recipeFoods(){return allFoods().filter(f=>f.category!=="Recipe");}
+function renderRecipeSearch(){
+  const input=by("recipe-food-search"),results=by("recipe-food-search-results");if(!input||!results)return;
+  const query=input.value.trim();
+  const ranked=recipeFoods().map(food=>({food,rank:searchRank(food,query)})).filter(x=>query?x.rank>0:true).sort((a,b)=>b.rank-a.rank||a.food.name.localeCompare(b.food.name)).slice(0,12);
+  results.innerHTML=query?ranked.map(({food})=>`<button type="button" data-recipe-food-choice="${esc(food.id)}"><strong>${esc(food.name)}</strong><small>${esc(food.serving)} · ${energyText(food.nutrients?.calories)}</small></button>`).join(""):'<p class="fine">Type at least part of an ingredient name.</p>';
+  if(recipeSelectedFoodId)selectRecipeFood(recipeSelectedFoodId,false);
 }
-function updateRecipeUnits(){const food=getFood(by("recipe-food-select")?.value);if(!food||!by("recipe-ingredient-unit"))return;by("recipe-ingredient-unit").innerHTML=Object.keys(unitOptions(food)).map(u=>`<option value="${esc(u)}">${esc(unitLabel(food,u))}</option>`).join("");by("recipe-ingredient-unit").value=defaultUnit(food);by("recipe-ingredient-amount").value=defaultAmount(food);}
-by("recipe-food-select")?.addEventListener("change",updateRecipeUnits);
-function renderRecipeBuilder(){renderRecipeSelectOptions();renderRecipeDraft();}
+function selectRecipeFood(id,clearSearch=true){
+  const food=getFood(id);if(!food)return;recipeSelectedFoodId=id;ext.ui.recipeSelectedFoodId=id;
+  if(by("recipe-food-select"))by("recipe-food-select").value=id;
+  if(by("recipe-selected-food"))by("recipe-selected-food").innerHTML=`<strong>${esc(food.name)}</strong><small>${esc(food.serving)} · ${energyText(food.nutrients?.calories)}</small>`;
+  const unit=by("recipe-ingredient-unit");if(unit){unit.innerHTML=Object.keys(unitOptions(food)).map(u=>`<option value="${esc(u)}">${esc(titleUnit(unitLabel(food,u)))}</option>`).join("");unit.value=defaultUnit(food);}
+  if(by("recipe-ingredient-amount"))by("recipe-ingredient-amount").value=defaultAmount(food);
+  if(clearSearch&&by("recipe-food-search")){by("recipe-food-search").value="";by("recipe-food-search-results").innerHTML="";}
+  saveRecipeDraft();
+}
+function titleUnit(text){
+  const metric={g:"g",kg:"kg",ml:"mL",l:"L",kj:"kJ",cal:"Cal"};
+  return String(text||"").split(/(\s+|[()])/).map(part=>{
+    const key=part.toLowerCase();
+    if(metric[key]) return metric[key];
+    if(/^[a-z][a-z-]*$/i.test(part)) return part.charAt(0).toUpperCase()+part.slice(1).toLowerCase();
+    return part;
+  }).join("");
+}
+by("recipe-food-search")?.addEventListener("input",renderRecipeSearch);
+by("recipe-name")?.addEventListener("input",event=>{ext.ui.recipeName=event.target.value;saveExt();});
+by("recipe-servings")?.addEventListener("input",event=>{ext.ui.recipeServings=Math.max(1,n(event.target.value)||1);saveExt();});
+by("recipe-notes")?.addEventListener("input",event=>{ext.ui.recipeNotes=event.target.value;saveExt();});
+document.addEventListener("click",event=>{const choice=event.target.closest("[data-recipe-food-choice]");if(choice){selectRecipeFood(choice.dataset.recipeFoodChoice);return;}const remove=event.target.closest("[data-remove-recipe-ingredient]");if(remove){recipeDraft=recipeDraft.filter(i=>i.id!==remove.dataset.removeRecipeIngredient);saveRecipeDraft();renderRecipeDraft();}});
+function renderRecipeBuilder(){recipeDraft=Array.isArray(ext.ui.recipeDraft)?ext.ui.recipeDraft:recipeDraft;recipeSelectedFoodId=ext.ui.recipeSelectedFoodId||recipeSelectedFoodId;if(by("recipe-name")&&!by("recipe-name").value)by("recipe-name").value=ext.ui.recipeName||"";if(by("recipe-servings"))by("recipe-servings").value=ext.ui.recipeServings||by("recipe-servings").value||4;if(by("recipe-notes")&&!by("recipe-notes").value)by("recipe-notes").value=ext.ui.recipeNotes||"";renderRecipeSearch();if(recipeSelectedFoodId)selectRecipeFood(recipeSelectedFoodId,false);renderRecipeDraft();}
 by("add-recipe-ingredient")?.addEventListener("click",()=>{
-  const food=getFood(by("recipe-food-select").value);if(!food)return;const amount=n(by("recipe-ingredient-amount").value),unit=by("recipe-ingredient-unit").value;if(amount<=0)return;
-  recipeDraft.push({id:uid("ingredient"),foodId:food.id,name:food.name,amount,unit,unitLabel:unitLabel(food,unit),nutrients:scaledNutrients(food,amount,unit),score:food.score});renderRecipeDraft();
+  const food=getFood(recipeSelectedFoodId);if(!food){showActionToast("Search for and choose an ingredient first.",null,4500);return;}const amount=n(by("recipe-ingredient-amount").value),unit=by("recipe-ingredient-unit").value;if(amount<=0)return;
+  recipeDraft.push({id:uid("ingredient"),foodId:food.id,name:food.name,amount,unit,unitLabel:titleUnit(unitLabel(food,unit)),nutrients:scaledNutrients(food,amount,unit),foodGroups:scaledFoodGroups(food,amount,unit),waterMl:scaledWaterMl(food,amount,unit),score:food.score});recipeSelectedFoodId="";if(by("recipe-selected-food"))by("recipe-selected-food").textContent="No Ingredient Selected.";saveRecipeDraft();renderRecipeDraft();
 });
+by("create-missing-ingredient")?.addEventListener("click",()=>{ext.ui.returnToRecipe=true;saveExt();openFeature("custom-food");});
+by("scan-recipe-ingredient")?.addEventListener("click",()=>{ext.ui.returnToRecipe=true;saveExt();openFeature("scan-centre");});
 function renderRecipeDraft(){
   if(!by("recipe-ingredient-list"))return;
-  by("recipe-ingredient-list").innerHTML=recipeDraft.length?recipeDraft.map(i=>`<div class="recipe-row"><span><strong>${esc(i.name)}</strong><small>${formatNumber(i.amount,true)} ${esc(i.unitLabel)} · ${formatNumber(i.nutrients.calories)} Cal</small></span><button data-remove-recipe-ingredient="${esc(i.id)}" class="delete-action">Remove</button></div>`).join(""):`<p class="empty-state">No ingredients yet.</p>`;
+  by("recipe-ingredient-list").innerHTML=recipeDraft.length?recipeDraft.map(i=>`<div class="recipe-row"><span><strong>${esc(i.name)}</strong><small>${formatNumber(i.amount,true)} ${esc(i.unitLabel)} · ${formatNumber(i.nutrients.calories)} Cal</small></span><button data-remove-recipe-ingredient="${esc(i.id)}" class="delete-action">Remove</button></div>`).join(""):`<p class="empty-state">No Ingredients Yet.</p>`;
   const servings=Math.max(1,n(by("recipe-servings")?.value)||1),total=sumNutrients(recipeDraft),per=Object.fromEntries(Object.entries(total).map(([k,v])=>[k,v/servings]));
-  by("recipe-nutrition-preview").innerHTML=`<p><strong>Whole recipe:</strong> ${formatNumber(total.calories)} Cal · <strong>Per serving:</strong> ${formatNumber(per.calories)} Cal</p>${nutritionCards(per)}`;
+  by("recipe-nutrition-preview").innerHTML=`<p><strong>Whole Recipe:</strong> ${formatNumber(total.calories)} Cal · <strong>Per Serving:</strong> ${formatNumber(per.calories)} Cal</p>${nutritionCards(per)}`;
+  saveRecipeDraft();
 }
-document.addEventListener("click",event=>{const b=event.target.closest("[data-remove-recipe-ingredient]");if(b){recipeDraft=recipeDraft.filter(i=>i.id!==b.dataset.removeRecipeIngredient);renderRecipeDraft();}});
 by("recipe-servings")?.addEventListener("input",renderRecipeDraft);
 by("save-recipe")?.addEventListener("click",()=>{
-  const name=by("recipe-name").value.trim(),servings=Math.max(1,whole(by("recipe-servings").value));if(!name||!recipeDraft.length){by("recipe-error").textContent="Enter a recipe name and at least one ingredient.";return;}
+  const name=by("recipe-name").value.trim(),servings=Math.max(1,whole(by("recipe-servings").value));if(!name||!recipeDraft.length){by("recipe-error").textContent="Enter a Recipe Name and at least one Ingredient.";return;}
   const total=sumNutrients(recipeDraft),per=Object.fromEntries(Object.entries(total).map(([k,v])=>[k,v/servings]));const score=Math.max(1,Math.min(10,round1(recipeDraft.reduce((sum,i)=>sum+n(i.score),0)/recipeDraft.length)));
-  const profile=recipeProfile({servings,ingredients:recipeDraft});const recipe={id:uid("recipe"),name,servings,notes:by("recipe-notes").value,ingredients:clone(recipeDraft),perServe:per,foodGroups:profile.foodGroups,waterMl:profile.waterMl,score,createdAt:new Date().toISOString()};ext.recipes.push(recipe);ext.savedFoodIds.push(recipe.id);saveExt();recipeDraft=[];by("recipe-name").value="";by("recipe-notes").value="";ext.ui.libraryTab="recipes";openFeature("food-library");showActionToast(`${recipe.name} saved as a recipe.`,null,6000);
+  const profile=recipeProfile({servings,ingredients:recipeDraft});const recipe={id:uid("recipe"),name,servings,notes:by("recipe-notes").value,ingredients:clone(recipeDraft),perServe:per,foodGroups:profile.foodGroups,waterMl:profile.waterMl,score,createdAt:new Date().toISOString()};ext.recipes.push(recipe);recipeDraft=[];recipeSelectedFoodId="";ext.ui.recipeDraft=[];ext.ui.recipeSelectedFoodId="";ext.ui.recipeName="";ext.ui.recipeServings=4;ext.ui.recipeNotes="";by("recipe-name").value="";by("recipe-servings").value=4;by("recipe-notes").value="";ext.ui.libraryTab="recipes";saveExt();openFeature("food-library");showActionToast(`${recipe.name} saved in My Recipes. Tap its star to also add it to Favourite Foods.`,null,7000);
 });
 
 // Voice and text logging
@@ -829,7 +893,7 @@ document.addEventListener("click",event=>{const b=event.target.closest("[data-re
 by("cancel-voice-review")?.addEventListener("click",()=>by("voice-review").classList.add("hidden"));
 by("confirm-voice-log")?.addEventListener("click",()=>{
   if(!voiceParsed.items?.length)return;const date=by("voice-date").value||isoToday(),meal=by("voice-meal").value;ext.diary[date] ||= [];
-  voiceParsed.items.forEach(item=>{const food=getFood(item.foodId);ext.diary[date].push({id:uid("entry"),foodId:food.id,name:food.name,brand:food.brand,date,meal,status:"eaten",amount:item.amount,unit:item.unit,unitLabel:unitLabel(food,item.unit),time:new Date().toTimeString().slice(0,5),notes:"Added after voice/text review",nutrients:scaledNutrients(food,item.amount,item.unit),foodGroups:scaledFoodGroups(food,item.amount,item.unit),waterMl:scaledWaterMl(food,item.amount,item.unit),hydrationType:food.hydrationType||"food",score:food.score,source:`Voice/Text Review · ${food.source}`,createdAt:new Date().toISOString()});});saveExt();ext.ui.diaryDate=date;openFeature("food-diary");showActionToast(`${voiceParsed.items.length} ${voiceParsed.items.length===1?"item":"items"} added after review.`,null,6500);voiceParsed=[];by("voice-transcript").value="";
+  voiceParsed.items.forEach(item=>{const food=getFood(item.foodId);ext.diary[date].push({id:uid("entry"),foodId:food.id,name:food.name,brand:food.brand,date,meal,status:"eaten",amount:item.amount,unit:item.unit,unitLabel:unitLabel(food,item.unit),time:localClock(),notes:"Added after voice/text review",nutrients:scaledNutrients(food,item.amount,item.unit),foodGroups:scaledFoodGroups(food,item.amount,item.unit),waterMl:scaledWaterMl(food,item.amount,item.unit),hydrationType:food.hydrationType||"food",score:food.score,source:`Voice/Text Review · ${food.source}`,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()});});saveExt();ext.ui.diaryDate=date;openFeature("food-diary");showActionToast(`${voiceParsed.items.length} ${voiceParsed.items.length===1?"item":"items"} added after review.`,null,6500);voiceParsed=[];by("voice-transcript").value="";
 });
 
 // Scan capture and review
@@ -856,7 +920,7 @@ function fillOcrReview(values){const map={calories:"ocr-calories",protein:"ocr-p
 by("run-label-ocr")?.addEventListener("click",async()=>{if(!scanFile)return;const box=by("ocr-progress");box.classList.remove("hidden");box.textContent="Loading OCR and reading the panel. This may take a minute on a phone…";try{if(!window.Tesseract)throw new Error("OCR library unavailable");const worker=await Tesseract.createWorker("eng",1,{logger:m=>{if(m.progress)box.textContent=`${m.status} · ${Math.round(m.progress*100)}%`;}});const result=await worker.recognize(scanFile);await worker.terminate();const text=result.data?.text||"";by("ocr-text").value=text;fillOcrReview(parseNutritionPanel(text));box.textContent="Recognition complete. Correct every field against the package before saving.";}catch(error){box.textContent="OCR could not read this image. Try a closer, square-on photo in brighter light, or enter the values manually.";by("ocr-review").classList.remove("hidden");}});
 by("use-ocr-values")?.addEventListener("click",()=>{const pairs=[["custom-food-name","ocr-food-name"],["custom-serving-amount","ocr-serving-amount"],["custom-serving-unit","ocr-serving-unit"],["custom-cal","ocr-calories"],["custom-protein","ocr-protein"],["custom-carbs","ocr-carbs"],["custom-fat","ocr-fat"],["custom-sat-fat","ocr-sat-fat"],["custom-fibre","ocr-fibre"],["custom-sugar","ocr-sugar"],["custom-sodium","ocr-sodium"]];pairs.forEach(([to,from])=>{if(by(to)&&by(from))by(to).value=by(from).value;});openFeature("custom-food");showActionToast("Recognised values copied for review. Compare every value with the package before saving.",null,8000);});
 by("photo-find-food")?.addEventListener("click",()=>{ext.ui.libraryTab="all";ext.ui.pendingMeal=ext.ui.pendingMeal||"Other";saveExt();openFeature("food-library");showActionToast("Search and add each food visible in the photo. The photo itself does not calculate calories.",null,8000);});
-by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal photos are kept only during this browser session in Alpha 0.6.3. Add a written Diary note for lasting context.",null,8000));
+by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal photos are kept only during this browser session in Alpha 0.6.4. Add a written Diary note for lasting context.",null,8000));
 by("review-scan-food")?.addEventListener("click",()=>{if(scanBarcodeFood)prepareEntry(scanBarcodeFood,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Other",source:scanBarcodeFood.source});});
 
 // Meal planner
@@ -869,44 +933,47 @@ function suggestionNutrition(suggestion){return sumNutrients(suggestion.items.ma
 function suggestionGroups(suggestion){return sumGroupValues(suggestion.items.map(i=>({foodGroups:scaledFoodGroups(getFood(i.foodId),i.amount,i.unit)})));}
 function suggestionSafety(suggestion){return suggestion.items.map(i=>foodSafety(getFood(i.foodId))).filter(x=>x.blocked).map(x=>x.message);}
 function plannerBudget(){
-  const date=ext.ui.plannerDate||isoToday(),selected=selectedPlannerMeals(),goal=currentGoals(date).calories;const entries=entriesForDate(date);const fixed=entries.filter(e=>e.status==="eaten"||!selected.includes(e.meal)).reduce((sum,e)=>sum+n(e.nutrients?.calories),0);const available=Math.max(0,goal-fixed);const guides={};const standard=selected.map(meal=>[meal,goal*(PLANNER_WEIGHTS[meal]||.15)]),needed=standard.reduce((sum,x)=>sum+x[1],0),scale=needed>available&&needed?available/needed:1;standard.forEach(([meal,value])=>guides[meal]=Math.max(0,Math.round(value*scale/10)*10));const allocated=Object.values(guides).reduce((a,b)=>a+b,0);return {date,goal,fixed,available,guides,unallocated:Math.max(0,available-allocated)};
+  const date=ext.ui.plannerDate||isoToday(),selected=selectedPlannerMeals(),goal=currentGoals(date).calories;const entries=entriesForDate(date);const fixed=entries.filter(e=>e.status==="eaten"||e.status==="planned").reduce((sum,e)=>sum+n(e.nutrients?.calories),0);const available=Math.max(0,goal-fixed);const guides={};const standard=selected.map(meal=>[meal,goal*(PLANNER_WEIGHTS[meal]||.15)]),needed=standard.reduce((sum,x)=>sum+x[1],0),scale=needed>available&&needed?available/needed:1;standard.forEach(([meal,value])=>guides[meal]=Math.max(0,Math.round(value*scale/10)*10));const allocated=Object.values(guides).reduce((a,b)=>a+b,0);return {date,goal,fixed,available,guides,unallocated:Math.max(0,available-allocated)};
 }
 function renderPlannerEnergySummary(){const box=by("planner-energy-summary");if(!box)return;const b=plannerBudget(),meals=selectedPlannerMeals();box.innerHTML=`<span class="eyebrow">Energy available for selected meals</span><strong>${formatNumber(b.available)} Cal</strong><small>Daily goal ${formatNumber(b.goal)} Cal · ${formatNumber(b.fixed)} Cal already eaten or reserved elsewhere</small>${meals.length?`<div class="planner-guide-list">${meals.map(m=>`<span>${esc(m)} <b>about ${formatNumber(b.guides[m])} Cal</b></span>`).join("")}</div><small>${formatNumber(b.unallocated)} Cal remains unallocated for flexibility.</small>`:"<small>Select one or more meals to see personalised guides.</small>"}`;}
 function plannerChoice(meal,retry=false){
-  const min=n(by("planner-min-score")?.value),target=plannerBudget().guides[meal]||450;const current=ext.ui.plannerResults?.[meal],rejected=ext.ui.plannerRejected?.[meal]||[];let candidates=MEAL_SUGGESTIONS.filter(s=>s.meal===meal&&s.score>=min&&!suggestionSafety(s).length);candidates.sort((a,b)=>Math.abs(suggestionNutrition(a).calories-target)-Math.abs(suggestionNutrition(b).calories-target));if(retry&&current&&!rejected.includes(current))rejected.push(current);let choice=candidates.find(s=>s.id!==current&&!rejected.includes(s.id));if(!choice){rejected.length=0;if(current)rejected.push(current);choice=candidates.find(s=>s.id!==current)||candidates[0];}if(choice)ext.ui.plannerResults[meal]=choice.id;ext.ui.plannerRejected[meal]=rejected;delete ext.ui.plannerAccepted?.[meal];return choice;
+  const min=n(by("planner-min-score")?.value),target=plannerBudget().guides[meal]??0;const current=ext.ui.plannerResults?.[meal],rejected=ext.ui.plannerRejected?.[meal]||[];let candidates=MEAL_SUGGESTIONS.filter(s=>s.meal===meal&&s.score>=min&&!suggestionSafety(s).length);candidates.sort((a,b)=>Math.abs(suggestionNutrition(a).calories-target)-Math.abs(suggestionNutrition(b).calories-target));if(retry&&current&&!rejected.includes(current))rejected.push(current);let choice=candidates.find(s=>s.id!==current&&!rejected.includes(s.id));if(!choice){rejected.length=0;if(current)rejected.push(current);choice=candidates.find(s=>s.id!==current)||candidates[0];}if(choice)ext.ui.plannerResults[meal]=choice.id;ext.ui.plannerRejected[meal]=rejected;delete ext.ui.plannerAccepted?.[meal];return choice;
 }
 function renderMealSuggestions(){
   const results=ext.ui.plannerResults||{},accepted=ext.ui.plannerAccepted||{},meals=Object.keys(results).filter(meal=>MEAL_SUGGESTIONS.some(s=>s.id===results[meal]));const target=by("meal-suggestions");if(!target)return;
-  target.innerHTML=meals.length?`<div class="planner-results">${meals.map(meal=>{const s=MEAL_SUGGESTIONS.find(x=>x.id===results[meal]),total=suggestionNutrition(s),groups=suggestionGroups(s),isAccepted=accepted[meal]===s.id;return `<article class="planner-result-card ${isAccepted?"planner-accepted":""}"><header><div><span class="eyebrow">${esc(meal)}</span><h3>${esc(s.name)}</h3><p>${formatNumber(total.calories)} Cal · guide ${formatNumber(plannerBudget().guides[meal])} Cal · Health Score ${s.score}/10</p></div><span class="health-score">${s.score}/10</span></header><p>${esc(s.reason)}</p><ul class="compact-list">${s.items.map(i=>{const f=getFood(i.foodId);return `<li>${esc(f.name)} — ${formatNumber(i.amount,true)} ${esc(unitLabel(f,i.unit))}</li>`}).join("")}</ul><div class="planner-group-line">${FOOD_GROUP_KEYS.filter(k=>groups[k]>0).map(k=>`<span>${esc(FOOD_GROUP_LABELS[k])}: ${formatNumber(groups[k],true)}</span>`).join("")}</div>${isAccepted?`<div class="accepted-plan-confirmation"><strong>Added to Plan ✓</strong><span>${esc(meal)} is visible in Diary and Daily Progress as planned.</span><button data-open-feature="food-diary" class="secondary">View in Diary</button></div>`:`<div class="planner-card-actions"><button class="primary" data-plan-accept="${esc(meal)}">Accept Meal</button><button class="secondary" data-plan-retry="${esc(meal)}">Try Again</button></div>`}</article>`}).join("")}</div>`:`<div class="card empty-state">Tick one or more meals, then choose Plan Selected Meals.</div>`;by("try-all-meal-suggestions")?.classList.toggle("hidden",!meals.length);
+  target.innerHTML=meals.length?`<div class="planner-results">${meals.map(meal=>{const s=MEAL_SUGGESTIONS.find(x=>x.id===results[meal]),total=suggestionNutrition(s),groups=suggestionGroups(s),isAccepted=accepted[meal]===s.id;return `<article class="planner-result-card ${isAccepted?"planner-accepted":""}"><header><div><span class="eyebrow">${esc(meal)}</span><h3>${esc(s.name)}</h3><p>${formatNumber(total.calories)} Cal · Protein ${formatNumber(total.protein)} g · Carbohydrate ${formatNumber(total.carbs)} g · Fat ${formatNumber(total.fat)} g · Fibre ${formatNumber(total.fibre)} g · Guide ${formatNumber(plannerBudget().guides[meal])} Cal</p></div><span class="health-score">${s.score}/10</span></header><p>${esc(s.reason)}</p><ul class="compact-list">${s.items.map(i=>{const f=getFood(i.foodId);return `<li>${esc(f.name)} — ${formatNumber(i.amount,true)} ${esc(unitLabel(f,i.unit))}</li>`}).join("")}</ul><div class="planner-group-line">${FOOD_GROUP_KEYS.filter(k=>groups[k]>0).map(k=>`<span>${esc(FOOD_GROUP_LABELS[k])}: ${formatNumber(groups[k],true)}</span>`).join("")}</div>${isAccepted?`<div class="accepted-plan-confirmation"><strong>Added to Plan ✓</strong><span>${esc(meal)} is visible in Diary and Daily Progress as planned.</span><div class="quick-action-row"><button data-open-feature="food-diary" class="secondary">View in Diary</button><button data-plan-undo="${esc(meal)}" class="secondary">Undo</button></div></div>`:`<div class="planner-card-actions"><button class="primary" data-plan-accept="${esc(meal)}">Accept Meal</button><button class="secondary" data-plan-retry="${esc(meal)}">Try Again</button></div>`}</article>`}).join("")}</div>`:`<div class="card empty-state">Tick one or more meals, then choose Plan Selected Meals.</div>`;by("try-all-meal-suggestions")?.classList.toggle("hidden",!meals.length);
 }
 function generatePlannerResults(retryAll=false){const meals=selectedPlannerMeals();if(!meals.length){showActionToast("Choose at least one meal to plan.",null,5000);return;}ext.ui.plannerResults ||= {};ext.ui.plannerRejected ||= {};ext.ui.plannerAccepted ||= {};meals.forEach(meal=>plannerChoice(meal,retryAll));Object.keys(ext.ui.plannerResults).forEach(meal=>{if(!meals.includes(meal))delete ext.ui.plannerResults[meal];});saveExt();renderPlannerEnergySummary();renderMealSuggestions();}
 function addPlannedSuggestion(meal,mode="add"){
-  const suggestion=MEAL_SUGGESTIONS.find(s=>s.id===ext.ui.plannerResults?.[meal]);if(!suggestion)return;const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday();ext.diary[date] ||= [];const uniqueRef=`${date}|${meal}|${suggestion.id}`;if(ext.diary[date].some(e=>e.plannerRef===uniqueRef)){ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();showActionToast(`${suggestion.name} is already in the plan.`,null,6000);return;}if(mode==="replace")ext.diary[date]=ext.diary[date].filter(e=>!(e.meal===meal&&e.status==="planned"));suggestion.items.forEach(i=>{const f=getFood(i.foodId);ext.diary[date].push({id:uid("entry"),foodId:f.id,name:f.name,brand:f.brand,date,meal,status:"planned",amount:i.amount,unit:i.unit,unitLabel:unitLabel(f,i.unit),time:"",notes:`Meal Planner · ${suggestion.name}`,nutrients:scaledNutrients(f,i.amount,i.unit),foodGroups:scaledFoodGroups(f,i.amount,i.unit),waterMl:scaledWaterMl(f,i.amount,i.unit),hydrationType:f.hydrationType||"food",score:f.score,source:`Meal Planner · ${f.source}`,plannerRef:uniqueRef,createdAt:new Date().toISOString()});});ext.ui.diaryDate=date;ext.ui.progressDate=date;ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();renderPlannerEnergySummary();showActionToast(`${suggestion.name} added to ${meal} as Planned. It is now visible in Daily Progress.`,()=>{ext.diary[date]=ext.diary[date].filter(e=>e.plannerRef!==uniqueRef);delete ext.ui.plannerAccepted[meal];saveExt();renderMealSuggestions();},9000);
+  const suggestion=MEAL_SUGGESTIONS.find(s=>s.id===ext.ui.plannerResults?.[meal]);if(!suggestion)return;const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday();ext.diary[date] ||= [];const uniqueRef=`${date}|${meal}|${suggestion.id}`;if(ext.diary[date].some(e=>e.plannerRef===uniqueRef)){ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();showActionToast(`${suggestion.name} is already in the plan.`,null,6000);return;}if(mode==="replace")ext.diary[date]=ext.diary[date].filter(e=>!(e.meal===meal&&e.status==="planned"));suggestion.items.forEach(i=>{const f=getFood(i.foodId);ext.diary[date].push({id:uid("entry"),foodId:f.id,name:f.name,brand:f.brand,date,meal,status:"planned",amount:i.amount,unit:i.unit,unitLabel:unitLabel(f,i.unit),time:"",notes:`Meal Planner · ${suggestion.name}`,nutrients:scaledNutrients(f,i.amount,i.unit),foodGroups:scaledFoodGroups(f,i.amount,i.unit),waterMl:scaledWaterMl(f,i.amount,i.unit),hydrationType:f.hydrationType||"food",score:f.score,source:`Meal Planner · ${f.source}`,plannerRef:uniqueRef,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()});});ext.ui.diaryDate=date;ext.ui.progressDate=date;ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();renderPlannerEnergySummary();showActionToast(`${suggestion.name} added to ${meal} as Planned. It is now visible in Daily Progress.`,()=>{ext.diary[date]=ext.diary[date].filter(e=>e.plannerRef!==uniqueRef);delete ext.ui.plannerAccepted[meal];saveExt();renderMealSuggestions();},9000);
 }
 function acceptPlannedSuggestion(meal){const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday(),existing=entriesForDate(date).filter(e=>e.meal===meal);if(!existing.length){addPlannedSuggestion(meal);return;}openModal(`${meal} already has entries`,`Choose how to use this suggestion. Existing eaten entries will never be removed.`,`Add Alongside Existing`,()=>addPlannedSuggestion(meal,"add"),`<button id="replace-planned-meal" class="secondary wide" type="button">Replace Existing Planned Items</button>`);by("replace-planned-meal")?.addEventListener("click",()=>{closeModal();addPlannedSuggestion(meal,"replace");},{once:true});}
-by("planner-select-all")?.addEventListener("change",event=>{qa('input[name="planner-meal"]').forEach(x=>x.checked=event.target.checked);updatePlannerSelectAll();});qa('input[name="planner-meal"]').forEach(input=>input.addEventListener("change",updatePlannerSelectAll));by("planner-min-score")?.addEventListener("change",()=>{clearPlannerResults();renderPlannerEnergySummary();});by("generate-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(false));by("try-all-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(true));document.addEventListener("click",event=>{const retry=event.target.closest("[data-plan-retry]");if(retry){plannerChoice(retry.dataset.planRetry,true);saveExt();renderMealSuggestions();return;}const accept=event.target.closest("[data-plan-accept]");if(accept)acceptPlannedSuggestion(accept.dataset.planAccept);});
+by("planner-select-all")?.addEventListener("change",event=>{qa('input[name="planner-meal"]').forEach(x=>x.checked=event.target.checked);updatePlannerSelectAll();});qa('input[name="planner-meal"]').forEach(input=>input.addEventListener("change",updatePlannerSelectAll));by("planner-min-score")?.addEventListener("change",()=>{clearPlannerResults();renderPlannerEnergySummary();});by("generate-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(false));by("try-all-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(true));document.addEventListener("click",event=>{const retry=event.target.closest("[data-plan-retry]");if(retry){plannerChoice(retry.dataset.planRetry,true);saveExt();renderMealSuggestions();return;}const accept=event.target.closest("[data-plan-accept]");if(accept){acceptPlannedSuggestion(accept.dataset.planAccept);return;}const undo=event.target.closest("[data-plan-undo]");if(undo){const meal=undo.dataset.planUndo,date=ext.ui.plannerDate||isoToday(),id=ext.ui.plannerAccepted?.[meal];ext.diary[date]=(ext.diary[date]||[]).filter(e=>!(e.meal===meal&&e.plannerRef?.endsWith(`|${id}`)));delete ext.ui.plannerAccepted[meal];saveExt();renderMealSuggestions();renderPlannerEnergySummary();showActionToast(`${meal} suggestion removed from the plan.`,null,5000);}});
 
 // Daily progress
 function weeklyFoodGroupAverages(endDate){const totals=Object.fromEntries(FOOD_GROUP_KEYS.map(k=>[k,0]));for(let i=0;i<7;i++){const groups=dayFoodGroups(shiftISO(endDate,-i),["eaten","planned"]);FOOD_GROUP_KEYS.forEach(k=>totals[k]+=n(groups[k]));}FOOD_GROUP_KEYS.forEach(k=>totals[k]/=7);return totals;}
 function projectedProgressCard(label,eaten,planned,target,unit,type,date){const projected=eaten+planned,[state,text]=progressState(projected,target,type,date),eatenPct=Math.min(100,target?eaten/target*100:0),plannedPct=Math.min(100-eatenPct,target?planned/target*100:0);return `<div class="progress-card projected ${state}"><div><strong>${esc(label)}</strong><span>${formatNumber(projected)} / ${formatNumber(target)} ${esc(unit)}</span></div><div class="progress-track layered"><i class="eaten-progress" style="width:${eatenPct}%"></i><i class="planned-progress" style="width:${plannedPct}%"></i></div><small>Eaten ${formatNumber(eaten)} · Planned ${formatNumber(planned)} · ${text}</small></div>`;}
 function projectedFoodGroupCard(key,eaten,planned,target){const e=Math.min(100,target?eaten/target*100:0),p=Math.min(100-e,target?planned/target*100:0);return `<div class="food-group-card projected"><div><strong>${esc(FOOD_GROUP_LABELS[key])}</strong><span>${formatNumber(eaten+planned,true)} of ${formatNumber(target,true)} serves</span></div><div class="progress-track layered"><i class="eaten-progress" style="width:${e}%"></i><i class="planned-progress" style="width:${p}%"></i></div><small>Eaten ${formatNumber(eaten,true)} · Planned ${formatNumber(planned,true)}</small></div>`;}
 function renderDailyProgress(){
-  const date=ext.ui.progressDate||by("progress-date")?.value||isoToday();ext.ui.progressDate=date;updateDateControl("progress",date);const summary=daySummary(date),{nutrients,planned,hydration,plannedHydration,steps,goals,foodGroups,plannedFoodGroups}=summary;by("today-water").value=ext.water[date]||"";by("today-steps").value=steps||"";
+  const date=ext.ui.progressDate||by("progress-date")?.value||isoToday();ext.ui.progressDate=date;updateDateControl("progress",date);const summary=daySummary(date),{nutrients,planned,hydration,plannedHydration,steps,goals,foodGroups,plannedFoodGroups}=summary;goals.hydration=n(ext.fluidTargets[date])||goals.hydration;by("today-water").value=ext.water[date]||"";if(by("today-fluid-target"))by("today-fluid-target").value=goals.hydration;by("today-steps").value=steps||"";
   const cards=[["Energy","calories",goals.calories,"Cal","energy"],["Protein","protein",goals.protein,"g","positive"],["Carbohydrate","carbs",goals.carbs,"g","positive"],["Fat","fat",goals.fat,"g","positive"],["Fibre","fibre",goals.fibre,"g","positive"],["Sugars","sugar",goals.sugar,"g","limit"],["Sodium","sodium",goals.sodium,"mg","limit"]];
   by("daily-progress-grid").innerHTML=cards.map(([label,key,target,unit,type])=>projectedProgressCard(label,n(nutrients[key]),n(planned[key]),target,unit,type,date)).join("")+projectedProgressCard("Fluids",hydration.drinks,plannedHydration.drinks,goals.hydration,"mL","positive",date)+progressCard("Steps",steps,goals.steps,"","positive",date);
   by("daily-food-group-progress").innerHTML=FOOD_GROUP_KEYS.map(key=>projectedFoodGroupCard(key,n(foodGroups[key]),n(plannedFoodGroups[key]),goals.foodGroups[key])).join("");const weekly=weeklyFoodGroupAverages(date);by("weekly-food-group-progress").innerHTML=`<h4>Seven-day planned + eaten average</h4><div>${FOOD_GROUP_KEYS.map(key=>`<span><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(weekly[key],true)} / ${formatNumber(goals.foodGroups[key],true)}</strong></span>`).join("")}</div><p>The lighter section of each bar is still planned. Update planned foods as the day unfolds to show what actually happened.</p>`;
-  const eatenCount=entriesForDate(date).filter(e=>e.status==="eaten").length,plannedCount=entriesForDate(date).filter(e=>e.status==="planned").length,projected=nutrients.calories+planned.calories,available=Math.max(0,goals.calories-projected);const parts=[`${formatNumber(nutrients.calories)} Cal eaten`,`${formatNumber(planned.calories)} Cal still planned`,`${formatNumber(projected)} Cal projected`,`${formatNumber(available)} Cal available after the plan`];if(!eatenCount&&!plannedCount)parts.unshift("Nothing has been planned or recorded yet.");if(hydration.foodMoisture>0)parts.push(`${formatNumber(hydration.foodMoisture)} mL estimated moisture from solid foods is shown separately and does not inflate the daily fluids target.`);by("daily-progress-explanation").innerHTML=`<h3>Today’s Summary</h3><p>${parts.join(" · ")}</p><p class="progress-key"><span class="key-eaten"></span>Eaten <span class="key-planned"></span>Planned</p>`;saveExt();
+  const eatenCount=entriesForDate(date).filter(e=>e.status==="eaten").length,plannedCount=entriesForDate(date).filter(e=>e.status==="planned").length,projected=nutrients.calories+planned.calories,available=Math.max(0,goals.calories-projected);const parts=[`${formatNumber(nutrients.calories)} Cal eaten`,`${formatNumber(planned.calories)} Cal still planned`,`${formatNumber(projected)} Cal projected`,`${formatNumber(available)} Cal available after the plan`];if(!eatenCount&&!plannedCount)parts.unshift("Nothing has been planned or recorded yet.");if(hydration.foodMoisture>0)parts.push(`${formatNumber(hydration.foodMoisture)} mL estimated moisture from solid foods is shown separately and does not inflate the daily fluids target.`);by("daily-progress-explanation").innerHTML=`<h3>Today’s Summary</h3><p>${parts.join(" · ")}</p><p class="progress-key"><span class="key-eaten"></span>Eaten <span class="key-planned"></span>Planned</p>`;
+  const plannedEntries=entriesForDate(date).filter(e=>e.status==="planned");if(by("daily-planned-foods"))by("daily-planned-foods").innerHTML=plannedEntries.length?plannedEntries.map(e=>`<article class="planned-food-row"><div><strong>${esc(e.name)}</strong><small>${esc(e.meal)} · ${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)} · ${formatNumber(e.nutrients?.calories)} Cal</small></div><div><button data-progress-eaten="${esc(e.id)}">Mark Eaten</button><button data-progress-edit="${esc(e.id)}">Change</button><button data-progress-replace="${esc(e.id)}">Replace</button><button data-progress-move="${esc(e.id)}">Move</button><button data-progress-skip="${esc(e.id)}">Skip</button></div></article>`).join(""):'<p class="empty-state">No Foods Are Currently Planned.</p>';saveExt();
 }
-let progressSaveTimer=null;function autoSaveProgressFields(){clearTimeout(progressSaveTimer);progressSaveTimer=setTimeout(()=>{const date=ext.ui.progressDate||isoToday();ext.water[date]=Math.max(0,n(by("today-water")?.value));ext.steps[date]=Math.max(0,whole(by("today-steps")?.value));saveExt();renderDailyProgress();showActionToast("Fluids and steps updated.",null,2500);},350);}by("today-water")?.addEventListener("change",autoSaveProgressFields);by("today-steps")?.addEventListener("change",autoSaveProgressFields);
+let progressSaveTimer=null;function autoSaveProgressFields(){clearTimeout(progressSaveTimer);progressSaveTimer=setTimeout(()=>{const date=ext.ui.progressDate||isoToday();ext.water[date]=Math.max(0,n(by("today-water")?.value));ext.fluidTargets[date]=Math.max(250,n(by("today-fluid-target")?.value)||currentGoals(date).hydration);ext.steps[date]=Math.max(0,whole(by("today-steps")?.value));saveExt();renderDailyProgress();showActionToast("Fluids and steps updated.",null,2500);},350);}by("today-water")?.addEventListener("change",autoSaveProgressFields);by("today-fluid-target")?.addEventListener("change",autoSaveProgressFields);by("today-steps")?.addEventListener("change",autoSaveProgressFields);
+
+document.addEventListener("click",event=>{const eaten=event.target.closest("[data-progress-eaten]");if(eaten){const found=findEntry(eaten.dataset.progressEaten);if(found){found.entry.status="eaten";saveExt();renderDailyProgress();showActionToast(`${found.entry.name} marked Eaten.`,null,4000);}return;}const edit=event.target.closest("[data-progress-edit]");if(edit){const found=findEntry(edit.dataset.progressEdit);if(found)prepareEntry(getFood(found.entry.foodId)||snapshotFood(found.entry),{entry:found.entry});return;}const replace=event.target.closest("[data-progress-replace]");if(replace){const found=findEntry(replace.dataset.progressReplace);if(found){ext.ui.replacingEntryId=found.entry.id;ext.ui.diaryDate=found.date;ext.ui.pendingMeal=found.entry.meal;ext.ui.libraryTab="all";saveExt();openFeature("food-library");showActionToast(`Choose a replacement for ${found.entry.name}.`,null,5000);}return;}const skip=event.target.closest("[data-progress-skip]");if(skip){const found=findEntry(skip.dataset.progressSkip);if(found){found.entry.status="skipped";saveExt();renderDailyProgress();showActionToast(`${found.entry.name} skipped.`,null,4000);}return;}const move=event.target.closest("[data-progress-move]");if(move){const found=findEntry(move.dataset.progressMove);if(found){openModal(`Move ${found.entry.name}`,"Choose a Meal for this Planned Food.","Move",()=>{found.entry.meal=by("progress-move-meal").value;saveExt();renderDailyProgress();},`<label>Meal<select id="progress-move-meal">${mealNames().map(m=>`<option ${m===found.entry.meal?"selected":""}>${esc(m)}</option>`).join("")}</select></label>`);}return;}});
 
 // Exercise and activity
 function renderExercise(){
   if(!by("exercise-history"))return;
-  by("exercise-history").innerHTML=ext.exercise.length?ext.exercise.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>`<div class="list-row"><span>🏃</span><div><strong>${esc(x.name)}</strong><small>${formatDate(x.date.slice(0,10))} · ${x.minutes} min · ${esc(x.intensity)} · ${formatNumber(x.calories)} Cal burned · ${formatNumber(x.credit)} Cal credited</small><p>${esc(x.notes||"")}</p></div><button data-activity-delete="${esc(x.id)}" class="delete-action">Delete</button></div>`).join(""):`<p class="empty-state">No extra activity logged yet.</p>`;
+  by("exercise-history").innerHTML=ext.exercise.length?ext.exercise.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>`<div class="list-row"><span>🏃</span><div><strong>${esc(x.name)}</strong><small>${formatDate(x.localDate||x.date.slice(0,10))} · ${x.minutes} min · ${esc(x.intensity)} · ${formatNumber(x.calories)} Cal burned · ${formatNumber(x.credit)} Cal credited</small><p>${esc(x.notes||"")}</p></div><button data-activity-delete="${esc(x.id)}" class="delete-action">Delete</button></div>`).join(""):`<p class="empty-state">No extra activity logged yet.</p>`;
 }
 by("add-exercise")?.addEventListener("click",()=>{
   const name=by("exercise-name").value.trim();if(!name)return;const calories=n(by("exercise-calories").value),choice=by("exercise-credit-choice").value,credit=choice==="custom"?n(by("exercise-custom-credit").value):calories*n(choice)/100;
-  ext.exercise.push({id:uid("activity"),date:new Date().toISOString(),name,minutes:n(by("exercise-minutes").value),intensity:by("exercise-intensity").value,calories,credit:whole(credit),notes:by("exercise-notes").value});saveExt();renderExercise();showActionToast(`${name} added. ${whole(credit)} Cal credited to today’s allowance.`,null,6000);["exercise-name","exercise-minutes","exercise-calories","exercise-custom-credit","exercise-notes"].forEach(id=>by(id).value="");
+  ext.exercise.push({id:uid("activity"),date:new Date().toISOString(),localDate:isoToday(),timeZone:activeTimeZone(),name,minutes:n(by("exercise-minutes").value),intensity:by("exercise-intensity").value,calories,credit:whole(credit),notes:by("exercise-notes").value});saveExt();renderExercise();showActionToast(`${name} added. ${whole(credit)} Cal credited to today’s allowance.`,null,6000);["exercise-name","exercise-minutes","exercise-calories","exercise-custom-credit","exercise-notes"].forEach(id=>by(id).value="");
 });
 document.addEventListener("click",event=>{const b=event.target.closest("[data-activity-delete]");if(!b)return;const idx=ext.exercise.findIndex(x=>x.id===b.dataset.activityDelete);if(idx<0)return;const item=ext.exercise[idx];openModal(`Delete ${item.name}?`,`This removes the activity and its credited Calories.`,`Delete`,()=>{const removed=ext.exercise.splice(idx,1)[0];saveExt();renderExercise();showActionToast(`${removed.name} deleted.`,()=>{ext.exercise.splice(idx,0,removed);saveExt();renderExercise();},8000);});});
 
@@ -940,7 +1007,7 @@ by("print-shopping-list")?.addEventListener("click",()=>{renderShoppingPrint();d
 by("speak-shopping-item")?.addEventListener("click",()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showActionToast("Speech entry is unavailable in this browser.",null,5000);return;}const r=new SR();r.lang="en-AU";r.interimResults=false;r.onresult=e=>{by("shopping-item").value=e.results[0][0].transcript;by("shopping-item").dispatchEvent(new Event("change"));};r.start();});
 
 
-by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,5000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database</strong> remains the preferred reference for Australian generic foods. Alpha 0.6.3 links to its official search while a licensed local import is prepared.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
+by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,5000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database</strong> remains the preferred reference for Australian generic foods. Alpha 0.6.4 links to its official search while a licensed local import is prepared.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
 
 // Food preferences and family readiness
 function renderFoodPreferences(){
@@ -989,7 +1056,7 @@ function buildReport(){
   by("report-preview").innerHTML=`<header class="report-title"><h1>Healthy Eating Companion Progress Report</h1><p>${formatDate(from)} to ${formatDate(to)}</p><p>${esc(main.personal?.preferredName||main.personal?.fullName||"Founder Tester")}</p></header><section><h2>Plain-English Summary</h2><p>${rows.filter(r=>r.entries.some(e=>e.status==="eaten")).length} days contain food records. Unrecorded days are not counted as zero intake. This founder report is for personal review and is not medical advice.</p></section>${foodOn?`<section><h2>Food & Nutrition</h2>${rows.length?rows.map(r=>`<h3>${formatDate(r.date)}</h3><p><strong>${formatNumber(r.summary.nutrients.calories)} Cal</strong> · Protein ${formatNumber(r.summary.nutrients.protein)} g · Fibre ${formatNumber(r.summary.nutrients.fibre)} g · Sodium ${formatNumber(r.summary.nutrients.sodium)} mg</p><table><thead><tr><th>Meal</th><th>Food</th><th>Status</th><th>Amount</th><th>Cal</th></tr></thead><tbody>${r.entries.map(e=>`<tr><td>${esc(e.meal)}</td><td>${esc(e.name)}</td><td>${esc(statusLabel(e.status))}</td><td>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)}</td><td>${formatNumber(e.nutrients.calories)}</td></tr>`).join("")}</tbody></table>`).join(""):`<p>No food records in this period.</p>`}</section>`:""}${weightOn?`<section><h2>Weight</h2>${weights.length?`<table><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${weights.map(w=>`<tr><td>${esc(w.date)}</td><td>${formatNumber(w.weightKg,true)} kg</td><td>${esc(w.note||"")}</td></tr>`).join("")}</tbody></table>`:`<p>No weight entries in this period.</p>`}</section>`:""}${activityOn?`<section><h2>Activity</h2>${activities.length?`<table><thead><tr><th>Date</th><th>Activity</th><th>Minutes</th><th>Burned</th><th>Credited</th></tr></thead><tbody>${activities.map(a=>`<tr><td>${esc(a.date.slice(0,10))}</td><td>${esc(a.name)}</td><td>${formatNumber(a.minutes)}</td><td>${formatNumber(a.calories)} Cal</td><td>${formatNumber(a.credit)} Cal</td></tr>`).join("")}</tbody></table>`:`<p>No activity entries in this period.</p>`}</section>`:""}${waterOn?`<section><h2>Hydration & Steps</h2><table><thead><tr><th>Date</th><th>Total Hydration</th><th>Steps</th></tr></thead><tbody>${Object.keys({...ext.diary,...ext.water,...ext.steps}).filter(d=>d>=from&&d<=to).sort().map(d=>`<tr><td>${esc(d)}</td><td>${formatNumber(dayHydration(d).total)} mL</td><td>${formatNumber(ext.steps[d])}</td></tr>`).join("")}</tbody></table></section>`:""}`;
 }
 by("preview-report")?.addEventListener("click",buildReport);by("print-report")?.addEventListener("click",()=>{buildReport();setTimeout(()=>window.print(),80);});
-by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-companion-alpha-0-6-3-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
+by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-companion-alpha-0-6-4-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
 
 // Contextual help
 const HELP={

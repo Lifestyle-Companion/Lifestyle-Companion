@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.3</title>
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.4</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.3</div>
+      <div class="badge">Founder Trial · Alpha 0.6.4</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.3 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.4 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,7 +120,7 @@
           <div class="section-heading"><div><h3>Meet the Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.3 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
+          <p class="fine">The Alpha 0.6.4 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
@@ -155,13 +155,15 @@
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐦</span><p>Only your email, given name and preferred name are needed here. Address and phone details are not requested in this trial.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
         <div class="form-grid">
-          <label>Given name *<input id="full-name" autocomplete="given-name" placeholder="For example, Malcolm"></label>
-          <label>Preferred name<input id="preferred-name" placeholder="For example, Mal"><small class="field-help">Leave blank to use your given name.</small></label>
+          <label>Given Name *<input id="full-name" autocomplete="given-name" placeholder="For example, Malcolm"></label>
+          <label>Surname<input id="surname" autocomplete="family-name" placeholder="For example, West"></label>
+          <label>Preferred Name<input id="preferred-name" placeholder="For example, Mal"><small class="field-help">Leave blank to use your given name.</small></label>
           <label class="full">Say my preferred name like this<input id="preferred-pronunciation" placeholder="Optional phonetic spelling"></label>
         </div>
         <input id="personal-email" type="hidden">
         <button id="preview-user-name" class="secondary">🔊 Preview my preferred name</button>
         <p class="fine">Health details needed for the recommendation are asked on the next screen, with an explanation of why they are used.</p>
+        <details class="optional-profile-details"><summary>Location &amp; Time Zone (Optional)</summary><p class="fine">These settings help the app show the correct local day, date and time. Daylight saving is handled automatically by the selected time zone.</p><div class="form-grid"><label>Country<select id="profile-country"><option>Australia</option><option>New Zealand</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option></select></label><label>State, Territory or Province<input id="profile-region" placeholder="For example, Queensland"></label><label>Postcode or ZIP Code<input id="profile-postcode" inputmode="text"></label><label>Home Time Zone<input id="home-timezone" placeholder="Australia/Brisbane"><small class="field-help" id="detected-timezone"></small></label><label class="full">When My Device Time Zone Changes<select id="timezone-behaviour"><option value="ask">Ask Me Before Changing</option><option value="device">Automatically Follow My Device</option><option value="home">Always Use My Home Time Zone</option></select></label></div></details>
 
         <div id="founder-contact-fields" class="hidden" aria-hidden="true">
           <select id="country"><option value="Australia">Australia</option><option value="New Zealand">New Zealand</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Canada">Canada</option><option value="Other">Other</option></select>
@@ -296,7 +298,7 @@
     <main class="page">
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>Calculated figures are shown as clean whole numbers. Weight measurements may retain one decimal place.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div id="recommendation-grid" class="recommendation-grid"></div>
-      <div id="calculation-breakdown" class="card calculation-breakdown"></div>
+      <div class="card calculation-help-card"><button id="calculation-help-toggle" class="round-help" type="button" aria-expanded="false" aria-controls="calculation-breakdown">?</button><strong>How Was My Energy Target Calculated?</strong><p class="fine">Tap the question mark to see the figures used to calculate your daily target.</p><div id="calculation-breakdown" class="calculation-breakdown hidden"></div></div>
       <div class="card"><h3>Detailed Nutrition Goals</h3><div id="micronutrient-grid" class="recommendation-grid"></div><p class="fine">These general adult estimates are for trial display only. Medical restrictions and clinician-set targets always take priority.</p></div>
 
       <div class="card">
@@ -326,7 +328,7 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header compact-home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.3</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.4</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
     <main class="home-main home-main-centred">
       <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
@@ -341,10 +343,10 @@
         <button id="home-companion" class="companion-centre"><img id="home-avatar-image" class="home-avatar-image hidden" alt=""><span id="home-avatar">🐦</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small></button>
       </div>
 
-      <div class="home-message daily-inspiration-card" aria-label="Daily food thought">
+      <div id="inspiration-card" class="home-message daily-inspiration-card tappable-card" role="button" tabindex="0" aria-label="Tap for another food tip, quote, joke or fact">
         <span id="message-avatar">🐵</span>
         <div><strong id="message-name">Healthy Eating Companion</strong><span id="message-type" class="eyebrow">Today’s thought</span><p id="message-text">Small changes are easier to repeat than perfect days.</p></div>
-        <button id="speak-home" class="speak-note companion-only" aria-label="Speak today’s thought">🔊</button>
+        <div class="inspiration-actions"><select id="inspiration-category" aria-label="Companion message category"><option value="mix">Mix Them Up</option><option value="tip">Healthy Eating Tips</option><option value="quote">Food Quotes</option><option value="joke">Food Jokes</option><option value="fact">Did You Know?</option><option value="encouragement">Encouragement</option></select><small>Tap the card for another</small></div><button id="speak-home" class="speak-note companion-only" aria-label="Speak today’s thought">🔊</button>
       </div>
     </main>
   </section>
@@ -391,8 +393,8 @@
         <label class="resource-search"><span>⌕</span><input id="food-search" type="search" placeholder="Search foods, saved meals and recipes"><button id="clear-food-search" type="button" aria-label="Clear search">×</button></label>
         <div class="library-tabs resource-tabs" role="tablist">
           <button class="active" data-library-tab="all">All Resources</button>
-          <button data-library-tab="saved">Saved Foods</button>
-          <button data-library-tab="custom">My Foods</button>
+          <button data-library-tab="saved">Favourite Foods</button>
+          <button data-library-tab="custom">Foods I Created</button>
           <button data-library-tab="recipes">My Recipes</button>
           <button data-library-tab="meals">Saved Meals</button>
           <button data-library-tab="online">Online Foods</button>
@@ -404,11 +406,13 @@
         <p id="online-food-status" class="fine online-food-status hidden">Local foods search immediately. Online searches run only when you tap the button, to respect database limits.</p>
       </div>
       <div id="food-results" class="resource-list"></div>
-      <button id="resource-add-button" class="floating-add" aria-label="Create or scan a food">＋</button>
+      <button id="resource-add-button" class="floating-add labelled-create" aria-label="Create or scan a food">＋ <span>Create or Scan</span></button>
       <div id="resource-add-menu" class="floating-action-menu hidden">
-        <button data-open-feature="custom-food">Create Custom Food</button>
-        <button data-open-feature="recipe-builder">Create Recipe</button>
-        <button data-open-feature="scan-centre">Scan &amp; Review</button>
+        <button data-open-feature="custom-food">Create a Single Food or Product</button>
+        <button data-open-feature="recipe-builder">Create a Recipe from Ingredients</button>
+        <button id="create-saved-meal" type="button">Create a Saved Meal</button>
+        <button data-open-feature="scan-centre">Scan a Barcode or Nutrition Panel</button>
+        <button id="close-resource-menu" type="button">Close</button>
       </div>
     </main>
   </section>
@@ -439,7 +443,7 @@
     <main class="page narrow"><div class="card">
       <div class="form-grid">
         <label>Food Name *<input id="custom-food-name" placeholder="For example, Woolworths Light Milk"></label><label>Brand<input id="custom-food-brand"></label>
-        <label>Serving Amount *<input id="custom-serving-amount" type="number" min="0.1" step="0.1" value="100"></label><label>Serving Unit *<select id="custom-serving-unit"><option>g</option><option>mL</option><option>item</option><option>slice</option><option>biscuit</option><option>cup</option><option>serve</option></select></label>
+        <label>Serving Amount *<input id="custom-serving-amount" type="number" min="0.1" step="0.1" value="100"></label><label>Serving Unit *<select id="custom-serving-unit"><option value="g">g</option><option value="mL">mL</option><option value="item">Item</option><option value="slice">Slice</option><option value="biscuit">Biscuit</option><option value="cup">Cup</option><option value="serve">Serve</option></select></label>
         <label>Calories (Cal) *<input id="custom-cal" type="number" min="0" step="0.1"></label><label>Protein (g)<input id="custom-protein" type="number" min="0" step="0.1"></label>
         <label>Carbohydrate (g)<input id="custom-carbs" type="number" min="0" step="0.1"></label><label>Fat (g)<input id="custom-fat" type="number" min="0" step="0.1"></label>
         <label>Saturated Fat (g)<input id="custom-sat-fat" type="number" min="0" step="0.1"></label><label>Fibre (g)<input id="custom-fibre" type="number" min="0" step="0.1"></label>
@@ -447,7 +451,7 @@
         <label class="full">Ingredients or Allergens<textarea id="custom-ingredients" rows="3" placeholder="Optional, but important for allergies"></textarea></label>
       </div>
       <p class="fine">Leave an unknown nutrient blank. Healthy Eating Companion displays “Not Available” rather than pretending missing information is zero.</p>
-      <small id="custom-food-error" class="field-error"></small><button id="save-custom-food" class="primary wide">Save to My Foods</button>
+      <small id="custom-food-error" class="field-error"></small><button id="save-custom-food" class="primary wide">Save to Foods I Created</button>
     </div></main>
   </section>
 
@@ -455,7 +459,7 @@
     <header class="topbar sticky"><button class="back" data-go="food-library">← Back</button><div class="grow"><h2>Create Recipe</h2><p>Build a batch once, then log each serving accurately.</p></div></header>
     <main class="page">
       <div class="card"><div class="form-grid"><label>Recipe Name *<input id="recipe-name" placeholder="For example, Homemade Beef Rissoles"></label><label>Number of Servings *<input id="recipe-servings" type="number" min="1" step="1" value="4"></label><label class="full">Preparation Notes<textarea id="recipe-notes" rows="2"></textarea></label></div></div>
-      <div class="card"><h3>Add Ingredients</h3><div class="form-grid"><label>Food<select id="recipe-food-select"></select></label><label>Amount<input id="recipe-ingredient-amount" type="number" min="0.01" step="0.1" value="1"></label><label>Unit<select id="recipe-ingredient-unit"></select></label></div><button id="add-recipe-ingredient" class="secondary">Add Ingredient</button><div id="recipe-ingredient-list"></div></div>
+      <div class="card recipe-ingredient-card"><h3>Add Ingredients</h3><p class="fine">Search the full food library, choose the exact ingredient, then select an amount and a food-specific measure.</p><label>Find an Ingredient<input id="recipe-food-search" type="search" placeholder="For example, bacon, English muffin or cheese" autocomplete="off"></label><div id="recipe-food-search-results" class="recipe-search-results"></div><input id="recipe-food-select" type="hidden"><div id="recipe-selected-food" class="status-box">No Ingredient Selected.</div><div class="form-grid"><label>Amount<input id="recipe-ingredient-amount" type="number" min="0.01" step="0.1" value="1"></label><label>Unit<select id="recipe-ingredient-unit"></select></label></div><div class="quick-action-row"><button id="add-recipe-ingredient" class="secondary">Add Ingredient</button><button id="create-missing-ingredient" class="secondary" type="button">Create Missing Ingredient</button><button id="scan-recipe-ingredient" class="secondary" type="button">Scan Ingredient</button></div><div id="recipe-ingredient-list"></div></div>
       <div class="card"><h3>Recipe Nutrition</h3><div id="recipe-nutrition-preview"></div><small id="recipe-error" class="field-error"></small><button id="save-recipe" class="primary wide">Save Recipe</button></div>
     </main>
   </section>
@@ -565,10 +569,11 @@
       <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Five Food Groups</h3><p>Personalised Australian daily serve targets.</p></div></div><div id="daily-food-group-progress" class="food-group-progress-grid"></div><div id="weekly-food-group-progress" class="weekly-food-groups"></div></section>
       <section class="compact-update-strip" aria-label="Quick hydration and steps update">
         <label>Additional drinks not already logged (mL)<input id="today-water" type="number" min="0" step="50" inputmode="numeric"></label>
+        <label>Daily Fluid Target (mL)<input id="today-fluid-target" type="number" min="250" step="50" inputmode="numeric"></label>
         <label>Steps<input id="today-steps" type="number" min="0" step="100" inputmode="numeric"></label>
         <small>These two fields save automatically. Drinks entered in the Diary are counted automatically.</small>
       </section>
-      <div id="daily-progress-explanation" class="card compact-summary-card"></div>
+      <div id="daily-progress-explanation" class="card compact-summary-card"></div><section class="progress-section"><div class="section-heading compact-heading"><div><h3>Foods Still Planned</h3><p>Mark them eaten, change or replace them, move them, or skip them.</p></div></div><div id="daily-planned-foods"></div></section>
       <button class="floating-mic" data-open-feature="quick-log" aria-label="Voice or text food log">🎙️</button>
     </main>
   </section>
@@ -645,10 +650,20 @@
         <button data-open-feature="food-preferences" class="secondary">Food Preferences</button>
         <button data-open-feature="family-connections" class="secondary">Family & Connections</button>
         <button id="food-data-settings" class="secondary">Food Data Sources</button>
-        <button id="reset-trial" class="danger-button">Reset Founder Trial</button>
+        <button data-open-feature="send-feedback" class="secondary">Send Feedback</button>
+        <button data-open-feature="data-privacy" class="secondary">Data, Backup &amp; Privacy</button>
+        <button id="founder-tools-button" data-open-feature="founder-tools" class="secondary hidden">Founder Trial Tools</button>
+        <button id="reset-trial" class="danger-button">Reset App for Testing</button>
+        <button id="leave-app" class="danger-button">Leave Healthy Eating Companion</button>
       </div>
     </main>
   </section>
+
+  <section id="send-feedback" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Send Feedback</h2><p>Tell us what works and what needs improvement.</p></div></header><main class="page narrow"><div class="card"><div class="form-grid"><label>Feedback Type<select id="feedback-type"><option>Something I Like</option><option>Something I Dislike</option><option>Something Seems Inaccurate</option><option>I Found a Bug</option><option>Suggest a New Feature</option><option>Other Feedback</option></select></label><label>Screen or Feature<input id="feedback-screen" placeholder="Optional"></label><label class="full">Your Feedback<textarea id="feedback-message" rows="7" required></textarea></label><label class="toggle full"><input id="feedback-response-ok" type="checkbox"><span>You may contact me about this feedback.</span></label></div><button id="submit-feedback" class="primary wide">Prepare Feedback</button><p class="fine">App version and basic device information are included. Diary text, food entries, weight, photos and address details are not attached automatically.</p><div id="feedback-status" class="status-box hidden"></div></div></main></section>
+
+  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.4 uses the same private browser storage as Alpha 0.6.3. Updating files at the same website address does not intentionally remove profiles, diary entries, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing and Leaving</h3><p><strong>Reset App for Testing</strong> removes this device’s profile and trial data so setup can be tested again.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
+
+  <section id="founder-tools" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Founder Trial Tools</h2><p>Local founder-only testing controls.</p></div></header><main class="page"><div id="founder-lock-card" class="card"><h3>Developer Access</h3><p>Set or enter a six-digit local PIN. This protects the tools on this device only.</p><label>Founder PIN<input id="founder-pin" type="password" inputmode="numeric" maxlength="6"></label><button id="founder-unlock" class="primary">Unlock</button><small id="founder-lock-status" class="field-error"></small></div><div id="founder-dashboard" class="hidden"><div class="card"><h3>Invite Trial Testers</h3><p>Create up to 10 invitation links for friends and family.</p><div class="form-grid"><label>Feedback Email<input id="founder-feedback-email" type="email" placeholder="Address that receives tester feedback"></label><label>Name<input id="invite-name"></label><label>Email or Note<input id="invite-contact"></label></div><button id="create-invite" class="primary">Create Invitation</button><div id="invite-list"></div><p class="fine">In this static trial, invitation records and the 10-person limit are stored on this device. Secure cross-device enforcement will require a protected server in a future build.</p></div><div class="card"><h3>Developer Insights</h3><div id="developer-insights"></div><button id="export-insights" class="secondary">Export Local Insights</button><p class="fine">These figures cover this browser only until a privacy-protected analytics service is connected.</p></div><div class="card"><h3>Feedback Received on This Device</h3><div id="founder-feedback-list"></div></div></div></main></section>
 
   <section id="weight-checkin" class="screen content-screen" data-speech="Record your current weight and selected goal. Recommendations update only after a meaningful change, so small daily fluctuations do not keep changing your plan.">
     <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Weight Check-in</h2><p>Update progress and adapt your plan</p></div></header>
@@ -685,5 +700,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/umd/zxing-browser.min.js" defer crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js" defer crossorigin="anonymous"></script>
 <script src="alpha06.js"></script>
+<script src="alpha064.js"></script>
 </body>
 </html>

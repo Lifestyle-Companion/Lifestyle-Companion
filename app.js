@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.3",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.4",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -13,9 +13,10 @@ const DEFAULTS = {
   completed: false,
   preferences: { language: "en-AU", theme: "garden", inspirationIndex: 0 },
   personal: {
-    givenName: "", fullName: "", preferredName: "", preferredPronunciation: "", email: "", dob: "",
+    givenName: "", surname: "", fullName: "", preferredName: "", preferredPronunciation: "", email: "", dob: "",
     energyUnit: "kJ", country: "Australia", region: "", postcode: "", suburb: "",
-    streetAddress: "", mobile: "", mobileInternational: "", phone: "", phoneInternational: ""
+    streetAddress: "", mobile: "", mobileInternational: "", phone: "", phoneInternational: "",
+    homeTimeZone: "", activeTimeZone: "", timeZoneBehaviour: "ask"
   },
   health: {
     sex: "", heightCm: 0, startingWeightKg: 0, currentWeightKg: 0,
@@ -65,7 +66,13 @@ function formatWeight(value){
   const n = roundWeight(value);
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+function deviceTimeZone(){ try{return Intl.DateTimeFormat().resolvedOptions().timeZone || "Australia/Brisbane";}catch{return "Australia/Brisbane";} }
+function activeTimeZone(){ return data?.personal?.activeTimeZone || data?.personal?.homeTimeZone || deviceTimeZone(); }
+function zonedParts(date=new Date(), timeZone=activeTimeZone()){
+  try{return Object.fromEntries(new Intl.DateTimeFormat("en-CA",{timeZone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(date).filter(x=>x.type!=="literal").map(x=>[x.type,x.value]));}catch{return {year:String(date.getFullYear()),month:String(date.getMonth()+1).padStart(2,"0"),day:String(date.getDate()).padStart(2,"0"),hour:String(date.getHours()),minute:String(date.getMinutes())};}
+}
+function todayISO(){ const z=zonedParts(); return `${z.year}-${z.month}-${z.day}`; }
+window.HECDate={deviceTimeZone,activeTimeZone,zonedParts,todayISO};
 function ageFromDob(value){
   if(!value) return NaN;
   const dob = new Date(value + "T00:00:00");
@@ -602,6 +609,7 @@ $("preview-user-name")?.addEventListener("click", () => {
 
 $("personal-next").addEventListener("click", () => {
   const givenName = $("full-name").value.trim();
+  const surname = $("surname")?.value.trim() || "";
   const preferredName = $("preferred-name").value.trim() || givenName;
   const email = (data.email || $("personal-email")?.value || "").trim();
   let error = "", spoken = "";
@@ -612,9 +620,16 @@ $("personal-next").addEventListener("click", () => {
   data.personal = {
     ...data.personal,
     givenName,
-    fullName: givenName,
+    surname,
+    fullName: [givenName,surname].filter(Boolean).join(" "),
     preferredName,
     preferredPronunciation: $("preferred-pronunciation").value.trim(),
+    country: $("profile-country")?.value || data.personal.country || "Australia",
+    region: $("profile-region")?.value.trim() || "",
+    postcode: $("profile-postcode")?.value.trim() || "",
+    homeTimeZone: $("home-timezone")?.value.trim() || deviceTimeZone(),
+    activeTimeZone: $("home-timezone")?.value.trim() || data.personal.activeTimeZone || deviceTimeZone(),
+    timeZoneBehaviour: $("timezone-behaviour")?.value || "ask",
     email
   };
   data.email = email;
@@ -649,7 +664,11 @@ function updateGoalOptions(){
     if(current) $("selected-goal-weight").value = formatWeight(current);
   }
 }
-document.querySelectorAll('input[name="goal"]').forEach(input => input.addEventListener("change", updateGoalOptions));
+document.querySelectorAll('input[name="goal"]').forEach(input => input.addEventListener("change", () => {
+  const changedGoal=selected("goal");
+  if(changedGoal !== data.health.goal) $("selected-goal-weight").value="";
+  updateGoalOptions();
+}));
 function updateFastingOptions(){
   const custom = selected("fasting") === "custom";
   $("custom-fasting").classList.toggle("hidden", !custom);
@@ -688,7 +707,7 @@ function lossRateLabel(value){
   return value === "slow" ? "Slow & steady" : value === "fast" ? "Fast" : "Recommended";
 }
 function recommendedGoalFor(goal, weightKg, healthyLow, healthyHigh){
-  if(goal === "maintain") return roundWhole(weightKg);
+  if(goal === "maintain") return roundWeight(weightKg);
   if(goal === "lose") return roundWhole(Math.max(healthyLow, Math.min(weightKg - 1, healthyHigh)));
   return roundWhole(Math.max(weightKg + 1, healthyLow));
 }
@@ -766,7 +785,7 @@ function collectHealthForm(){
     fastingEnergyKj: fastingInputToKj(),
     activity: Number($("activity").value),
     exerciseCredit: Number(selected("exercise-credit") || 0),
-    selectedGoalWeight: Number($("selected-goal-weight").value) || 0
+    selectedGoalWeight: selected("goal") === data.health.goal ? (Number($("selected-goal-weight").value) || 0) : 0
   };
 }
 $("calculate-button").addEventListener("click", () => {
@@ -845,9 +864,14 @@ function renderRecommendations(){
   ).join("");
   if($("calculation-breakdown")){
     if(r.targetCal){
-      const adjustmentText = r.adjustmentCal === 0 ? "No goal adjustment" : `${r.adjustmentCal > 0 ? "+" : ""}${r.adjustmentCal.toLocaleString()} Cal goal adjustment`;
-      const minimumText = r.targetCal === r.minimumCal ? ` The ${r.minimumCal.toLocaleString()} Cal founder-trial minimum was applied.` : "";
-      $("calculation-breakdown").innerHTML = `<h3>How this energy figure was calculated</h3><div class="calculation-steps"><div><span>1 · Resting estimate</span><strong>${r.bmrCal.toLocaleString()} Cal</strong><small>${escapeHtml(r.formulaName)} · age, sex, height and weight</small></div><div><span>2 · Daily activity</span><strong>× ${r.activityFactor}</strong><small>${escapeHtml(r.activityLabel)} → ${r.tdeeCal.toLocaleString()} Cal maintenance estimate</small></div><div><span>3 · Goal adjustment</span><strong>${escapeHtml(adjustmentText)}</strong><small>Selected goal: ${escapeHtml(goalLabel(data.health.goal))} · ${escapeHtml(lossRateLabel(data.health.lossRate))}</small></div><div><span>4 · Starting target</span><strong>${r.targetCal.toLocaleString()} Cal</strong><small>${escapeHtml(energyDisplay(r.energyKj))}.${escapeHtml(minimumText)}</small></div></div><p class="fine">Calculation record: ${escapeHtml(r.formulaVersion)}. You can adjust the target manually before accepting it.</p>`;
+      const adjustmentCal = Number(r.adjustmentCal) || 0;
+      const minimumCal = Number(r.minimumCal) || 0;
+      const bmrCal = roundWhole(r.bmrCal);
+      const tdeeCal = roundWhole(r.tdeeCal);
+      const finalCal = roundWhole(r.targetCal || (Number(r.energyKj)||0)/4.184);
+      const adjustmentText = adjustmentCal === 0 ? "No goal adjustment" : `${adjustmentCal > 0 ? "+" : ""}${adjustmentCal.toLocaleString()} Cal goal adjustment`;
+      const minimumText = minimumCal && finalCal === minimumCal ? ` The ${minimumCal.toLocaleString()} Cal founder-trial minimum was applied.` : "";
+      $("calculation-breakdown").innerHTML = `<h3>How this energy figure was calculated</h3><div class="calculation-steps"><div><span>1 · Resting estimate</span><strong>${bmrCal ? `${bmrCal.toLocaleString()} Cal` : "Not available"}</strong><small>${escapeHtml(r.formulaName || "Calculation method")} · age, sex, height and weight</small></div><div><span>2 · Daily activity</span><strong>${r.activityFactor ? `× ${r.activityFactor}` : "Not available"}</strong><small>${escapeHtml(r.activityLabel || "Activity estimate")}${tdeeCal ? ` → ${tdeeCal.toLocaleString()} Cal maintenance estimate` : ""}</small></div><div><span>3 · Goal adjustment</span><strong>${escapeHtml(adjustmentText)}</strong><small>Selected goal: ${escapeHtml(goalLabel(data.health.goal))} · ${escapeHtml(lossRateLabel(data.health.lossRate))}</small></div><div><span>4 · Starting target</span><strong>${finalCal.toLocaleString()} Cal</strong><small>Final daily target after rounding.${escapeHtml(minimumText)}</small></div></div><p class="fine">Calculation record: ${escapeHtml(r.formulaVersion || "HEC calculation")}. You can adjust the target manually before accepting it.</p>`;
     }else{
       $("calculation-breakdown").innerHTML = `<h3>Energy target set manually</h3><p>You chose not to use the automatic sex-based calculation. Enter the daily energy target you want to use.</p>`;
     }
@@ -958,7 +982,7 @@ $("finish-setup").addEventListener("click", () => {
   data.completed = true;
   data.firstHomePending = false;
   if(!data.weightHistory.length){
-    data.weightHistory.push({date:todayISO(),weightKg:data.health.startingWeightKg,note:"Starting weight"});
+    data.weightHistory.push({date:todayISO(),weightKg:data.health.startingWeightKg,note:"Starting weight",timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
   }
   save();
   if(returnToSettingsAfterRecommendations){
@@ -970,7 +994,7 @@ $("finish-setup").addEventListener("click", () => {
 });
 
 function greeting(){
-  const hour = new Date().getHours();
+  const hour = Number(zonedParts().hour);
   return hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 }
 const HOME_GUIDANCE = [
@@ -1013,8 +1037,8 @@ function homeMessage(){
 function renderHome(){
   const name = displayName();
   $("home-greeting").textContent = `${greeting()}${name ? ", " + name : ""}`;
-  $("home-summary").textContent =
-    `Current: ${formatWeight(data.health.currentWeightKg)} kg · Goal: ${formatWeight(data.health.selectedGoalWeight)} kg · Daily energy: ${energyDisplay(data.recommendations.energyKj)}`;
+  const lastWeight=[...(data.weightHistory||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
+  $("home-summary").innerHTML = `<span><strong>Current Weight:</strong> ${escapeHtml(formatWeight(data.health.currentWeightKg))} kg${lastWeight?.date?` <small>(recorded ${escapeHtml(new Intl.DateTimeFormat("en-AU",{day:"numeric",month:"short",year:"numeric"}).format(new Date(lastWeight.date+"T12:00:00")))})</small>`:""}</span><span><strong>Goal Weight:</strong> ${escapeHtml(formatWeight(data.health.selectedGoalWeight))} kg</span><span><strong>Daily Energy Target:</strong> ${escapeHtml(energyDisplay(data.recommendations.energyKj))}</span>`;
 
   const enabled = data.companion.enabled;
   const avatar = enabled ? data.companion.character : "🥗";
@@ -1053,11 +1077,11 @@ document.querySelectorAll(".room").forEach(button => button.addEventListener("cl
   if(room === "settings"){ show("settings"); return; }
   if(room === "progress-weight"){ show("progress-weight-hub", {speak:false}); return; }
   if(typeof window.openAlpha05Feature === "function"){
-    if(room === "daily-progress"){ window.openAlpha05Feature("daily-progress"); return; }
-    if(room === "diary"){ window.openAlpha05Feature("food-diary"); return; }
-    if(room === "database"){ window.openAlpha05Feature("food-library"); return; }
-    if(room === "meal-planner"){ window.openAlpha05Feature("meal-planner"); return; }
-    if(room === "shopping-list"){ window.openAlpha05Feature("shopping-list"); return; }
+    if(room === "daily-progress"){ window.openAlpha05Feature("daily-progress",{fromHome:true}); return; }
+    if(room === "diary"){ window.openAlpha05Feature("food-diary",{fromHome:true}); return; }
+    if(room === "database"){ window.openAlpha05Feature("food-library",{fromHome:true}); return; }
+    if(room === "meal-planner"){ window.openAlpha05Feature("meal-planner",{fromHome:true}); return; }
+    if(room === "shopping-list"){ window.openAlpha05Feature("shopping-list",{fromHome:true}); return; }
   }
   const map = {
     "daily-progress":["Daily Progress","📊","Today’s progress is loading."],
@@ -1212,8 +1236,8 @@ $("save-checkin").addEventListener("click", () => {
   const existing = data.weightHistory.find(item => item.date === date);
   if(existing){
     existing.weightKg = roundWeight(weight);
-    existing.note = "Updated check-in";
-  }else data.weightHistory.push({date,weightKg:roundWeight(weight),note:"Progress check-in"});
+    existing.note = "Updated check-in"; existing.timeZone=activeTimeZone(); existing.recordedAt=new Date().toISOString();
+  }else data.weightHistory.push({date,weightKg:roundWeight(weight),note:"Progress check-in",timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
 
   let message;
   if(meaningfulWeightChange || goalChanged){
@@ -1241,6 +1265,7 @@ $("reset-trial").addEventListener("click", () => {
   if(confirm("Reset this founder trial and delete the saved profile on this device?")){
     localStorage.removeItem(KEY);
     LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
+    localStorage.removeItem(APP.functionalStorageKey);
     location.reload();
   }
 });
@@ -1252,8 +1277,15 @@ function populateForms(){
   $("register-email").value = data.email || "";
   $("personal-email").value = data.personal.email || data.email || "";
   $("full-name").value = data.personal.givenName || data.personal.fullName || "";
+  if($("surname")) $("surname").value = data.personal.surname || "";
   $("preferred-name").value = data.personal.preferredName || "";
   $("preferred-pronunciation").value = data.personal.preferredPronunciation || "";
+  if($("profile-country")) $("profile-country").value=data.personal.country||"Australia";
+  if($("profile-region")) $("profile-region").value=data.personal.region||"";
+  if($("profile-postcode")) $("profile-postcode").value=data.personal.postcode||"";
+  if($("home-timezone")) $("home-timezone").value=data.personal.homeTimeZone||deviceTimeZone();
+  if($("timezone-behaviour")) $("timezone-behaviour").value=data.personal.timeZoneBehaviour||"ask";
+  if($("detected-timezone")) $("detected-timezone").textContent=`Device time zone: ${deviceTimeZone()}`;
   $("dob").value = data.personal.dob || "";
   $("energy-unit").value = data.personal.energyUnit || "kJ";
 
@@ -1324,6 +1356,10 @@ data = loadStoredData();
 data.version = VERSION;
 if(data.personal.energyUnit === "Calories") data.personal.energyUnit = "Cal";
 if(!data.personal.givenName && data.personal.fullName) data.personal.givenName = data.personal.fullName.trim().split(/\s+/)[0];
+if(data.personal.surname===undefined) data.personal.surname="";
+if(!data.personal.homeTimeZone) data.personal.homeTimeZone=deviceTimeZone();
+if(!data.personal.activeTimeZone) data.personal.activeTimeZone=data.personal.homeTimeZone;
+if(!data.personal.timeZoneBehaviour) data.personal.timeZoneBehaviour="ask";
 if(!data.personal.fullName && data.personal.givenName) data.personal.fullName = data.personal.givenName;
 if(!data.personal.preferredName && (data.personal.givenName || data.personal.fullName)) data.personal.preferredName = (data.personal.givenName || data.personal.fullName).trim().split(/\s+/)[0];
 data.companion = normaliseCompanionRecord(data.companion);

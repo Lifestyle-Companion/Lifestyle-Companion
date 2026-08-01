@@ -287,3 +287,27 @@ textarea{display:block;width:100%;margin-top:7px;padding:13px 14px;border-radius
 /* Alpha 0.6.3 opaque sticky-header correction */
 .compact-feature-header{background:var(--page-bg)!important;z-index:40!important;isolation:isolate}
 .compact-feature-header:after{content:"";position:absolute;inset:0;z-index:-1;background:var(--page-bg)}
+
+/* Healthy Eating Companion Alpha 0.6.4 */
+.hec-nav-pair{display:flex;gap:8px;align-items:center;flex:0 0 auto}.hec-nav-pair button{white-space:nowrap}
+#home-summary{display:flex;flex-wrap:wrap;gap:6px 16px;line-height:1.45}#home-summary span{display:inline-block}#home-summary small{color:var(--muted)}
+.seven-room-circle .room{height:19%!important;border-radius:50%!important;overflow:hidden;justify-content:center}.seven-room-circle .room b{line-height:1.02}.seven-room-circle .room small{font-size:.62rem}
+.calculation-help-card{text-align:center}.round-help{width:54px;height:54px;border-radius:50%;padding:0;font-size:1.55rem;margin:0 auto 9px;display:grid;place-items:center}.calculation-help-card>strong{display:block;font-size:1.15rem}.calculation-help-card .calculation-breakdown{text-align:left;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.optional-profile-details{margin:18px 0;padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--surface2)}.optional-profile-details summary{font-weight:800;cursor:pointer}
+.tappable-card{cursor:pointer;position:relative}.tappable-card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.inspiration-actions{display:grid;gap:4px;min-width:150px}.inspiration-actions select{margin:0;padding:8px}.inspiration-actions small{color:var(--muted);text-align:center}
+.labelled-create{width:auto!important;min-width:66px;padding:0 16px!important;grid-template-columns:auto auto!important;gap:7px!important}.labelled-create span{font-size:.78rem;font-weight:800}.floating-action-menu{max-width:min(360px,calc(100vw - 32px))}.floating-action-menu button:last-child{color:var(--muted)}
+.recipe-search-results{display:grid;gap:5px;margin:5px 0 12px;max-height:310px;overflow:auto}.recipe-search-results button{display:grid;text-align:left;background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 12px}.recipe-search-results button strong,.recipe-search-results button small{display:block}.recipe-search-results button small{color:var(--muted);margin-top:2px}.recipe-ingredient-card .status-box{margin:12px 0}.recipe-ingredient-card .status-box strong,.recipe-ingredient-card .status-box small{display:block}
+.planned-food-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 14px;margin:8px 0;background:#fff;border:1px solid var(--line);border-radius:14px}.planned-food-row strong,.planned-food-row small{display:block}.planned-food-row small{color:var(--muted);margin-top:3px}.planned-food-row>div:last-child{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.planned-food-row button{padding:7px 9px;font-size:.75rem}
+.compact-update-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+.invite-row,.feedback-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.invite-row strong,.invite-row small,.feedback-row strong,.feedback-row small{display:block}.invite-row small,.feedback-row small{color:var(--muted)}.invite-row>div:last-child{display:flex;gap:5px;flex-wrap:wrap}.invite-row button{padding:7px 9px}.feedback-row{grid-template-columns:1fr}.feedback-row p{margin:5px 0}.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.insight-grid>div{padding:10px;background:var(--surface2);border-radius:10px}.insight-grid span,.insight-grid strong{display:block}.insight-grid span{text-transform:capitalize;color:var(--muted);font-size:.8rem}.insight-grid strong{font-size:1.25rem}.danger-zone{border:2px solid #c66}.file-button{position:relative;display:inline-flex;align-items:center;justify-content:center}.file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.settings-grid .hidden{display:none!important}
+@media(max-width:700px){.hec-nav-pair{gap:4px}.hec-nav-pair button{padding:8px 9px;font-size:.75rem}.compact-feature-header{grid-template-columns:auto minmax(0,1fr) auto}.compact-feature-header .hec-nav-pair{grid-column:1}.inspiration-actions{grid-column:1/-1;width:100%}.daily-inspiration-card{flex-wrap:wrap}.planned-food-row{grid-template-columns:1fr}.planned-food-row>div:last-child{justify-content:flex-start}.compact-update-strip{grid-template-columns:1fr 1fr}.insight-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.hec-nav-pair{flex-direction:column;align-items:stretch}.hec-nav-pair button{padding:6px 8px}.seven-room-circle .room{height:22%!important}.labelled-create span{display:none}.labelled-create{width:66px!important;padding:0!important}.compact-update-strip{grid-template-columns:1fr}}
+/* Alpha 0.6.4 mobile navigation: keep Back and Home together, then show the screen title clearly. */
+@media(max-width:480px){
+  .topbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px;row-gap:8px}
+  .topbar>.hec-nav-pair{grid-column:1/-1;grid-row:1;display:flex;flex-direction:row;align-items:center;gap:8px}
+  .topbar>.hec-nav-pair button{padding:7px 10px;font-size:.78rem}
+  .topbar>.grow,.topbar>div:not(.hec-nav-pair){grid-column:1;grid-row:2;min-width:0}
+  .topbar>.icon-help-button,.topbar>.step-pill{grid-column:2;grid-row:2;justify-self:end}
+}

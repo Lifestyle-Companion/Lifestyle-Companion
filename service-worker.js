@@ -1,4 +1,4 @@
-const CACHE_NAME = "healthy-eating-companion-alpha-0-6-3-v1";
+const CACHE_NAME = "healthy-eating-companion-alpha-0-6-4-v1";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const APP_FILES = [
   "./companions.js",
   "./app.js",
   "./alpha06.js",
+  "./alpha064.js",
   "./manifest.webmanifest",
   "./assets/companions/koko-koala.svg",
   "./assets/companions/skip-kangaroo.svg",

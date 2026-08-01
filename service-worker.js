@@ -1,4 +1,4 @@
-const CACHE_NAME = "healthy-eating-companion-alpha-0-6-4-v1";
+const CACHE_NAME = "healthy-eating-companion-alpha-0-6-5-v1";
 const APP_FILES = [
   "./",
   "./index.html",

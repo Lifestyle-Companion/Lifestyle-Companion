@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.4",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.5",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -89,6 +89,13 @@ FOODS.push(
   {id:"beef-steak",name:"Beef Steak, Grilled",brand:"Generic Australian",category:"Meat & Seafood",country:"Australia",aliases:["steak","beef steak","grilled steak"],defaultAmount:1,defaultUnit:"medium",units:{small:.67,medium:1,large:1.5,g:1/150},unitLabels:{small:"1 Small Steak (100 g)",medium:"1 Medium Steak (150 g)",large:"1 Large Steak (225 g)",g:"g"},serving:"1 Medium Steak (150 g)",nutrients:nutrient(330,42,0,18,7,0,0,110),score:7,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Beef",allergens:[],waterMl:85,foodGroups:{proteinFoods:2}}
 );
 FOODS.forEach(food => Object.assign(food, FOOD_METADATA[food.id] || {waterMl:food.waterMl||0,foodGroups:food.foodGroups||{}}));
+// Alpha 0.6.5: keep a plain egg separate from egg dishes so search and preparation are easier to understand.
+FOODS.push(
+  {id:"scrambled-eggs",name:"Scrambled Eggs",brand:"Generic Australian",category:"Dairy & Eggs",country:"Australia",aliases:["scrambled egg","scrambled eggs"],defaultAmount:1,defaultUnit:"serve",units:{serve:1,g:1/100},unitLabels:{serve:"1 Serving (about 2 Large Eggs)",g:"g"},serving:"1 Serving (about 2 Large Eggs)",nutrients:nutrient(144,12.6,.8,9.6,3.2,0,.4,142),score:8,source:"Guided Australian Egg Dish Estimate",verified:false,ingredients:"Eggs; additions vary",allergens:["egg"],waterMl:76,foodGroups:{proteinFoods:1}},
+  {id:"omelette",name:"Omelette",brand:"Generic Australian",category:"Dairy & Eggs",country:"Australia",aliases:["omelet","omelette","egg omelette"],defaultAmount:1,defaultUnit:"serve",units:{serve:1,g:1/120},unitLabels:{serve:"1 Omelette (about 2 Large Eggs)",g:"g"},serving:"1 Omelette (about 2 Large Eggs)",nutrients:nutrient(150,13,1.2,10,3.4,0,.5,155),score:8,source:"Guided Australian Egg Dish Estimate",verified:false,ingredients:"Eggs; fillings vary",allergens:["egg"],waterMl:76,foodGroups:{proteinFoods:1}},
+  {id:"eggs-benedict",name:"Eggs Benedict",brand:"Generic Café Estimate",category:"Dairy & Eggs",country:"Australia",aliases:["egg benedict","eggs benedict","benedict"],defaultAmount:1,defaultUnit:"serve",units:{serve:1},unitLabels:{serve:"1 Serving"},serving:"1 Serving",nutrients:nutrient(480,23,32,29,12,2,4,1150),score:5,source:"Generic Café Estimate — Ingredients Vary Widely",verified:false,ingredients:"Poached eggs, English muffin, hollandaise sauce and ham or similar protein",allergens:["egg","milk","wheat","gluten"],waterMl:90,foodGroups:{proteinFoods:1,dairy:.3,grains:2}}
+);
+
 const FOOD_BY_ID = new Map(FOODS.map(f => [f.id,f]));
 
 const MEAL_SUGGESTIONS = [
@@ -108,7 +115,7 @@ const MEAL_SUGGESTIONS = [
 ];
 
 const EXT_DEFAULTS = {
-  version:"0.6.4", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
+  version:"0.6.5", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
   family:{enabled:false,name:"",email:""}, connections:{}, customFoods:[], savedFoodIds:[], recipes:[], mealTemplates:[],
   ui:{diaryDate:isoToday(),progressDate:isoToday(),plannerDate:isoToday(),diaryView:"all",libraryTab:"all",scanMode:"food",pendingMeal:"",plannerResults:{},plannerRejected:{},plannerAccepted:{},recipeDraft:[],recipeName:"",recipeServings:4,recipeNotes:"",returnToRecipe:false,replacingEntryId:""}
 };
@@ -123,13 +130,13 @@ function merge(target, source){
 function loadExt(){
   let current = null;
   try { current = JSON.parse(localStorage.getItem(EXT_KEY)); } catch {}
-  if(current){ const loaded=merge(clone(EXT_DEFAULTS),current); loaded.version="0.6.4"; return loaded; }
+  if(current){ const loaded=merge(clone(EXT_DEFAULTS),current); loaded.version="0.6.5"; return loaded; }
   for(const legacyKey of LEGACY_EXT_KEYS){
     try {
       const legacy = JSON.parse(localStorage.getItem(legacyKey));
       if(legacy){
         const migrated = merge(clone(EXT_DEFAULTS),legacy);
-        migrated.version = "0.6.4";
+        migrated.version = "0.6.5";
         if(legacy.daily?.date){
           migrated.water[legacy.daily.date] = legacy.daily.water || 0;
           migrated.steps[legacy.daily.date] = legacy.daily.steps || 0;
@@ -323,44 +330,81 @@ function mealNames(){ return ["Breakfast","Morning Tea","Lunch","Afternoon Tea",
 function plannerMealNames(){ return ["Breakfast","Morning Tea","Lunch","Afternoon Tea","Dinner","Snacks"]; }
 
 const FOOD_VARIANT_SCHEMAS={
-  egg:{
-    fields:[
-      {key:"eggType",label:"Egg type",options:[["chicken","Chicken egg"],["duck","Duck egg"],["quail","Quail egg"]]},
-      {key:"eggSize",label:"Size",options:[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra large"]]},
-      {key:"eggPrep",label:"Preparation",options:[["raw","Raw"],["boiled","Boiled"],["poached","Poached"],["scrambled","Scrambled"],["fried","Fried"]]},
-      {key:"eggAdded",label:"Added ingredients",options:[["none","No added fat"],["oil","Cooked with oil"],["butter","Cooked with butter"],["margarine","Cooked with margarine"],["milk","Milk added"]]}
-    ],defaults:{eggType:"chicken",eggSize:"large",eggPrep:"boiled",eggAdded:"none"}
-  },
-  potato:{
-    fields:[
-      {key:"potatoType",label:"Potato type",options:[["pale","Pale skin"],["red","Red / dark skin"]]},
-      {key:"potatoSkin",label:"Skin",options:[["peeled","Peeled"],["unpeeled","Unpeeled"]]},
-      {key:"potatoPrep",label:"Preparation",options:[["raw","Raw"],["boiled","Boiled"],["steamed","Steamed"],["baked","Baked"],["roasted","Roasted"],["mashed","Mashed"],["fried","Fried"]]},
-      {key:"potatoAdded",label:"For mashed / cooked potato",options:[["none","No additions"],["milk","With milk"],["milk-margarine","Milk & margarine"],["milk-dairyblend","Milk & dairy blend"],["milk-butter","Milk & butter"],["oil","Oil added"]]}
-    ],defaults:{potatoType:"pale",potatoSkin:"unpeeled",potatoPrep:"boiled",potatoAdded:"none"}
-  }
+  egg:{fields:[
+    {key:"eggType",label:"Egg Type",options:[["chicken","Chicken Egg"],["duck","Duck Egg"],["quail","Quail Egg"]]},
+    {key:"eggSize",label:"Size",options:[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
+    {key:"eggPrep",label:"Cooking Method",options:[["raw","Raw"],["boiled","Boiled"],["poached","Poached in Water"],["microwave-poached","Microwave-Poached"],["fried","Fried"],["oven-baked","Oven-Baked"],["other","Other Cooking Method"]]}
+  ],defaults:{eggType:"chicken",eggSize:"large",eggPrep:"boiled",eggAdded:"none",eggOther:""}},
+  "scrambled-eggs":{fields:[
+    {key:"eggDishAppliance",label:"Cooking Method",options:[["stovetop","Stovetop"],["microwave","Microwave"],["oven","Oven-Baked"],["other","Other Cooking Method"]]},
+    {key:"eggDishFat",label:"Cooking Fat",options:[["none","None"],["spray","Cooking Spray"],["oil","Oil"],["butter","Butter"],["margarine","Margarine"]]},
+    {key:"eggDishLiquid",label:"Liquid / Protein Addition",options:[["none","None"],["water","Water"],["milk","Milk"],["cottage-cheese","Cottage Cheese"],["cream","Cream"]]},
+    {key:"eggDishExtra",label:"Common Extra",options:[["plain","Plain"],["cheese","Cheese"],["bacon","Bacon"],["ham","Ham"],["vegetables","Vegetables"],["custom","Customise in Recipe Builder"]]}
+  ],defaults:{eggDishAppliance:"stovetop",eggDishFat:"none",eggDishLiquid:"none",eggDishExtra:"plain",eggDishOther:""}},
+  omelette:{fields:[
+    {key:"eggDishAppliance",label:"Cooking Method",options:[["stovetop","Stovetop"],["microwave","Microwave Omelette Container"],["oven","Oven-Baked"],["air-fryer","Air-Fried"],["other","Other Cooking Method"]]},
+    {key:"eggDishFat",label:"Cooking Fat",options:[["none","None"],["spray","Cooking Spray"],["oil","Oil"],["butter","Butter"],["margarine","Margarine"]]},
+    {key:"eggDishLiquid",label:"Liquid / Protein Addition",options:[["none","None"],["water","Water"],["milk","Milk"],["cottage-cheese","Cottage Cheese"],["cream","Cream"]]},
+    {key:"eggDishExtra",label:"Filling",options:[["plain","Plain"],["cheese","Cheese"],["ham-cheese","Ham & Cheese"],["bacon-cheese","Bacon & Cheese"],["vegetables","Vegetables"],["custom","Customise in Recipe Builder"]]}
+  ],defaults:{eggDishAppliance:"stovetop",eggDishFat:"none",eggDishLiquid:"none",eggDishExtra:"plain",eggDishOther:""}},
+  potato:{fields:[
+    {key:"potatoType",label:"Potato Type",options:[["pale","Pale Skin"],["red","Red / Dark Skin"]]},
+    {key:"potatoSkin",label:"Skin",options:[["peeled","Peeled"],["unpeeled","Unpeeled"]]},
+    {key:"potatoPrep",label:"Cooking Method",options:[["raw","Raw"],["boiled","Boiled"],["steamed","Steamed"],["microwaved","Microwaved"],["baked","Oven-Baked"],["roasted","Roasted"],["air-fried","Air-Fried"],["mashed","Mashed"],["fried","Fried"],["other","Other Cooking Method"]]},
+    {key:"potatoAdded",label:"Added Ingredients",options:[["none","No Additions"],["milk","With Milk"],["milk-margarine","Milk & Margarine"],["milk-dairyblend","Milk & Dairy Blend"],["milk-butter","Milk & Butter"],["oil","Oil Added"]]}
+  ],defaults:{potatoType:"pale",potatoSkin:"unpeeled",potatoPrep:"boiled",potatoAdded:"none",potatoOther:""}},
+  "beef-sausage":{fields:[{key:"cookMethod",label:"Cooking Method",options:[["grilled","Grilled"],["air-fried","Air-Fried"],["barbecued","Barbecued"],["oven-baked","Oven-Baked"],["pan-fried","Pan-Fried"],["other","Other Cooking Method"]]},{key:"cookFat",label:"Added Cooking Fat",options:[["none","None"],["spray","Cooking Spray"],["oil","Oil"],["butter","Butter"],["margarine","Margarine"]]}],defaults:{cookMethod:"air-fried",cookFat:"none",cookOther:""}},
+  "beef-steak":{fields:[{key:"cookMethod",label:"Cooking Method",options:[["grilled","Grilled"],["air-fried","Air-Fried"],["barbecued","Barbecued"],["oven-baked","Oven-Baked"],["pan-fried","Pan-Fried"],["other","Other Cooking Method"]]},{key:"cookFat",label:"Added Cooking Fat",options:[["none","None"],["spray","Cooking Spray"],["oil","Oil"],["butter","Butter"],["margarine","Margarine"]]}],defaults:{cookMethod:"grilled",cookFat:"none",cookOther:""}},
+  "beef-rissole":{fields:[{key:"cookMethod",label:"Cooking Method",options:[["grilled","Grilled"],["air-fried","Air-Fried"],["barbecued","Barbecued"],["oven-baked","Oven-Baked"],["pan-fried","Pan-Fried"],["other","Other Cooking Method"]]},{key:"cookFat",label:"Added Cooking Fat",options:[["none","None"],["spray","Cooking Spray"],["oil","Oil"],["butter","Butter"],["margarine","Margarine"]]}],defaults:{cookMethod:"air-fried",cookFat:"none",cookOther:""}},
+  "chicken-breast":{fields:[{key:"cookMethod",label:"Cooking Method",options:[["grilled","Grilled"],["air-fried","Air-Fried"],["barbecued","Barbecued"],["oven-baked","Oven-Baked"],["pan-fried","Pan-Fried"],["other","Other Cooking Method"]]},{key:"cookFat",label:"Added Cooking Fat",options:[["none","None"],["spray","Cooking Spray"],["oil","Oil"],["butter","Butter"],["margarine","Margarine"]]}],defaults:{cookMethod:"grilled",cookFat:"none",cookOther:""}}
 };
 function variantSchema(food){return FOOD_VARIANT_SCHEMAS[food?.id]||null;}
 function selectedVariantValues(){const out={};qa("[data-variant-key]").forEach(select=>out[select.dataset.variantKey]=select.value);return out;}
 function resolveVariantFood(food,values={}){
   if(!food)return food;const schema=variantSchema(food);if(!schema)return food;
   const v={...schema.defaults,...values};const resolved=clone(food);
+  const addCalories=(cal)=>{resolved.nutrients.calories=n(resolved.nutrients.calories)+cal;resolved.nutrients.fat=n(resolved.nutrients.fat)+cal/9;};
   if(food.id==="egg"){
     const bases={chicken:{small:54,medium:63,large:72,xlarge:80},duck:{small:110,medium:120,large:130,xlarge:145},quail:{small:12,medium:14,large:16,xlarge:18}};
-    const cal=bases[v.eggType]?.[v.eggSize]||72;const ratio=cal/72;resolved.nutrients=Object.fromEntries(Object.entries(food.nutrients).map(([k,val])=>[k,val==null?val:Number(val)*ratio]));
-    const added={none:0,oil:40,butter:36,margarine:34,milk:10}[v.eggAdded]||0;resolved.nutrients.calories+=added;resolved.nutrients.fat+=(added/9);resolved.name=`${v.eggSize==="xlarge"?"Extra Large":v.eggSize[0].toUpperCase()+v.eggSize.slice(1)} ${v.eggType[0].toUpperCase()+v.eggType.slice(1)} Egg, ${v.eggPrep[0].toUpperCase()+v.eggPrep.slice(1)}`;if(v.eggAdded!=="none")resolved.name+=` (${v.eggAdded.replace(/-/g," ")})`;resolved.serving="1 egg";resolved.source="Guided preparation estimate · review ingredients";
-  }
-  if(food.id==="potato"){
-    const per100={raw:77,boiled:77,steamed:80,baked:93,roasted:150,mashed:88,fried:290};let cal=per100[v.potatoPrep]||77;const add={none:0,milk:12,"milk-margarine":42,"milk-dairyblend":38,"milk-butter":50,oil:45}[v.potatoAdded]||0;cal+=add;const ratio=(cal*1.5)/116;resolved.nutrients=Object.fromEntries(Object.entries(food.nutrients).map(([k,val])=>[k,val==null?val:Number(val)*ratio]));resolved.nutrients.calories=cal*1.5;resolved.name=`Potato, ${v.potatoSkin}, ${v.potatoPrep}`;if(v.potatoAdded!=="none")resolved.name+=` (${v.potatoAdded.replace(/-/g," ")})`;resolved.source="Guided preparation estimate · 150 g serving";
+    const cal=bases[v.eggType]?.[v.eggSize]||72,ratio=cal/72;resolved.nutrients=Object.fromEntries(Object.entries(food.nutrients).map(([k,val])=>[k,val==null?val:Number(val)*ratio]));
+    const prepLabels={raw:"Raw",boiled:"Boiled",poached:"Poached", "microwave-poached":"Microwave-Poached",fried:"Fried","oven-baked":"Oven-Baked",other:"Other Method"};
+    if(v.eggPrep==="fried")addCalories({none:0,spray:5,oil:40,butter:36,margarine:34}[v.eggAdded]||0);
+    resolved.name=`${v.eggSize==="xlarge"?"Extra Large":titleUnit(v.eggSize)} ${titleUnit(v.eggType)} Egg, ${prepLabels[v.eggPrep]||titleUnit(v.eggPrep)}`;
+    if(v.eggPrep==="fried"&&v.eggAdded!=="none")resolved.name+=` (${titleUnit(v.eggAdded)})`;
+    if(v.eggPrep==="other"&&v.eggOther)resolved.name+=` — ${v.eggOther}`;
+    resolved.serving="1 Egg";resolved.source="Guided Preparation Estimate · Review Ingredients";
+  } else if(food.id==="scrambled-eggs"||food.id==="omelette"){
+    const fat={none:0,spray:5,oil:40,butter:36,margarine:34}[v.eggDishFat]||0;
+    const liquid={none:0,water:0,milk:12,"cottage-cheese":25,cream:35}[v.eggDishLiquid]||0;
+    const extras=food.id==="omelette"?{plain:0,cheese:55,"ham-cheese":85,"bacon-cheese":105,vegetables:25,custom:0}:{plain:0,cheese:55,bacon:55,ham:30,vegetables:25,custom:0};
+    addCalories(fat+liquid+(extras[v.eggDishExtra]||0));
+    const appliance={stovetop:"Stovetop",microwave:"Microwave",oven:"Oven-Baked","air-fryer":"Air-Fried",other:"Other Method"}[v.eggDishAppliance]||titleUnit(v.eggDishAppliance);
+    resolved.name=`${food.name}, ${appliance}`;
+    if(v.eggDishLiquid!=="none")resolved.name+=` + ${titleUnit(v.eggDishLiquid)}`;
+    if(v.eggDishExtra!=="plain"&&v.eggDishExtra!=="custom")resolved.name+=` + ${titleUnit(v.eggDishExtra.replace(/-/g," "))}`;
+    if(v.eggDishExtra==="custom")resolved.source="Quick Estimate Only · Use Recipe Builder for Exact Custom Ingredients";
+  } else if(food.id==="potato"){
+    const per100={raw:77,boiled:77,steamed:80,microwaved:82,baked:93,roasted:150,"air-fried":135,mashed:88,fried:290,other:90};let cal=per100[v.potatoPrep]||77;
+    const add={none:0,milk:12,"milk-margarine":42,"milk-dairyblend":38,"milk-butter":50,oil:45}[v.potatoAdded]||0;cal+=add;const ratio=(cal*1.5)/116;resolved.nutrients=Object.fromEntries(Object.entries(food.nutrients).map(([k,val])=>[k,val==null?val:Number(val)*ratio]));resolved.nutrients.calories=cal*1.5;resolved.name=`Potato, ${titleUnit(v.potatoSkin)}, ${titleUnit(v.potatoPrep.replace(/-/g," "))}`;if(v.potatoAdded!=="none")resolved.name+=` (${titleUnit(v.potatoAdded.replace(/-/g," "))})`;resolved.source="Guided Preparation Estimate · 150 g Serving";
+  } else if(["beef-sausage","beef-steak","beef-rissole","chicken-breast"].includes(food.id)){
+    addCalories({none:0,spray:5,oil:40,butter:36,margarine:34}[v.cookFat]||0);resolved.name=`${food.name.replace(/, (Cooked|Grilled)$/i,"")}, ${titleUnit(v.cookMethod.replace(/-/g," "))}`;if(v.cookFat!=="none")resolved.name+=` + ${titleUnit(v.cookFat)}`;resolved.source="Guided Cooking-Method Estimate · Review Quantity";
   }
   resolved.variantSelections=v;return resolved;
 }
 function renderVariantOptions(food,existing={}){
   const holder=by("entry-variant-options"),schema=variantSchema(food);if(!holder)return;
   holder.classList.toggle("hidden",!schema);if(!schema){holder.innerHTML="";return;}
-  const values={...schema.defaults,...existing};holder.innerHTML=`<h3>Choose the exact food and preparation</h3><p class="fine">Cooking methods and added ingredients can change energy and nutrients. Review every choice.</p><div class="form-grid">${schema.fields.map(field=>`<label>${esc(field.label)}<select data-variant-key="${esc(field.key)}">${field.options.map(([value,label])=>`<option value="${esc(value)}" ${values[field.key]===value?"selected":""}>${esc(label)}</option>`).join("")}</select></label>`).join("")}</div>`;
-  qa("[data-variant-key]").forEach(el=>el.addEventListener("change",updateEntryPreview));
+  const values={...schema.defaults,...existing};
+  const visibleFields=schema.fields.filter(field=>{
+    if(food.id==="egg"&&field.key==="eggAdded")return values.eggPrep==="fried";
+    return true;
+  });
+  const otherKey=food.id==="egg"?"eggPrep":(["scrambled-eggs","omelette"].includes(food.id)?"eggDishAppliance":food.id==="potato"?"potatoPrep":"cookMethod");
+  const otherValue=values[otherKey];
+  holder.innerHTML=`<h3>Choose the Exact Food and Preparation</h3><p class="fine">Only choices that can affect identification or nutrition are shown. Review each selection.</p><div class="form-grid">${visibleFields.map(field=>`<label>${esc(field.label)}<select data-variant-key="${esc(field.key)}">${field.options.map(([value,label])=>`<option value="${esc(value)}" ${values[field.key]===value?"selected":""}>${esc(label)}</option>`).join("")}</select></label>`).join("")}${otherValue==="other"?`<label class="variant-other-note">Describe the Other Cooking Method<input data-variant-key="${food.id==="egg"?"eggOther":["scrambled-eggs","omelette"].includes(food.id)?"eggDishOther":food.id==="potato"?"potatoOther":"cookOther"}" value="${esc(values[food.id==="egg"?"eggOther":["scrambled-eggs","omelette"].includes(food.id)?"eggDishOther":food.id==="potato"?"potatoOther":"cookOther"]||"")}" placeholder="Briefly describe how it was cooked"></label>`:""}</div>${otherValue==="other"?'<p class="variant-help">Other methods are kept as a reviewed description. This trial will not silently guess calories from an unknown cooking method.</p>':""}`;
+  qa("[data-variant-key]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{if(el.tagName==="SELECT")renderVariantOptions(food,selectedVariantValues());updateEntryPreview();}));
 }
+
 
 function statusLabel(status){ return status === "planned" ? "Planned" : status === "skipped" ? "Skipped" : "Eaten / Drunk"; }
 function relativeDateLabel(value){
@@ -449,28 +493,20 @@ function foodGroupCard(key,value,target,date){
 function diaryDate(){ return by("diary-date")?.value || ext.ui.diaryDate || isoToday(); }
 function renderDiary(){
   const date=ext.ui.diaryDate||by("diary-date")?.value||isoToday();ext.ui.diaryDate=date;updateDateControl("diary",date);
-  const goals=currentGoals(date),settings=ext.daySettings[date]||{type:"normal",targetCal:goals.baseCalories};
+  const goals=currentGoals(date),settings=ext.daySettings[date]||{type:"normal",targetCal:ext.dayTypeTargets?.normal||goals.baseCalories};
   by("day-type").value=settings.type||"normal";by("day-cal-target").value=n(settings.targetCal)||goals.baseCalories;
   daySettingsBaseline={type:by("day-type").value,targetCal:whole(by("day-cal-target").value)};setDaySettingsDirty(false);
-  by("day-settings-note").textContent=settings.type==="fasting"?"Flexible fasting day for this date only.":"Normal day. Separately logged exercise is credited according to your profile choice.";
+  by("day-settings-note").textContent=settings.type==="fasting"?"Flexible Fasting Day for this date only.":"Normal Day. Separately logged exercise is credited according to your profile choice.";
   const summary=daySummary(date),consumed=summary.nutrients.calories,remaining=Math.max(0,summary.goals.calories-consumed);
-  by("diary-day-summary").innerHTML=`
-    <article class="summary-slide"><span>Today’s Energy</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${formatNumber(summary.goals.calories)} Cal</strong></div><div><small>Consumed</small><strong>${formatNumber(consumed)} Cal</strong></div><div><small>Remaining</small><strong>${formatNumber(remaining)} Cal</strong></div></div></article>
-    <article class="summary-slide"><span>Macronutrients</span><div class="diary-kpi-row"><div><small>Protein</small><strong>${formatNumber(summary.nutrients.protein)} g</strong></div><div><small>Fat</small><strong>${formatNumber(summary.nutrients.fat)} g</strong></div><div><small>Carbs</small><strong>${formatNumber(summary.nutrients.carbs)} g</strong></div></div></article>
-    <article class="summary-slide"><span>Five Food Groups</span><div class="mini-food-groups">${FOOD_GROUP_KEYS.map(key=>`<div><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(summary.foodGroups[key],true)}/${formatNumber(summary.goals.foodGroups[key],true)}</strong></div>`).join("")}</div></article>`;
+  by("diary-day-summary").innerHTML=`<article class="summary-slide"><span>Today’s Energy</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${formatNumber(summary.goals.calories)} Cal</strong></div><div><small>Consumed</small><strong>${formatNumber(consumed)} Cal</strong></div><div><small>Remaining</small><strong>${formatNumber(remaining)} Cal</strong></div></div></article><article class="summary-slide"><span>Macronutrients</span><div class="diary-kpi-row"><div><small>Protein</small><strong>${formatNumber(summary.nutrients.protein)} g</strong></div><div><small>Fat</small><strong>${formatNumber(summary.nutrients.fat)} g</strong></div><div><small>Carbs</small><strong>${formatNumber(summary.nutrients.carbs)} g</strong></div></div></article><article class="summary-slide"><span>Five Food Groups</span><div class="mini-food-groups">${FOOD_GROUP_KEYS.map(key=>`<div><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(summary.foodGroups[key],true)}/${formatNumber(summary.goals.foodGroups[key],true)}</strong></div>`).join("")}</div></article>`;
   const view=ext.ui.diaryView||"all";qa("[data-diary-view]").forEach(button=>button.classList.toggle("active",button.dataset.diaryView===view));
-  const diagnostics=calculationDiagnostics(date),diagnosticBox=by("diary-calculation-status");
-  diagnosticBox.className=`calculation-status ${diagnostics.missing.length?"warning":diagnostics.eaten.length?"ok":"neutral"}`;
-  diagnosticBox.innerHTML=diagnostics.missing.length?`<strong>Total needs attention</strong><span>${diagnostics.missing.length} eaten ${diagnostics.missing.length===1?"entry is":"entries are"} excluded because energy is unavailable.</span>`:diagnostics.eaten.length?`<strong>${formatNumber(diagnostics.total)} Cal eaten</strong><span>${diagnostics.eaten.length} ${diagnostics.eaten.length===1?"entry":"entries"} counted.</span>`:`<strong>No food counted yet</strong><span>Planned food stays separate until marked eaten.</span>`;
+  const diagnostics=calculationDiagnostics(date),diagnosticBox=by("diary-calculation-status");diagnosticBox.className=`calculation-status ${diagnostics.missing.length?"warning":diagnostics.eaten.length?"ok":"neutral"}`;diagnosticBox.innerHTML=diagnostics.missing.length?`<strong>Total Needs Attention</strong><span>${diagnostics.missing.length} eaten ${diagnostics.missing.length===1?"entry is":"entries are"} excluded because energy is unavailable.</span>`:diagnostics.eaten.length?`<strong>${formatNumber(diagnostics.total)} Cal Eaten</strong><span>${diagnostics.eaten.length} ${diagnostics.eaten.length===1?"entry":"entries"} confirmed.</span>`:`<strong>No Food Confirmed Yet</strong><span>Plan first, then confirm meals as the day unfolds.</span>`;
   const entries=entriesForDate(date);
-  by("diary-meals").innerHTML=mealNames().map(meal=>{
-    const allMealEntries=entries.filter(e=>e.meal===meal),shown=allMealEntries.filter(e=>view==="all"||e.status===view),eatenTotals=sumNutrients(allMealEntries.filter(e=>e.status==="eaten"));
-    return `<section class="meal-list-section"><header class="meal-list-heading"><div><h3>${esc(meal)}</h3><strong>${formatNumber(eatenTotals.calories)} Cal</strong></div></header><div class="meal-simple-list">${shown.length?shown.map(entryCard).join(""):`<p class="meal-empty">${view==="all"?"No entries yet.":`No ${view} entries.`}</p>`}</div><footer class="meal-list-actions"><button data-add-to-meal="${esc(meal)}" aria-label="Add food to ${esc(meal)}">＋</button><button data-meal-menu="${esc(meal)}" aria-label="More ${esc(meal)} actions">•••</button></footer><div class="meal-menu-actions hidden" data-meal-actions="${esc(meal)}">${allMealEntries.length?`<button data-save-meal-template="${esc(meal)}">Save as Reusable Meal</button><button data-mark-meal-eaten="${esc(meal)}">Mark Planned Items Eaten</button>`:`<span>No meal actions yet.</span>`}</div></section>`;
-  }).join("");
-  saveExt();
+  by("diary-meals").innerHTML=mealNames().map(meal=>{const allMealEntries=entries.filter(e=>e.meal===meal),shown=allMealEntries.filter(e=>view==="all"||e.status===view),projectedTotals=sumNutrients(allMealEntries.filter(e=>e.status!=="skipped")),eaten=allMealEntries.filter(e=>e.status==="eaten").length,planned=allMealEntries.filter(e=>e.status==="planned").length;return `<section class="meal-list-section" data-meal-name="${esc(meal)}"><header class="meal-list-heading"><div><h3>${esc(meal)}</h3><strong>${formatNumber(projectedTotals.calories)} Cal</strong></div><small>${planned?`${eaten} Eaten · ${planned} Planned`:eaten?"Complete":"Nothing Planned"}</small></header><div class="meal-simple-list">${shown.length?shown.map(entryCard).join(""):`<p class="meal-empty">${view==="all"?"No Entries Yet.":`No ${titleUnit(view)} Entries.`}</p>`}</div><footer class="meal-list-actions"><button data-add-to-meal="${esc(meal)}" aria-label="Add food to ${esc(meal)}">＋</button><button data-meal-menu="${esc(meal)}" aria-label="More ${esc(meal)} actions">•••</button></footer><div class="meal-menu-actions hidden" data-meal-actions="${esc(meal)}">${allMealEntries.length?`<button data-save-meal-template="${esc(meal)}">Save as Reusable Meal</button>${planned?`<button data-mark-meal-eaten="${esc(meal)}">Ate as Planned</button>`:""}`:`<span>No Meal Actions Yet.</span>`}</div></section>`;}).join("");saveExt();
 }
 function entryCard(entry){
-  return `<article class="simple-diary-entry ${entry.status==="planned"?"planned-entry":""}" data-entry-id="${esc(entry.id)}"><button class="entry-open" data-entry-edit="${esc(entry.id)}"><span><strong>${esc(entry.name)}</strong><small>${formatNumber(entry.amount,true)} ${esc(entry.unitLabel||entry.unit)}${entry.status==="planned"?" · Planned":""}</small></span><b>${formatNumber(entry.nutrients?.calories)} Cal</b></button><button class="entry-more" data-entry-menu="${esc(entry.id)}" aria-label="More actions for ${esc(entry.name)}">•••</button><div class="entry-inline-actions hidden" data-entry-actions="${esc(entry.id)}">${entry.status==="planned"?`<button data-entry-eaten="${esc(entry.id)}">Mark Eaten</button>`:""}<button data-entry-copy="${esc(entry.id)}">Copy</button><button data-entry-delete="${esc(entry.id)}" class="delete-action">Delete</button></div></article>`;
+  const icon=entry.status==="eaten"?"✓":entry.status==="skipped"?"—":"○",label=entry.status==="eaten"?"Eaten":entry.status==="skipped"?"Skipped":"Planned";
+  return `<article class="simple-diary-entry ${entry.status}-entry" data-entry-id="${esc(entry.id)}"><button class="entry-open" data-entry-edit="${esc(entry.id)}"><span><strong>${esc(entry.name)}</strong><small>${icon} ${formatNumber(entry.amount,true)} ${esc(entry.unitLabel||entry.unit)} <em class="entry-status-chip">${label}</em></small></span><b>${formatNumber(entry.nutrients?.calories)} Cal</b></button><button class="entry-more" data-entry-menu="${esc(entry.id)}" aria-label="More actions for ${esc(entry.name)}">•••</button><div class="entry-inline-actions hidden" data-entry-actions="${esc(entry.id)}">${entry.status==="planned"?`<button data-entry-eaten="${esc(entry.id)}">✓ Eaten</button>`:""}<button data-entry-copy="${esc(entry.id)}">Copy</button><button data-entry-delete="${esc(entry.id)}" class="delete-action">Delete</button></div></article>`;
 }
 function addEntry(entry){
   const date = entry.date || isoToday();
@@ -488,37 +524,22 @@ function findEntry(id){
 
 let editorState = null;
 function prepareEntry(food,{entry=null,date=null,meal=null,status="eaten",source=null}={}){
-  if(!food) return;
-  const defaultDate = date || ext.ui.diaryDate || isoToday();
-  const now = new Date();
-  editorState = {foodId:food.id,entryId:entry?.id || null,returnTo:"food-diary",source:source || food.source,variantSelections:entry?.variantSelections||{}};
-  by("entry-editor-title").textContent = entry ? `Edit ${entry.name}` : `Review ${food.name}`;
-  by("entry-date").value = entry?.date || defaultDate;
-  by("entry-meal").value = entry?.meal || meal || "Breakfast";
-  by("entry-status").value = entry?.status || status;
-  by("entry-amount").value = entry?.amount ?? defaultAmount(food);
-  by("entry-time").value = entry?.time || localClock();
-  by("entry-notes").value = entry?.notes || "";
-  by("entry-unit").innerHTML = Object.keys(unitOptions(food)).map(unit => `<option value="${esc(unit)}">${esc(unitLabel(food,unit))}</option>`).join("");
-  by("entry-unit").value = entry?.unit || defaultUnit(food);
-  renderVariantOptions(food,entry?.variantSelections||{});
-  const safety = foodSafety(food);
-  by("entry-source-warning").innerHTML = `<strong>${food.verified ? "Verified Trial Source" : "Review the Source"}</strong><p>${esc(food.source || "Source not supplied")}. ${safety.blocked ? `<b class="danger-text">${esc(safety.message)}</b>` : "Check the quantity and details before adding."}</p>`;
-  by("save-food-entry").textContent = entry ? "Save Changes" : (status === "planned" ? "Add to Plan" : "Add to Diary");
-  by("save-food-entry-and-food").classList.toggle("hidden",entry || ext.savedFoodIds.includes(food.id));
-  updateEntryPreview();
-  openFeature("food-entry-editor");
+  if(!food)return;const defaultDate=date||ext.ui.diaryDate||isoToday();
+  const planContext=!!(meal||ext.ui.pendingMeal||ext.ui.recentPlanMode);const automaticStatus=entry?.status||(status!=="eaten"?status:(defaultDate>isoToday()||planContext?"planned":"eaten"));
+  editorState={foodId:food.id,entryId:entry?.id||null,returnTo:"food-diary",source:source||food.source,variantSelections:entry?.variantSelections||{}};
+  by("entry-editor-title").textContent=entry?`Edit ${entry.name}`:`Review ${food.name}`;by("entry-date").value=entry?.date||defaultDate;by("entry-meal").value=entry?.meal||meal||ext.ui.pendingMeal||"Breakfast";by("entry-status").value=automaticStatus;by("entry-time").value=entry?.time||localClock();by("entry-notes").value=entry?.notes||"";
+  by("entry-unit").innerHTML=Object.keys(unitOptions(food)).map(unit=>`<option value="${esc(unit)}">${esc(unitLabel(food,unit))}</option>`).join("");by("entry-unit").value=entry?.unit||defaultUnit(food);by("entry-amount").value=entry?.amount??defaultAmount(food);
+  renderVariantOptions(food,entry?.variantSelections||{});const safety=foodSafety(food);by("entry-source-warning").innerHTML=`<strong>${food.verified?"Verified Trial Source":"Review the Source"}</strong><p>${esc(food.source||"Source not supplied")}. ${safety.blocked?`<b class="danger-text">${esc(safety.message)}</b>`:"Check the quantity and details before adding."}</p>`;
+  by("save-food-entry").textContent=entry?"Save Changes":(automaticStatus==="planned"?"Add to Plan":"Add to Diary");by("save-food-entry-and-food").classList.toggle("hidden",entry||ext.savedFoodIds.includes(food.id));updateEntryPreview();openFeature("food-entry-editor");
 }
 function updateEntryPreview(){
-  if(!editorState) return;
-  const baseFood = getFood(editorState.foodId);
-  if(!baseFood) return;
-  const food=resolveVariantFood(baseFood,selectedVariantValues());
-  const values = scaledNutrients(food,by("entry-amount").value,by("entry-unit").value);
-  by("entry-nutrition-preview").innerHTML = `<div class="food-detail-title"><div><h3>${esc(food.name)}</h3><p>${esc(food.brand || "")} · ${esc(food.serving || "")}</p></div><span class="health-score score-${Math.min(10,whole(food.score))}">${whole(food.score)}/10</span></div>${nutritionCards(values)}<p class="fine"><strong>Why this score:</strong> ${esc(scoreExplanation(food.score))}</p>`;
+  if(!editorState)return;const baseFood=getFood(editorState.foodId);if(!baseFood)return;const food=resolveVariantFood(baseFood,selectedVariantValues()),amount=by("entry-amount").value,unit=by("entry-unit").value,values=scaledNutrients(food,amount,unit);
+  by("entry-nutrition-preview").innerHTML=`<div class="food-detail-title"><div><h3>${esc(food.name)}</h3><p>${esc(food.brand||"")} · ${esc(food.serving||"")}</p></div><span class="health-score score-${Math.min(10,whole(food.score))}">${whole(food.score)}/10</span></div>${nutritionCards(values)}<p class="fine"><strong>Why This Score:</strong> ${esc(scoreExplanation(food.score))}</p>`;
+  if(by("entry-selection-summary"))by("entry-selection-summary").innerHTML=`<strong>You Are Adding: ${formatNumber(amount,true)} ${esc(unitLabel(food,unit))}</strong><span>${energyText(values.calories)} · ${by("entry-status").value==="planned"?"Planned":"Eaten / Drunk"}</span>`;
 }
 by("entry-amount")?.addEventListener("input",updateEntryPreview);
-by("entry-unit")?.addEventListener("change",updateEntryPreview);
+by("entry-unit")?.addEventListener("change",()=>{if(by("entry-amount"))by("entry-amount").value=1;updateEntryPreview();});
+by("entry-status")?.addEventListener("change",updateEntryPreview);
 by("entry-editor-back")?.addEventListener("click",() => openFeature(editorState?.returnTo || "food-library"));
 function saveEditorEntry(andSaveFood=false){
   const baseFood = getFood(editorState?.foodId);
@@ -560,12 +581,14 @@ function saveEditorEntry(andSaveFood=false){
 by("save-food-entry")?.addEventListener("click",() => saveEditorEntry(false));
 by("save-food-entry-and-food")?.addEventListener("click",() => saveEditorEntry(true));
 
-by("day-type")?.addEventListener("change",updateDaySettingsDirty);
+by("day-type")?.addEventListener("change",()=>{
+  const type=by("day-type").value,target=type==="fasting"?(n(ext.dayTypeTargets?.fasting)||500):(n(ext.dayTypeTargets?.normal)||recommendedNormalTarget());by("day-cal-target").value=whole(target);by("day-settings-note").textContent=type==="fasting"?"Flexible Fasting Day for this date only.":"Normal Day. Separately logged exercise is credited according to your profile choice.";updateDaySettingsDirty();refreshDiaryEnergyPreview(target);
+});
 by("day-cal-target")?.addEventListener("input",updateDaySettingsDirty);
 qa("[data-diary-view]").forEach(button=>button.addEventListener("click",()=>{ext.ui.diaryView=button.dataset.diaryView;saveExt();renderDiary();}));
 document.addEventListener("click",event => {
   const add = event.target.closest("[data-add-to-meal]");
-  if(add){ ext.ui.pendingMeal=add.dataset.addToMeal;ext.ui.libraryTab="all";saveExt();openFeature("food-library");return; }
+  if(add){ ext.ui.recentPlanMode=false;ext.ui.pendingMeal=add.dataset.addToMeal;ext.ui.libraryTab="all";saveExt();openFeature("food-library");return; }
   const edit = event.target.closest("[data-entry-edit]");
   if(edit){ const found=findEntry(edit.dataset.entryEdit); if(found) prepareEntry(getFood(found.entry.foodId) || snapshotFood(found.entry),{entry:found.entry}); return; }
   const menu=event.target.closest("[data-entry-menu]");
@@ -575,7 +598,7 @@ document.addEventListener("click",event => {
   const eaten = event.target.closest("[data-entry-eaten]");
   if(eaten){ const found=findEntry(eaten.dataset.entryEaten);if(found){found.entry.status="eaten";saveExt();renderDiary();const total=dayNutrition(found.entry.date,["eaten"]).calories;showActionToast(`${found.entry.name} marked as eaten — ${energyText(found.entry.nutrients?.calories)}. New daily total: ${formatNumber(total)} Cal.`,null,8000);}return; }
   const markMeal=event.target.closest("[data-mark-meal-eaten]");
-  if(markMeal){const date=diaryDate(),items=entriesForDate(date).filter(e=>e.meal===markMeal.dataset.markMealEaten&&e.status==="planned");items.forEach(e=>e.status="eaten");saveExt();renderDiary();showActionToast(items.length?`${items.length} planned ${items.length===1?"item":"items"} marked eaten.`:"There were no planned items to mark eaten.",null,5500);return;}
+  if(markMeal){const date=diaryDate(),items=entriesForDate(date).filter(e=>e.meal===markMeal.dataset.markMealEaten&&e.status==="planned");items.forEach(e=>e.status="eaten");saveExt();renderDiary();renderDailyProgress();showActionToast(items.length?`${items.length} planned ${items.length===1?"item":"items"} marked eaten.`:"There were no planned items to mark eaten.",null,5500);return;}
   const del = event.target.closest("[data-entry-delete]");
   if(del){ requestDeleteEntry(del.dataset.entryDelete);return; }
   const copy = event.target.closest("[data-entry-copy]");
@@ -584,7 +607,7 @@ document.addEventListener("click",event => {
   if(template){ saveMealTemplatePrompt(template.dataset.saveMealTemplate);return; }
 });
 function saveDaySettings(showMessage=true){
-  const date=diaryDate();ext.daySettings[date]={type:by("day-type").value,targetCal:whole(by("day-cal-target").value)};saveExt();daySettingsBaseline=clone(ext.daySettings[date]);setDaySettingsDirty(false);renderDiary();if(showMessage)showActionToast("Day settings saved.",null,5000);
+  const date=diaryDate(),type=by("day-type").value,targetCal=whole(by("day-cal-target").value);ext.dayTypeTargets||={normal:recommendedNormalTarget(),fasting:500};ext.dayTypeTargets[type]=targetCal;ext.daySettings[date]={type,targetCal};saveExt();daySettingsBaseline=clone(ext.daySettings[date]);setDaySettingsDirty(false);renderDiary();if(showMessage)showActionToast("Day Settings Saved.",null,5000);
 }
 by("save-day-settings")?.addEventListener("click",()=>saveDaySettings(true));
 
@@ -617,15 +640,13 @@ function saveMealTemplatePrompt(meal){
 // Modal and persistent action toast
 let modalConfirm = null;
 function openModal(title,copy,confirmLabel,onConfirm,extra=""){
-  by("a05-modal-title").textContent=title;by("a05-modal-copy").textContent=copy;by("a05-modal-extra").innerHTML=extra;by("a05-modal-confirm").textContent=confirmLabel;by("a05-modal-confirm").className=confirmLabel.toLowerCase().includes("delete")?"danger-button":"primary";modalConfirm=onConfirm;by("a05-modal").classList.remove("hidden");
+  by("a05-modal-title").textContent=title;by("a05-modal-copy").textContent=copy;by("a05-modal-extra").innerHTML=extra;by("a05-modal-confirm").textContent=confirmLabel;by("a05-modal-confirm").className=confirmLabel.toLowerCase().includes("delete")?"danger-button":"primary";modalConfirm=onConfirm;const card=by("a05-modal")?.querySelector(".a05-modal-card");card?.classList.toggle("info-only",confirmLabel.toLowerCase()==="close");by("a05-modal").classList.remove("hidden");card?.scrollTo?.(0,0);
 }
-function closeModal(){by("a05-modal").classList.add("hidden");modalConfirm=null;if(by("a05-modal-cancel"))by("a05-modal-cancel").textContent="Cancel";}
-function promptUnsavedDaySettings(next){
-  openModal("Unsaved Day Settings","You changed the day type or energy target.","Save",()=>{saveDaySettings(false);next();},`<button id="discard-day-settings" class="secondary wide" type="button">Discard Changes</button>`);
-  by("a05-modal-cancel").textContent="Stay Here";
-  by("discard-day-settings")?.addEventListener("click",()=>{setDaySettingsDirty(false);closeModal();next();},{once:true});
-}
+function closeModal(){by("a05-modal").classList.add("hidden");modalConfirm=null;by("a05-modal")?.querySelector(".a05-modal-card")?.classList.remove("info-only");if(by("a05-modal-cancel"))by("a05-modal-cancel").textContent="Cancel";}
+
 by("a05-modal-cancel")?.addEventListener("click",closeModal);
+by("a05-modal-close")?.addEventListener("click",closeModal);
+by("a05-modal")?.addEventListener("click",event=>{if(event.target===by("a05-modal"))closeModal();});
 by("a05-modal-confirm")?.addEventListener("click",() => {const fn=modalConfirm;closeModal();fn?.();});
 let toastUndo=null,toastTimer=null;
 function showActionToast(copy,action=null,duration=6000){
@@ -667,24 +688,19 @@ function foodRecordType(food){
   if(food.verified)return "Verified Food";
   return "Australian Trial Record";
 }
-function activeLibraryTab(){ return ext.ui.libraryTab || "all"; }
+function activeLibraryTab(){return ext.ui.libraryTab||"all";}
+function recentGroups(days=14){
+  const start=shiftISO(isoToday(),-(days-1)),groups=[];Object.keys(ext.diary).filter(date=>date>=start&&date<=isoToday()).sort().reverse().forEach(date=>{plannerMealNames().concat(["Other"]).forEach(meal=>{const items=entriesForDate(date).filter(e=>e.meal===meal&&e.status!=="skipped");if(items.length)groups.push({date,meal,items});});});return groups;
+}
+function renderRecentLibrary(query=""){
+  const nq=normalise(query),groups=recentGroups(14).map(g=>({...g,items:g.items.filter(e=>!nq||normalise(`${e.name} ${e.brand||""}`).includes(nq))})).filter(g=>g.items.length);
+  by("food-results").innerHTML=groups.length?groups.map(g=>`<section class="recent-meal-group"><header><div><strong>${esc(g.meal)}</strong><small>${esc(relativeDateLabel(g.date))}</small></div><button data-recent-meal-add="${esc(g.date)}|${esc(g.meal)}">Add Meal to Plan</button></header>${g.items.map(e=>`<div class="recent-entry-row"><span><strong>${esc(e.name)}</strong><small>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)} · ${formatNumber(e.nutrients?.calories)} Cal</small></span><button data-recent-entry-add="${esc(e.id)}" aria-label="Add ${esc(e.name)} to plan">＋</button></div>`).join("")}</section>`).join(""):`<div class="resource-empty"><strong>No Recent Foods Yet.</strong><p>Foods and meals from the last 14 days will appear here for quick reuse.</p></div>`;
+}
+function copyRecentEntry(entry,targetDate,targetMeal){const copy={...clone(entry),id:uid("entry"),date:targetDate,localDate:targetDate,meal:targetMeal,status:"planned",time:localClock(),createdAt:new Date().toISOString(),timeZone:activeTimeZone()};ext.diary[targetDate]||=[];ext.diary[targetDate].push(copy);return copy;}
 function renderLibrary(){
-  qa("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab===activeLibraryTab()));
-  by("food-search").value=ext.ui.foodSearch||"";
-  const context=by("library-entry-context");
-  if(context){const pending=ext.ui.pendingMeal;context.classList.toggle("hidden",!pending);context.innerHTML=pending?`<span>Adding to <strong>${esc(pending)}</strong> on ${esc(relativeDateLabel(ext.ui.diaryDate||isoToday()))}</span><button data-clear-pending-meal>Cancel Adding to ${esc(pending)}</button>`:"";}
-  const tab=activeLibraryTab(),query=by("food-search").value;
-  by("online-search-actions")?.classList.toggle("hidden",tab!=="online");
-  by("online-food-status")?.classList.toggle("hidden",tab!=="online");
-  if(tab==="recipes"){renderRecipeLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}
-  if(tab==="meals"){renderMealLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}
-  if(tab==="online"){renderOnlineLibrary(query);return;}
-  const libraryFoods=tab==="saved"?allFoods().filter(food=>ext.savedFoodIds.includes(food.id)):allFoods().filter(food=>food.category!=="Recipe");
-  const ranked=libraryFoods.filter(food=>tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
-  const strongMatch=ranked.some(item=>item.rank>=760),visible=query?ranked.filter(item=>item.rank>=(strongMatch?760:620)):ranked;
-  const closeNote=query&&visible.length&&!strongMatch?`<div class="search-guidance compact-search-guidance"><strong>Showing close spelling matches for “${esc(query)}”</strong></div>`:"";
-  by("food-results").innerHTML=visible.length?`${closeNote}${visible.map(item=>resourceFoodRow(item.food)).join("")}`:`<div class="resource-empty"><strong>No close match found.</strong><p>Try fewer words or create a private My Food entry.</p></div>`;
-  renderRecipeSelectOptions();renderScanSelect();
+  qa("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab===activeLibraryTab()));by("food-search").value=ext.ui.foodSearch||"";const context=by("library-entry-context");if(context){const pending=ext.ui.pendingMeal;context.classList.toggle("hidden",!pending);context.innerHTML=pending?`<span>Adding to <strong>${esc(pending)}</strong> on ${esc(relativeDateLabel(ext.ui.diaryDate||isoToday()))}</span><button data-clear-pending-meal>Cancel Adding to ${esc(pending)}</button>`:"";}
+  const tab=activeLibraryTab(),query=by("food-search").value;by("online-search-actions")?.classList.toggle("hidden",tab!=="online");by("online-food-status")?.classList.toggle("hidden",tab!=="online");if(tab==="recent"){renderRecentLibrary(query);return;}if(tab==="recipes"){renderRecipeLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}if(tab==="meals"){renderMealLibrary(query);renderRecipeSelectOptions();renderScanSelect();return;}if(tab==="online"){renderOnlineLibrary(query);return;}
+  const libraryFoods=tab==="saved"?allFoods().filter(food=>ext.savedFoodIds.includes(food.id)):allFoods().filter(food=>food.category!=="Recipe");const ranked=libraryFoods.filter(food=>tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));const strongMatch=ranked.some(item=>item.rank>=760),visible=query?ranked.filter(item=>item.rank>=(strongMatch?760:620)):ranked;const closeNote=query&&visible.length&&!strongMatch?`<div class="search-guidance compact-search-guidance"><strong>Showing close spelling matches for “${esc(query)}”</strong></div>`:"";by("food-results").innerHTML=visible.length?`${closeNote}${visible.map(item=>resourceFoodRow(item.food)).join("")}`:`<div class="resource-empty"><strong>No Close Match Found.</strong><p>Try fewer words or create a private food entry.</p></div>`;renderRecipeSelectOptions();renderScanSelect();
 }
 function resourceFoodRow(food){
   const saved=ext.savedFoodIds.includes(food.id),safety=foodSafety(food);
@@ -701,6 +717,11 @@ document.addEventListener("click",event=>{
   const mealDelete=event.target.closest("[data-meal-delete]");if(mealDelete){deleteMealTemplate(mealDelete.dataset.mealDelete);return;}
   if(event.target.closest("[data-clear-pending-meal]")){ext.ui.pendingMeal="";saveExt();renderLibrary();return;}
 });
+document.addEventListener("click",event=>{
+  const one=event.target.closest("[data-recent-entry-add]");if(one){const found=findEntry(one.dataset.recentEntryAdd);if(!found)return;const targetDate=ext.ui.recentPlanMode?(ext.ui.plannerDate||isoToday()):(ext.ui.diaryDate||isoToday()),targetMeal=ext.ui.pendingMeal||found.entry.meal;const copy=copyRecentEntry(found.entry,targetDate,targetMeal);saveExt();showActionToast(`${copy.name} added to ${targetMeal} as Planned.`,null,4500);return;}
+  const meal=event.target.closest("[data-recent-meal-add]");if(meal){const [sourceDate,sourceMeal]=meal.dataset.recentMealAdd.split("|"),items=entriesForDate(sourceDate).filter(e=>e.meal===sourceMeal&&e.status!=="skipped"),targetDate=ext.ui.recentPlanMode?(ext.ui.plannerDate||isoToday()):(ext.ui.diaryDate||isoToday()),targetMeal=ext.ui.pendingMeal||sourceMeal;items.forEach(e=>copyRecentEntry(e,targetDate,targetMeal));saveExt();showActionToast(`${items.length} ${items.length===1?"item":"items"} added to ${targetMeal} as Planned.`,null,5000);return;}
+});
+by("browse-planner-recent")?.addEventListener("click",()=>{ext.ui.recentPlanMode=true;ext.ui.libraryTab="recent";ext.ui.diaryDate=ext.ui.plannerDate||isoToday();ext.ui.pendingMeal="";saveExt();openFeature("food-library");});
 by("food-search")?.addEventListener("input",()=>{ext.ui.foodSearch=by("food-search").value;saveExt();renderLibrary();});
 by("clear-food-search")?.addEventListener("click",()=>{ext.ui.foodSearch="";by("food-search").value="";saveExt();renderLibrary();});
 by("resource-add-button")?.addEventListener("click",event=>{event.stopPropagation();by("resource-add-menu")?.classList.toggle("hidden");});
@@ -826,6 +847,7 @@ function titleUnit(text){
   }).join("");
 }
 by("recipe-food-search")?.addEventListener("input",renderRecipeSearch);
+by("recipe-ingredient-unit")?.addEventListener("change",()=>{if(by("recipe-ingredient-amount"))by("recipe-ingredient-amount").value=1;});
 by("recipe-name")?.addEventListener("input",event=>{ext.ui.recipeName=event.target.value;saveExt();});
 by("recipe-servings")?.addEventListener("input",event=>{ext.ui.recipeServings=Math.max(1,n(event.target.value)||1);saveExt();});
 by("recipe-notes")?.addEventListener("input",event=>{ext.ui.recipeNotes=event.target.value;saveExt();});
@@ -920,7 +942,7 @@ function fillOcrReview(values){const map={calories:"ocr-calories",protein:"ocr-p
 by("run-label-ocr")?.addEventListener("click",async()=>{if(!scanFile)return;const box=by("ocr-progress");box.classList.remove("hidden");box.textContent="Loading OCR and reading the panel. This may take a minute on a phone…";try{if(!window.Tesseract)throw new Error("OCR library unavailable");const worker=await Tesseract.createWorker("eng",1,{logger:m=>{if(m.progress)box.textContent=`${m.status} · ${Math.round(m.progress*100)}%`;}});const result=await worker.recognize(scanFile);await worker.terminate();const text=result.data?.text||"";by("ocr-text").value=text;fillOcrReview(parseNutritionPanel(text));box.textContent="Recognition complete. Correct every field against the package before saving.";}catch(error){box.textContent="OCR could not read this image. Try a closer, square-on photo in brighter light, or enter the values manually.";by("ocr-review").classList.remove("hidden");}});
 by("use-ocr-values")?.addEventListener("click",()=>{const pairs=[["custom-food-name","ocr-food-name"],["custom-serving-amount","ocr-serving-amount"],["custom-serving-unit","ocr-serving-unit"],["custom-cal","ocr-calories"],["custom-protein","ocr-protein"],["custom-carbs","ocr-carbs"],["custom-fat","ocr-fat"],["custom-sat-fat","ocr-sat-fat"],["custom-fibre","ocr-fibre"],["custom-sugar","ocr-sugar"],["custom-sodium","ocr-sodium"]];pairs.forEach(([to,from])=>{if(by(to)&&by(from))by(to).value=by(from).value;});openFeature("custom-food");showActionToast("Recognised values copied for review. Compare every value with the package before saving.",null,8000);});
 by("photo-find-food")?.addEventListener("click",()=>{ext.ui.libraryTab="all";ext.ui.pendingMeal=ext.ui.pendingMeal||"Other";saveExt();openFeature("food-library");showActionToast("Search and add each food visible in the photo. The photo itself does not calculate calories.",null,8000);});
-by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal photos are kept only during this browser session in Alpha 0.6.4. Add a written Diary note for lasting context.",null,8000));
+by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal photos are kept only during this browser session in Alpha 0.6.5. Add a written Diary note for lasting context.",null,8000));
 by("review-scan-food")?.addEventListener("click",()=>{if(scanBarcodeFood)prepareEntry(scanBarcodeFood,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"Other",source:scanBarcodeFood.source});});
 
 // Meal planner
@@ -956,15 +978,16 @@ function projectedProgressCard(label,eaten,planned,target,unit,type,date){const 
 function projectedFoodGroupCard(key,eaten,planned,target){const e=Math.min(100,target?eaten/target*100:0),p=Math.min(100-e,target?planned/target*100:0);return `<div class="food-group-card projected"><div><strong>${esc(FOOD_GROUP_LABELS[key])}</strong><span>${formatNumber(eaten+planned,true)} of ${formatNumber(target,true)} serves</span></div><div class="progress-track layered"><i class="eaten-progress" style="width:${e}%"></i><i class="planned-progress" style="width:${p}%"></i></div><small>Eaten ${formatNumber(eaten,true)} · Planned ${formatNumber(planned,true)}</small></div>`;}
 function renderDailyProgress(){
   const date=ext.ui.progressDate||by("progress-date")?.value||isoToday();ext.ui.progressDate=date;updateDateControl("progress",date);const summary=daySummary(date),{nutrients,planned,hydration,plannedHydration,steps,goals,foodGroups,plannedFoodGroups}=summary;goals.hydration=n(ext.fluidTargets[date])||goals.hydration;by("today-water").value=ext.water[date]||"";if(by("today-fluid-target"))by("today-fluid-target").value=goals.hydration;by("today-steps").value=steps||"";
-  const cards=[["Energy","calories",goals.calories,"Cal","energy"],["Protein","protein",goals.protein,"g","positive"],["Carbohydrate","carbs",goals.carbs,"g","positive"],["Fat","fat",goals.fat,"g","positive"],["Fibre","fibre",goals.fibre,"g","positive"],["Sugars","sugar",goals.sugar,"g","limit"],["Sodium","sodium",goals.sodium,"mg","limit"]];
-  by("daily-progress-grid").innerHTML=cards.map(([label,key,target,unit,type])=>projectedProgressCard(label,n(nutrients[key]),n(planned[key]),target,unit,type,date)).join("")+projectedProgressCard("Fluids",hydration.drinks,plannedHydration.drinks,goals.hydration,"mL","positive",date)+progressCard("Steps",steps,goals.steps,"","positive",date);
-  by("daily-food-group-progress").innerHTML=FOOD_GROUP_KEYS.map(key=>projectedFoodGroupCard(key,n(foodGroups[key]),n(plannedFoodGroups[key]),goals.foodGroups[key])).join("");const weekly=weeklyFoodGroupAverages(date);by("weekly-food-group-progress").innerHTML=`<h4>Seven-day planned + eaten average</h4><div>${FOOD_GROUP_KEYS.map(key=>`<span><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(weekly[key],true)} / ${formatNumber(goals.foodGroups[key],true)}</strong></span>`).join("")}</div><p>The lighter section of each bar is still planned. Update planned foods as the day unfolds to show what actually happened.</p>`;
-  const eatenCount=entriesForDate(date).filter(e=>e.status==="eaten").length,plannedCount=entriesForDate(date).filter(e=>e.status==="planned").length,projected=nutrients.calories+planned.calories,available=Math.max(0,goals.calories-projected);const parts=[`${formatNumber(nutrients.calories)} Cal eaten`,`${formatNumber(planned.calories)} Cal still planned`,`${formatNumber(projected)} Cal projected`,`${formatNumber(available)} Cal available after the plan`];if(!eatenCount&&!plannedCount)parts.unshift("Nothing has been planned or recorded yet.");if(hydration.foodMoisture>0)parts.push(`${formatNumber(hydration.foodMoisture)} mL estimated moisture from solid foods is shown separately and does not inflate the daily fluids target.`);by("daily-progress-explanation").innerHTML=`<h3>Today’s Summary</h3><p>${parts.join(" · ")}</p><p class="progress-key"><span class="key-eaten"></span>Eaten <span class="key-planned"></span>Planned</p>`;
-  const plannedEntries=entriesForDate(date).filter(e=>e.status==="planned");if(by("daily-planned-foods"))by("daily-planned-foods").innerHTML=plannedEntries.length?plannedEntries.map(e=>`<article class="planned-food-row"><div><strong>${esc(e.name)}</strong><small>${esc(e.meal)} · ${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)} · ${formatNumber(e.nutrients?.calories)} Cal</small></div><div><button data-progress-eaten="${esc(e.id)}">Mark Eaten</button><button data-progress-edit="${esc(e.id)}">Change</button><button data-progress-replace="${esc(e.id)}">Replace</button><button data-progress-move="${esc(e.id)}">Move</button><button data-progress-skip="${esc(e.id)}">Skip</button></div></article>`).join(""):'<p class="empty-state">No Foods Are Currently Planned.</p>';saveExt();
+  const eatenCount=entriesForDate(date).filter(e=>e.status==="eaten").length,plannedCount=entriesForDate(date).filter(e=>e.status==="planned").length,projected=nutrients.calories+planned.calories,available=Math.max(0,goals.calories-projected);const parts=[`${formatNumber(goals.calories)} Cal goal`,`${formatNumber(nutrients.calories)} Cal eaten`,`${formatNumber(planned.calories)} Cal still planned`,`${formatNumber(projected)} Cal projected`,`${formatNumber(available)} Cal remaining after the plan`];if(!eatenCount&&!plannedCount)parts.unshift("Nothing has been planned or recorded yet.");by("daily-progress-explanation").innerHTML=`<h3>${date===isoToday()?"Today’s":"Day"} Summary</h3><p>${parts.join(" · ")}</p><p class="progress-key"><span class="key-eaten"></span>Eaten <span class="key-planned"></span>Planned</p>`;
+  const allEntries=entriesForDate(date),meals=plannerMealNames().concat(allEntries.some(e=>e.meal==="Other")?["Other"]:[]);by("daily-meal-status").innerHTML=meals.map(meal=>{const items=allEntries.filter(e=>e.meal===meal),eaten=items.filter(e=>e.status==="eaten"),plannedItems=items.filter(e=>e.status==="planned"),skipped=items.filter(e=>e.status==="skipped"),active=items.filter(e=>e.status!=="skipped"),total=sumNutrients(active).calories;let state="empty",label="Nothing Planned";if(items.length){if(plannedItems.length&&eaten.length){state="mixed";label=`${eaten.length} of ${eaten.length+plannedItems.length} Confirmed`;}else if(plannedItems.length){state="planned";label="Planned";}else if(eaten.length){state="complete";label="Complete ✓";}else if(skipped.length){state="empty";label="Skipped";}}return `<div class="meal-progress-shell"><details class="meal-progress-card ${state}" ${state==="mixed"?"open":""}><summary><span class="meal-progress-title"><strong>${esc(meal)} · ${formatNumber(total)} Cal</strong><small>${items.length?`${eaten.length} Eaten · ${plannedItems.length} Planned${skipped.length?` · ${skipped.length} Skipped`:""}`:"Tap to plan or add food"}</small></span><span class="meal-progress-state">${esc(label)}</span></summary><div class="meal-progress-body">${items.length?items.map(e=>`<div class="meal-progress-item ${e.status}"><span class="status-icon">${e.status==="eaten"?"✓":e.status==="skipped"?"—":"○"}</span><span><strong>${esc(e.name)}</strong><small>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)} · ${formatNumber(e.nutrients?.calories)} Cal</small></span><div class="meal-progress-item-actions">${e.status==="planned"?`<button data-progress-eaten="${esc(e.id)}">✓ Eaten</button><button data-progress-skip="${esc(e.id)}">Skip</button>`:""}<button data-progress-edit="${esc(e.id)}">Change</button></div></div>`).join(""):'<p class="empty-state">Nothing planned for this meal.</p>'}<div class="meal-progress-actions"><button class="secondary" data-progress-open-meal="${esc(meal)}">Open Meal</button></div></div></details>${plannedItems.length?`<button class="meal-quick-confirm" data-mark-meal-eaten="${esc(meal)}">✓ Ate as Planned</button>`:""}</div>`;}).join("");
+  const cards=[["Energy","calories",goals.calories,"Cal","energy"],["Protein","protein",goals.protein,"g","positive"],["Carbohydrate","carbs",goals.carbs,"g","positive"],["Fat","fat",goals.fat,"g","positive"],["Fibre","fibre",goals.fibre,"g","positive"],["Sugars","sugar",goals.sugar,"g","limit"],["Sodium","sodium",goals.sodium,"mg","limit"]];by("daily-progress-grid").innerHTML=cards.map(([label,key,target,unit,type])=>projectedProgressCard(label,n(nutrients[key]),n(planned[key]),target,unit,type,date)).join("")+projectedProgressCard("Fluids",hydration.drinks,plannedHydration.drinks,goals.hydration,"mL","positive",date)+progressCard("Steps",steps,goals.steps,"","positive",date);
+  by("daily-food-group-progress").innerHTML=FOOD_GROUP_KEYS.map(key=>projectedFoodGroupCard(key,n(foodGroups[key]),n(plannedFoodGroups[key]),goals.foodGroups[key])).join("");const weekly=weeklyFoodGroupAverages(date);by("weekly-food-group-progress").innerHTML=`<h4>Seven-Day Planned + Eaten Average</h4><div>${FOOD_GROUP_KEYS.map(key=>`<span><small>${esc(FOOD_GROUP_LABELS[key])}</small><strong>${formatNumber(weekly[key],true)} / ${formatNumber(goals.foodGroups[key],true)}</strong></span>`).join("")}</div><p>Confirm meals as the day unfolds so the average increasingly reflects what actually happened.</p>`;saveExt();
 }
 let progressSaveTimer=null;function autoSaveProgressFields(){clearTimeout(progressSaveTimer);progressSaveTimer=setTimeout(()=>{const date=ext.ui.progressDate||isoToday();ext.water[date]=Math.max(0,n(by("today-water")?.value));ext.fluidTargets[date]=Math.max(250,n(by("today-fluid-target")?.value)||currentGoals(date).hydration);ext.steps[date]=Math.max(0,whole(by("today-steps")?.value));saveExt();renderDailyProgress();showActionToast("Fluids and steps updated.",null,2500);},350);}by("today-water")?.addEventListener("change",autoSaveProgressFields);by("today-fluid-target")?.addEventListener("change",autoSaveProgressFields);by("today-steps")?.addEventListener("change",autoSaveProgressFields);
 
 document.addEventListener("click",event=>{const eaten=event.target.closest("[data-progress-eaten]");if(eaten){const found=findEntry(eaten.dataset.progressEaten);if(found){found.entry.status="eaten";saveExt();renderDailyProgress();showActionToast(`${found.entry.name} marked Eaten.`,null,4000);}return;}const edit=event.target.closest("[data-progress-edit]");if(edit){const found=findEntry(edit.dataset.progressEdit);if(found)prepareEntry(getFood(found.entry.foodId)||snapshotFood(found.entry),{entry:found.entry});return;}const replace=event.target.closest("[data-progress-replace]");if(replace){const found=findEntry(replace.dataset.progressReplace);if(found){ext.ui.replacingEntryId=found.entry.id;ext.ui.diaryDate=found.date;ext.ui.pendingMeal=found.entry.meal;ext.ui.libraryTab="all";saveExt();openFeature("food-library");showActionToast(`Choose a replacement for ${found.entry.name}.`,null,5000);}return;}const skip=event.target.closest("[data-progress-skip]");if(skip){const found=findEntry(skip.dataset.progressSkip);if(found){found.entry.status="skipped";saveExt();renderDailyProgress();showActionToast(`${found.entry.name} skipped.`,null,4000);}return;}const move=event.target.closest("[data-progress-move]");if(move){const found=findEntry(move.dataset.progressMove);if(found){openModal(`Move ${found.entry.name}`,"Choose a Meal for this Planned Food.","Move",()=>{found.entry.meal=by("progress-move-meal").value;saveExt();renderDailyProgress();},`<label>Meal<select id="progress-move-meal">${mealNames().map(m=>`<option ${m===found.entry.meal?"selected":""}>${esc(m)}</option>`).join("")}</select></label>`);}return;}});
+
+document.addEventListener("click",event=>{const open=event.target.closest("[data-progress-open-meal]");if(!open)return;ext.ui.diaryDate=ext.ui.progressDate||isoToday();ext.ui.focusMeal=open.dataset.progressOpenMeal;saveExt();openFeature("food-diary");setTimeout(()=>{q(`[data-meal-name="${CSS.escape(open.dataset.progressOpenMeal)}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});},80);});
 
 // Exercise and activity
 function renderExercise(){
@@ -1007,7 +1030,7 @@ by("print-shopping-list")?.addEventListener("click",()=>{renderShoppingPrint();d
 by("speak-shopping-item")?.addEventListener("click",()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showActionToast("Speech entry is unavailable in this browser.",null,5000);return;}const r=new SR();r.lang="en-AU";r.interimResults=false;r.onresult=e=>{by("shopping-item").value=e.results[0][0].transcript;by("shopping-item").dispatchEvent(new Event("change"));};r.start();});
 
 
-by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,5000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database</strong> remains the preferred reference for Australian generic foods. Alpha 0.6.4 links to its official search while a licensed local import is prepared.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
+by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,5000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database</strong> remains the preferred reference for Australian generic foods. Alpha 0.6.5 links to its official search while a licensed local import is prepared.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
 
 // Food preferences and family readiness
 function renderFoodPreferences(){
@@ -1056,19 +1079,24 @@ function buildReport(){
   by("report-preview").innerHTML=`<header class="report-title"><h1>Healthy Eating Companion Progress Report</h1><p>${formatDate(from)} to ${formatDate(to)}</p><p>${esc(main.personal?.preferredName||main.personal?.fullName||"Founder Tester")}</p></header><section><h2>Plain-English Summary</h2><p>${rows.filter(r=>r.entries.some(e=>e.status==="eaten")).length} days contain food records. Unrecorded days are not counted as zero intake. This founder report is for personal review and is not medical advice.</p></section>${foodOn?`<section><h2>Food & Nutrition</h2>${rows.length?rows.map(r=>`<h3>${formatDate(r.date)}</h3><p><strong>${formatNumber(r.summary.nutrients.calories)} Cal</strong> · Protein ${formatNumber(r.summary.nutrients.protein)} g · Fibre ${formatNumber(r.summary.nutrients.fibre)} g · Sodium ${formatNumber(r.summary.nutrients.sodium)} mg</p><table><thead><tr><th>Meal</th><th>Food</th><th>Status</th><th>Amount</th><th>Cal</th></tr></thead><tbody>${r.entries.map(e=>`<tr><td>${esc(e.meal)}</td><td>${esc(e.name)}</td><td>${esc(statusLabel(e.status))}</td><td>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)}</td><td>${formatNumber(e.nutrients.calories)}</td></tr>`).join("")}</tbody></table>`).join(""):`<p>No food records in this period.</p>`}</section>`:""}${weightOn?`<section><h2>Weight</h2>${weights.length?`<table><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${weights.map(w=>`<tr><td>${esc(w.date)}</td><td>${formatNumber(w.weightKg,true)} kg</td><td>${esc(w.note||"")}</td></tr>`).join("")}</tbody></table>`:`<p>No weight entries in this period.</p>`}</section>`:""}${activityOn?`<section><h2>Activity</h2>${activities.length?`<table><thead><tr><th>Date</th><th>Activity</th><th>Minutes</th><th>Burned</th><th>Credited</th></tr></thead><tbody>${activities.map(a=>`<tr><td>${esc(a.date.slice(0,10))}</td><td>${esc(a.name)}</td><td>${formatNumber(a.minutes)}</td><td>${formatNumber(a.calories)} Cal</td><td>${formatNumber(a.credit)} Cal</td></tr>`).join("")}</tbody></table>`:`<p>No activity entries in this period.</p>`}</section>`:""}${waterOn?`<section><h2>Hydration & Steps</h2><table><thead><tr><th>Date</th><th>Total Hydration</th><th>Steps</th></tr></thead><tbody>${Object.keys({...ext.diary,...ext.water,...ext.steps}).filter(d=>d>=from&&d<=to).sort().map(d=>`<tr><td>${esc(d)}</td><td>${formatNumber(dayHydration(d).total)} mL</td><td>${formatNumber(ext.steps[d])}</td></tr>`).join("")}</tbody></table></section>`:""}`;
 }
 by("preview-report")?.addEventListener("click",buildReport);by("print-report")?.addEventListener("click",()=>{buildReport();setTimeout(()=>window.print(),80);});
-by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-companion-alpha-0-6-4-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
+by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-companion-alpha-0-6-5-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
 
 // Contextual help
 const HELP={
-  "food-diary":"Swipe the date card to move through days, or tap it for a calendar. Use the plus beside a meal to add food. Planned food stays separate from food actually eaten. The Day Settings save button appears only after a change.",
+  "food-diary":"Swipe the date card to move through days, or tap it for a calendar. Use the plus beside a meal to add food. Foods added while planning are Planned automatically. Use Ate as Planned for a whole meal, or change only the items that differed. The Day Settings save button appears only after a change.",
   "food-library":"Search prioritises exact Australian matches and your own foods. Review the serving size and source before adding. Save Food is labelled in words rather than relying on a bookmark icon.",
   "quick-log":"Speak or type naturally, correct the transcript, then review the identified foods. Nothing is logged automatically. Accent recognition depends on the device speech service, while the food vocabulary and confirmation flow are controlled here.",
   "scan-centre":"Barcode photos and live camera scanning can look up products in Open Food Facts. Nutrition-panel OCR fills editable review fields. Meal photos never guess calories; identify and confirm every food before logging.",
   "meal-planner":"Tick one or more meals for the app to plan. Accept a suggestion or choose Try Again for just that meal. Existing plans are protected before anything is replaced.",
-  "daily-progress":"Solid bar sections show eaten amounts and lighter sections show planned amounts. Fluids include water and other logged drinks. Estimated moisture in solid foods is shown separately. Update the plan as the day changes.",
+  "daily-progress":"Meal status appears first so you can confirm or amend the plan quickly. Solid bar sections show eaten amounts and lighter sections show planned amounts. Fluids include water and other logged drinks. Estimated moisture in solid foods is shown separately. Update the plan as the day changes.",
   "progress-history":"Averages use days with actual records only. There are no flames, game badges or leaderboards—only meaningful progress information."
 };
 document.addEventListener("click",event=>{const b=event.target.closest("[data-help]");if(!b)return;const copy=HELP[b.dataset.help]||"Help is available for this screen.";openModal("Help With This Screen",copy,"Close",()=>{});by("a05-modal-confirm").className="primary";if(mainData().companion?.enabled&&typeof window.speakText==="function")window.speakText(copy);});
+
+// Alpha 0.6.5 migration: preserve all existing records, while separating Normal and Fasting targets.
+function recommendedNormalTarget(){const main=mainData(),cal=n(main.recommendations?.energyKj)/4.184;return whole(cal)||2000;}
+function refreshDiaryEnergyPreview(target){const slide=by("diary-day-summary")?.querySelector(".summary-slide");if(!slide)return;const date=diaryDate(),consumed=dayNutrition(date,["eaten"]).calories,exercise=(ext.exercise||[]).filter(x=>x.date?.slice(0,10)===date).reduce((sum,x)=>sum+n(x.credit),0),goal=n(target)+exercise;slide.innerHTML=`<span>Today’s Energy</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${formatNumber(goal)} Cal</strong></div><div><small>Consumed</small><strong>${formatNumber(consumed)} Cal</strong></div><div><small>Remaining</small><strong>${formatNumber(Math.max(0,goal-consumed))} Cal</strong></div></div>`;}
+ext.version="0.6.5";ext.dayTypeTargets||={normal:recommendedNormalTarget(),fasting:500};if(!n(ext.dayTypeTargets.normal))ext.dayTypeTargets.normal=recommendedNormalTarget();if(!n(ext.dayTypeTargets.fasting))ext.dayTypeTargets.fasting=500;Object.values(ext.daySettings||{}).forEach(settings=>{if(settings?.type==="normal"&&n(settings.targetCal)<=700&&recommendedNormalTarget()>1000)settings.targetCal=ext.dayTypeTargets.normal;});saveExt();
 
 // Initial setup and integration
 function init(){

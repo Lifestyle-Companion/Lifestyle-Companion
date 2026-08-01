@@ -1,18 +1,18 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.4
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.5
 
 PURPOSE
-Alpha 0.6.4 consolidates the Alpha 0.6.3 family-testing feedback supplied by Mal, Tracey, Shelly and Corey. It is a self-contained static web-app trial for publishing to the existing Healthy Eating Companion GitHub Pages address.
+Alpha 0.6.5 refines the Alpha 0.6.3 family-testing feedback supplied by Mal, Tracey, Shelly and Corey. It is a self-contained static web-app trial for publishing to the existing Healthy Eating Companion GitHub Pages address.
 
 IMPORTANT — KEEPING EXISTING TEST DATA
-Alpha 0.6.4 deliberately keeps the same browser-storage keys used by Alpha 0.6.3:
+Alpha 0.6.5 deliberately keeps the same browser-storage keys used by Alpha 0.6.3:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-When Alpha 0.6.4 replaces Alpha 0.6.3 at the SAME GitHub Pages website address, in the SAME browser and on the SAME device, the existing profile, diary, plans, recipes, Shopping List and other trial records should migrate forward rather than being intentionally deleted.
+When Alpha 0.6.5 replaces Alpha 0.6.4 at the SAME GitHub Pages website address, in the SAME browser and on the SAME device, the existing profile, diary, plans, recipes, Shopping List and other trial records should migrate forward rather than being intentionally deleted.
 
 Browser data can still be lost if a tester clears Safari/website data, uses Private Browsing, changes to a different GitHub Pages address, changes browser/device, or removes the site’s stored data. Use Settings > Data, Backup & Privacy > Download Backup before major testing changes.
 
-MAIN ALPHA 0.6.4 CHANGES
+MAIN ALPHA 0.6.5 CHANGES
 - Local Australian day/date handling replaces UTC-derived “today”.
 - Optional country, state/province, postcode and IANA time-zone fields, with automatic daylight-saving rules and travel time-zone choices.
 - Surname added to profile setup; additional contact/address fields remain reserved but hidden.
@@ -54,12 +54,15 @@ CURRENT STATIC-TRIAL LIMITATIONS
 - Online food data, barcode services and OCR require internet access and real-device testing.
 
 HOW TO PUBLISH
-1. Download and unzip the Alpha 0.6.4 package.
-2. Replace the files in the existing GitHub Pages repository with the complete contents of the Alpha 0.6.4 folder.
+1. Download and unzip the Alpha 0.6.5 package.
+2. Replace the files in the existing GitHub Pages repository with the complete contents of the Alpha 0.6.5 folder.
 3. Keep the existing repository/site address unchanged to preserve browser data.
 4. Wait for GitHub Pages to finish publishing.
-5. Open the normal site address and confirm Alpha 0.6.4 appears.
+5. Open the normal site address and confirm Alpha 0.6.5 appears.
 6. Do not clear Safari or website data during the update.
 
 HOW TO RUN LOCALLY
 Extract the folder and open index.html, or serve the complete folder from an HTTPS-capable web server. Camera access normally requires HTTPS.
+
+
+See RELEASE_NOTES_ALPHA_0_6_5.txt and TESTING_CHECKLIST_ALPHA_0_6_5.txt for this build.

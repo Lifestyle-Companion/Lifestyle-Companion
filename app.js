@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.6",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.7",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -744,7 +744,7 @@ function calculateRecommendationSet({
     energyKj = Math.round((targetCal * 4.184) / 100) * 100;
   }
 
-  // Alpha 0.6.6: keep the displayed macro targets inside a practical whole-day balance.
+  // Alpha 0.6.7: keep the displayed macro targets inside a practical whole-day balance.
   // Weight-loss plans use a moderately higher protein share without allowing protein to consume nearly half of total energy.
   const targetCalories = energyKj ? energyKj / 4.184 : null;
   const proteinShare = goal === "lose" ? 0.25 : 0.20;
@@ -1102,14 +1102,10 @@ document.querySelectorAll(".room").forEach(button => button.addEventListener("cl
   show("placeholder");
 }));
 
-function formatSavedAddress(){
-  const p = data.personal;
-  const parts = [];
-  if(p.streetAddress) parts.push(p.streetAddress);
-  const locality = [p.suburb,p.region,p.postcode].filter(Boolean).join(" ");
-  if(locality) parts.push(locality);
-  if(p.country) parts.push(p.country);
-  return parts.join(", ") || "Not entered";
+function formatSavedLocation(){
+  const p = data.personal || {};
+  const locality = [p.suburb,p.region,p.postcode].filter(Boolean).join(" ").trim();
+  return [locality,p.country].filter(Boolean).join(", ") || "Location not set";
 }
 function renderSettings(){
   const companionText = data.companion.enabled
@@ -1121,8 +1117,7 @@ function renderSettings(){
       <div class="summary-item"><span>Language</span><strong>${escapeHtml(data.preferences.language)}</strong></div>
       <div class="summary-item"><span>Theme</span><strong>${escapeHtml(data.preferences.theme[0].toUpperCase() + data.preferences.theme.slice(1))}</strong></div>
       <div class="summary-item"><span>Email</span><strong>${escapeHtml(data.personal.email || data.email)}</strong></div>
-      <div class="summary-item"><span>Address</span><strong>${escapeHtml(formatSavedAddress())}</strong></div>
-      <div class="summary-item"><span>Mobile</span><strong>${escapeHtml(data.personal.mobile || "Not entered")}</strong></div>
+      <div class="summary-item"><span>Location</span><strong>${escapeHtml(formatSavedLocation())}</strong></div>
       <div class="summary-item"><span>Companion</span><strong>${companionText}</strong></div>
       <div class="summary-item"><span>Goal</span><strong>${escapeHtml(goalLabel(data.health.goal))}: ${escapeHtml(formatWeight(data.health.selectedGoalWeight))} kg</strong></div>
       <div class="summary-item"><span>Current weight</span><strong>${escapeHtml(formatWeight(data.health.currentWeightKg))} kg</strong></div>
@@ -1208,48 +1203,62 @@ function recalculateFromStored(){
   data.health.recommendedGoalWeight = fresh.recommendedGoalWeight;
   data.health.lastCalculationWeightKg = data.health.currentWeightKg;
 }
+function latestApplicableWeightRecord(){
+  const today=todayISO();
+  return [...(data.weightHistory||[])].filter(item=>item?.date&&item.date<=today&&Number(item.weightKg)>0).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")))[0]||null;
+}
+function friendlyWeightDate(value){
+  if(!value)return "";
+  return new Intl.DateTimeFormat("en-AU",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).format(new Date(`${value}T12:00:00`)).replace(",","");
+}
 function renderWeightCheckin(){
+  const latest=latestApplicableWeightRecord();
   $("checkin-date").value = todayISO();
-  $("checkin-weight").value = formatWeight(data.health.currentWeightKg || data.health.startingWeightKg);
+  $("checkin-weight").value = formatWeight(latest?.weightKg || data.health.currentWeightKg || data.health.startingWeightKg);
   $("checkin-goal").value = formatWeight(data.health.selectedGoalWeight || data.health.recommendedGoalWeight);
+  if($("checkin-note"))$("checkin-note").value="";
   $("checkin-error").textContent = "";
   $("checkin-result").classList.add("hidden");
-  const history = [...data.weightHistory].sort((a,b) => String(b.date).localeCompare(String(a.date)));
-  $("weight-history").innerHTML = history.length
-    ? `<table class="history-table"><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${history.map(item =>
-        `<tr><td>${escapeHtml(item.date)}</td><td>${escapeHtml(formatWeight(item.weightKg))} kg</td><td>${escapeHtml(item.note || "")}</td></tr>`
-      ).join("")}</tbody></table>`
-    : '<div class="empty-state">No weight check-ins have been recorded yet.</div>';
+  renderWeightHistoryOnly();
   updateCompanionUI();
 }
 $("save-checkin").addEventListener("click", () => {
   const date = $("checkin-date").value || todayISO();
   const weight = Number($("checkin-weight").value);
   const goal = Number($("checkin-goal").value);
-  if(!weight || weight < 30 || weight > 400) return friendlyError("checkin-error", "Please enter a valid current weight.", "Please check your current weight.");
-  const goalError = validateGoalWeight(data.health.goal, weight, goal, data.recommendations.healthyLow || 0);
+  const note = $("checkin-note")?.value.trim() || "Progress Check-in";
+  if(!weight || weight < 30 || weight > 400) return friendlyError("checkin-error", "Please enter a valid weight.", "Please check your weight.");
+  const latestBefore=latestApplicableWeightRecord();
+  const currentWeightBefore=Number(latestBefore?.weightKg || data.health.currentWeightKg || weight);
+  const goalError = validateGoalWeight(data.health.goal, currentWeightBefore, goal, data.recommendations.healthyLow || 0);
   if(goalError) return friendlyError("checkin-error", goalError, goalError);
-
-  const previousCalculationWeight = Number(data.health.lastCalculationWeightKg || data.health.currentWeightKg || weight);
-  const goalChanged = Math.abs(goal - Number(data.health.selectedGoalWeight || 0)) >= 0.1;
-  const meaningfulWeightChange = Math.abs(weight - previousCalculationWeight) >= 1;
-
-  data.health.currentWeightKg = roundWeight(weight);
-  data.health.selectedGoalWeight = roundWeight(goal);
-  data.recommendations.selectedGoalWeight = roundWeight(goal);
 
   const existing = data.weightHistory.find(item => item.date === date);
   if(existing){
     existing.weightKg = roundWeight(weight);
-    existing.note = "Updated check-in"; existing.timeZone=activeTimeZone(); existing.recordedAt=new Date().toISOString();
-  }else data.weightHistory.push({date,weightKg:roundWeight(weight),note:"Progress check-in",timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
+    existing.note = note || "Updated Check-in";
+    existing.timeZone=activeTimeZone(); existing.recordedAt=new Date().toISOString();
+  }else data.weightHistory.push({date,weightKg:roundWeight(weight),note,timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
+
+  const latestAfter=latestApplicableWeightRecord();
+  const latestWeight=Number(latestAfter?.weightKg || data.health.currentWeightKg || weight);
+  const savedIsCurrent=!!latestAfter && latestAfter.date===date;
+  const previousCalculationWeight = Number(data.health.lastCalculationWeightKg || currentWeightBefore || latestWeight);
+  const goalChanged = Math.abs(goal - Number(data.health.selectedGoalWeight || 0)) >= 0.1;
+  const meaningfulCurrentWeightChange = savedIsCurrent && Math.abs(latestWeight - previousCalculationWeight) >= 1;
+
+  data.health.currentWeightKg = roundWeight(latestWeight);
+  data.health.selectedGoalWeight = roundWeight(goal);
+  data.recommendations.selectedGoalWeight = roundWeight(goal);
 
   let message;
-  if(meaningfulWeightChange || goalChanged){
+  if(meaningfulCurrentWeightChange || goalChanged){
     recalculateFromStored();
     message = data.recommendations.manual
-      ? `Check-in saved. Your goal and health estimates were refreshed, while your manually chosen energy and nutrient targets were retained.`
-      : `Check-in saved. Recommendations were recalculated using ${formatWeight(weight)} kg and your selected goal of ${formatWeight(goal)} kg.`;
+      ? `Check-in saved. Your current goal and health estimates were refreshed, while your manually chosen energy and nutrient targets were retained.`
+      : `Check-in saved. Recommendations were recalculated using your latest dated weight of ${formatWeight(latestWeight)} kg.`;
+  }else if(!savedIsCurrent){
+    message = `Historical weight saved for ${friendlyWeightDate(date)}. Your current weight remains ${formatWeight(latestWeight)} kg because a newer entry exists.`;
   }else{
     message = "Check-in saved. The change was less than 1 kg, so your recommendations stayed steady to avoid reacting to a small fluctuation.";
   }
@@ -1260,11 +1269,20 @@ $("save-checkin").addEventListener("click", () => {
   if(data.companion.enabled) speakText(message);
 });
 function renderWeightHistoryOnly(){
-  const history = [...data.weightHistory].sort((a,b) => String(b.date).localeCompare(String(a.date)));
-  $("weight-history").innerHTML = `<table class="history-table"><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${history.map(item =>
-    `<tr><td>${escapeHtml(item.date)}</td><td>${escapeHtml(formatWeight(item.weightKg))} kg</td><td>${escapeHtml(item.note || "")}</td></tr>`
-  ).join("")}</tbody></table>`;
+  const history=[...(data.weightHistory||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")));
+  const latest=latestApplicableWeightRecord(),start=history.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0];
+  const change=latest&&start?roundWeight(Number(latest.weightKg)-Number(start.weightKg)):0;
+  const summary=latest?`<div class="weight-history-summary"><div><span>Current Weight</span><strong>${escapeHtml(formatWeight(latest.weightKg))} kg</strong></div><div><span>Goal Weight</span><strong>${escapeHtml(formatWeight(data.health.selectedGoalWeight))} kg</strong></div><div><span>Change Since Start</span><strong>${change>0?"+":""}${escapeHtml(formatWeight(change))} kg</strong></div><div><span>Last Recorded</span><strong>${escapeHtml(friendlyWeightDate(latest.date))}</strong></div></div>`:"";
+  const rows=items=>items.map(item=>`<button type="button" class="weight-history-row" data-edit-weight-date="${escapeHtml(item.date)}"><span><strong>${escapeHtml(friendlyWeightDate(item.date))}</strong><small>${escapeHtml(item.note||"")}</small></span><b>${escapeHtml(formatWeight(item.weightKg))} kg</b><em>Edit</em></button>`).join("");
+  $("weight-history").innerHTML=history.length?`${summary}<h4>Recent Weight Entries</h4>${rows(history.slice(0,5))}${history.length>5?`<details class="weight-history-all"><summary>View All Weight History (${history.length})</summary>${rows(history.slice(5))}</details>`:""}`:'<div class="empty-state">No weight check-ins have been recorded yet.</div>';
 }
+document.addEventListener("click",event=>{
+  const row=event.target.closest("[data-edit-weight-date]");if(!row)return;
+  const item=(data.weightHistory||[]).find(x=>x.date===row.dataset.editWeightDate);if(!item)return;
+  $("checkin-date").value=item.date;$("checkin-weight").value=formatWeight(item.weightKg);if($("checkin-note"))$("checkin-note").value=item.note||"";
+  $("checkin-result").innerHTML=`<strong>Editing Historical Entry</strong><p>Saving ${escapeHtml(friendlyWeightDate(item.date))} will not replace your current weight if a newer dated entry exists.</p>`;$("checkin-result").classList.remove("hidden");
+  $("checkin-date").scrollIntoView({behavior:"smooth",block:"center"});
+});
 
 $("reset-trial").addEventListener("click", () => {
   if(confirm("Reset this founder trial and delete the saved profile on this device?")){

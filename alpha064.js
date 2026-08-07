@@ -15,11 +15,11 @@ const deviceTZ=()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone|
 const toast=message=>{const t=$("toast")||$("a05-toast-copy");if(!t)return; if(t.id==="toast"){t.textContent=message;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),5000);}else t.textContent=message;};
 
 function ensureSchemas(){
-  const main=read(MAIN_KEY,{});main.version=APP.version||"0.6.6";main.personal||={};main.personal.surname??="";main.personal.homeTimeZone||=deviceTZ();main.personal.activeTimeZone||=main.personal.homeTimeZone;main.personal.timeZoneBehaviour||="ask";main.analytics||={consent:false};main.developer||={founderEnabled:false};main.trial||={};
+  const main=read(MAIN_KEY,{});main.version=APP.version||"0.6.7";main.personal||={};main.personal.surname??="";main.personal.homeTimeZone||=deviceTZ();main.personal.activeTimeZone||=main.personal.homeTimeZone;main.personal.timeZoneBehaviour||="ask";main.analytics||={consent:false};main.developer||={founderEnabled:false};main.trial||={};
   if(new URLSearchParams(location.search).get("founder")==="1")main.developer.founderEnabled=true;
   const params=new URLSearchParams(location.search);if(params.get("invite")){main.trial.inviteCode=params.get("invite");main.trial.invitedBy=params.get("from")||"Founder Trial";main.trial.feedbackEmail=params.get("feedback")||main.trial.feedbackEmail||"";}
   write(MAIN_KEY,main);
-  const ext=read(EXT_KEY,{});ext.version=APP.version||"0.6.6";ext.fluidTargets||={};ext.ui||={};write(EXT_KEY,ext);
+  const ext=read(EXT_KEY,{});ext.version=APP.version||"0.6.7";ext.fluidTargets||={};ext.ui||={};write(EXT_KEY,ext);
   const admin=read(ADMIN_KEY,{usage:{},feedback:[],invites:[],sessions:0});admin.usage||={};admin.feedback||=[];admin.invites||=[];admin.sessions=(admin.sessions||0)+1;write(ADMIN_KEY,admin);
 }
 ensureSchemas();
@@ -114,7 +114,7 @@ document.addEventListener("click",event=>{
 
 // Backup and restore.
 function downloadJson(name,value){const blob=new Blob([JSON.stringify(value,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);}
-$("export-all-data")?.addEventListener("click",()=>{downloadJson(`healthy-eating-companion-alpha-0-6-6-backup-${window.HECDate?.todayISO?.()||"today"}.json`,{format:"HEC-BACKUP-1",version:APP.version,exportedAt:new Date().toISOString(),profile:read(MAIN_KEY,{}),functional:read(EXT_KEY,{})});track("data:backup");});
+$("export-all-data")?.addEventListener("click",()=>{downloadJson(`healthy-eating-companion-alpha-0-6-7-backup-${window.HECDate?.todayISO?.()||"today"}.json`,{format:"HEC-BACKUP-1",version:APP.version,exportedAt:new Date().toISOString(),profile:read(MAIN_KEY,{}),functional:read(EXT_KEY,{})});track("data:backup");});
 $("import-all-data")?.addEventListener("change",async event=>{
   const file=event.target.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());if(!payload.profile||!payload.functional)throw new Error("This is not a complete Healthy Eating Companion backup.");if(!confirm("Restore this backup and replace the app data currently stored on this device?"))return;write(MAIN_KEY,payload.profile);write(EXT_KEY,payload.functional);location.reload();}catch(error){alert(`Backup could not be restored: ${error.message}`);}finally{event.target.value="";}
 });
@@ -145,7 +145,7 @@ $("founder-unlock")?.addEventListener("click",async()=>{if(!founderEnabled()){al
 $("founder-feedback-email")?.addEventListener("change",event=>{const admin=read(ADMIN_KEY,{});admin.feedbackEmail=event.target.value.trim();write(ADMIN_KEY,admin);});
 $("create-invite")?.addEventListener("click",()=>{const admin=read(ADMIN_KEY,{invites:[]});admin.invites||=[];if(admin.invites.length>=10){alert("This founder trial currently allows up to 10 invitation slots.");return;}const code=Math.random().toString(36).slice(2,8).toUpperCase(),name=$("invite-name").value.trim()||`Trial Tester ${admin.invites.length+1}`,contact=$("invite-contact").value.trim(),base=`${location.origin}${location.pathname}`,url=`${base}?invite=${encodeURIComponent(code)}&from=${encodeURIComponent("Mal")}${admin.feedbackEmail?`&feedback=${encodeURIComponent(admin.feedbackEmail)}`:""}`;admin.invites.push({code,name,contact,url,createdAt:new Date().toISOString()});write(ADMIN_KEY,admin);$("invite-name").value="";$("invite-contact").value="";renderFounder();});
 document.addEventListener("click",async event=>{const share=event.target.closest("[data-share-invite]"),copy=event.target.closest("[data-copy-invite]"),remove=event.target.closest("[data-remove-invite]");if(!share&&!copy&&!remove)return;const admin=read(ADMIN_KEY,{invites:[]}),index=Number((share||copy||remove).dataset.shareInvite??(share||copy||remove).dataset.copyInvite??(share||copy||remove).dataset.removeInvite),invite=admin.invites[index];if(!invite)return;if(remove){admin.invites.splice(index,1);write(ADMIN_KEY,admin);renderFounder();return;}if(share&&navigator.share){try{await navigator.share({title:"Healthy Eating Companion Founder Trial",text:`${invite.name}, use this private trial link:`,url:invite.url});return;}catch{}}await navigator.clipboard?.writeText(invite.url);toast("Invitation link copied.");});
-$("export-insights")?.addEventListener("click",()=>downloadJson(`hec-alpha-0-6-6-local-insights.json`,read(ADMIN_KEY,{})));
+$("export-insights")?.addEventListener("click",()=>downloadJson(`hec-alpha-0-6-7-local-insights.json`,read(ADMIN_KEY,{})));
 
 // Data deletion / deregistration.
 async function clearInstalledData(includeFounder=true){localStorage.removeItem(MAIN_KEY);localStorage.removeItem(EXT_KEY);["healthyEatingAlpha05","healthyEatingAlpha04","healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"].forEach(k=>localStorage.removeItem(k));if(includeFounder)localStorage.removeItem(ADMIN_KEY);if("caches" in window){for(const key of await caches.keys())await caches.delete(key);}if(navigator.serviceWorker){for(const reg of await navigator.serviceWorker.getRegistrations())await reg.unregister();}}

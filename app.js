@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.7",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.8",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -744,7 +744,7 @@ function calculateRecommendationSet({
     energyKj = Math.round((targetCal * 4.184) / 100) * 100;
   }
 
-  // Alpha 0.6.7: keep the displayed macro targets inside a practical whole-day balance.
+  // Alpha 0.6.8: keep the displayed macro targets inside a practical whole-day balance.
   // Weight-loss plans use a moderately higher protein share without allowing protein to consume nearly half of total energy.
   const targetCalories = energyKj ? energyKj / 4.184 : null;
   const proteinShare = goal === "lose" ? 0.25 : 0.20;
@@ -1222,7 +1222,12 @@ function renderWeightCheckin(){
   renderWeightHistoryOnly();
   updateCompanionUI();
 }
+let lastSavedCheckinSignature = "";
+function checkinSignature(){ return [$("checkin-date")?.value||"", Number($("checkin-weight")?.value||0), Number($("checkin-goal")?.value||0), $("checkin-note")?.value.trim()||""].join("|"); }
+["checkin-date","checkin-weight","checkin-goal","checkin-note"].forEach(id=>$(id)?.addEventListener("input",()=>{ if($("save-checkin")){ $("save-checkin").disabled=false; $("save-checkin").textContent="Save Check-In And Review Plan"; } }));
 $("save-checkin").addEventListener("click", () => {
+  const currentSignature=checkinSignature();
+  if(currentSignature===lastSavedCheckinSignature){ $("checkin-result").innerHTML="<strong>Already Saved</strong><p>No changes to save.</p>"; $("checkin-result").classList.remove("hidden"); return; }
   const date = $("checkin-date").value || todayISO();
   const weight = Number($("checkin-weight").value);
   const goal = Number($("checkin-goal").value);
@@ -1263,10 +1268,12 @@ $("save-checkin").addEventListener("click", () => {
     message = "Check-in saved. The change was less than 1 kg, so your recommendations stayed steady to avoid reacting to a small fluctuation.";
   }
   save();
+  lastSavedCheckinSignature=currentSignature;
+  $("save-checkin").textContent="Saved ✓"; $("save-checkin").disabled=true;
   $("checkin-result").innerHTML = `<strong>Saved</strong><p>${escapeHtml(message)} Current daily energy: ${escapeHtml(energyDisplay(data.recommendations.energyKj))}.</p>`;
   $("checkin-result").classList.remove("hidden");
   renderWeightHistoryOnly();
-  if(data.companion.enabled) speakText(message);
+  if(data.companion.enabled) speakText(meaningfulCurrentWeightChange||goalChanged ? message : "Weight and date saved.");
 });
 function renderWeightHistoryOnly(){
   const history=[...(data.weightHistory||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")));

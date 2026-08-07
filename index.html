@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.7</title>
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.8</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.7</div>
+      <div class="badge">Founder Trial · Alpha 0.6.8</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.7 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.8 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,7 +120,7 @@
           <div class="section-heading"><div><h3>Meet the Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.7 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
+          <p class="fine">The Alpha 0.6.8 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
@@ -163,7 +163,7 @@
         <input id="personal-email" type="hidden">
         <button id="preview-user-name" class="secondary">🔊 Preview my preferred name</button>
         <p class="fine">Health details needed for the recommendation are asked on the next screen, with an explanation of why they are used.</p>
-        <details class="optional-profile-details"><summary>Location &amp; Time Zone (Optional)</summary><p class="fine">These settings help the app show the correct local day, date and time. Daylight saving is handled automatically by the selected time zone.</p><div class="form-grid"><label>Country<select id="profile-country"><option>Australia</option><option>New Zealand</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option></select></label><label>State, Territory or Province<input id="profile-region" placeholder="For example, Queensland"></label><label>Postcode or ZIP Code<input id="profile-postcode" inputmode="text"></label><label>Home Time Zone<input id="home-timezone" placeholder="Australia/Brisbane"><small class="field-help" id="detected-timezone"></small></label><label class="full">When My Device Time Zone Changes<select id="timezone-behaviour"><option value="ask">Ask Me Before Changing</option><option value="device">Automatically Follow My Device</option><option value="home">Always Use My Home Time Zone</option></select></label></div></details>
+        <details class="optional-profile-details"><summary>Location &amp; Time Zone (Optional)</summary><p class="fine">These settings help the app show the correct local day, date and time. Daylight saving is handled automatically by the selected time zone.</p><div class="form-grid"><label>Country<select id="profile-country"><option>Australia</option><option>New Zealand</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option></select></label><label><span id="profile-region-label">State Or Territory</span><select id="profile-region"><option value="">Choose A State Or Territory</option><option>Australian Capital Territory</option><option>New South Wales</option><option>Northern Territory</option><option>Queensland</option><option>South Australia</option><option>Tasmania</option><option>Victoria</option><option>Western Australia</option></select></label><label>Postcode or ZIP Code<input id="profile-postcode" inputmode="text"></label><label>Home Time Zone<input id="home-timezone" placeholder="Australia/Brisbane"><small class="field-help" id="detected-timezone"></small></label><label class="full">When My Device Time Zone Changes<select id="timezone-behaviour"><option value="ask">Ask Me Before Changing</option><option value="device">Automatically Follow My Device</option><option value="home">Always Use My Home Time Zone</option></select></label></div></details>
 
         <div id="founder-contact-fields" class="hidden" aria-hidden="true">
           <select id="country"><option value="Australia">Australia</option><option value="New Zealand">New Zealand</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Canada">Canada</option><option value="Other">Other</option></select>
@@ -197,7 +197,7 @@
           <label>Preferred energy unit<select id="energy-unit"><option value="kJ">Kilojoules (kJ)</option><option value="Cal">Calories (Cal)</option></select><small class="field-help">You can change this later.</small></label>
         </div>
         <hr>
-        <label>Sex used for energy calculation *<select id="calculation-sex"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="manual">Prefer not to say — set energy manually</option></select></label>
+        <label>Sex Used For Energy Calculation *<select id="calculation-sex"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="manual">Prefer not to say — set energy manually</option></select></label>
 
         <fieldset>
           <legend>Height *</legend>
@@ -214,7 +214,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Your goal *</legend>
+          <legend>Your Goal *</legend>
           <div class="choice-grid three">
             <label><input type="radio" name="goal" value="lose"> Lose weight</label>
             <label><input type="radio" name="goal" value="maintain"> Maintain weight</label>
@@ -225,7 +225,7 @@
             <p class="fine">Healthy Eating Companion will calculate and show its recommendation first. You will choose your own goal weight on the next screen.</p>
           </div>
           <div id="loss-options" class="conditional hidden">
-            <h4>Preferred rate of weight loss</h4>
+            <h4>Preferred Rate Of Weight Loss</h4>
             <div class="choice-grid three">
               <label class="selection-card"><input type="radio" name="loss-rate" value="slow"><span><strong>Slow &amp; steady</strong><small>A smaller initial reduction.</small></span></label>
               <label class="selection-card recommended-choice"><input type="radio" name="loss-rate" value="recommended" checked><span><strong>Recommended</strong><small>A balanced starting rate.</small></span></label>
@@ -235,7 +235,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Fasting interest</legend>
+          <legend>Fasting Interest</legend>
           <p class="fine">Fasting days and energy targets may change from week to week. This setting records only whether you would like fasting tools available.</p>
           <div class="choice-grid">
             <label><input type="radio" name="fasting" value="none" checked> I do not want fasting tools</label>
@@ -300,7 +300,7 @@
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>Calculated figures are shown as clean whole numbers. Weight measurements may retain one decimal place.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div id="recommendation-grid" class="recommendation-grid"></div>
       <div class="card calculation-help-card"><button id="calculation-help-toggle" class="round-help" type="button" aria-expanded="false" aria-controls="calculation-breakdown">?</button><strong>How Was My Energy Target Calculated?</strong><p class="fine">Tap the question mark to see the figures used to calculate your daily target.</p><div id="calculation-breakdown" class="calculation-breakdown hidden"></div></div>
-      <div class="card"><h3>Detailed Nutrition Goals</h3><div id="micronutrient-grid" class="recommendation-grid"></div><p class="fine">These general adult estimates are for trial display only. Medical restrictions and clinician-set targets always take priority.</p></div>
+      <details class="card recommendation-details"><summary><span><strong>Detailed Nutrition Goals</strong><small>View protein, carbohydrate, fat, fibre and other finer targets.</small></span><span class="details-action">Show Details</span></summary><div id="micronutrient-grid" class="recommendation-grid"></div><p class="fine">These general adult estimates are for trial display only. Medical restrictions and clinician-set targets always take priority.</p></details>
 
       <div class="card">
         <h3>Your Weight Goal</h3>
@@ -329,7 +329,7 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header compact-home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.7</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.8</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
     <main class="home-main home-main-centred">
       <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
@@ -493,7 +493,7 @@
     <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Voice or Text Log</h2><p>Review what was understood before adding anything.</p></div><button class="help-button" data-help="quick-log">Help With This Screen</button></header>
     <main class="page narrow">
       <div class="card"><label>Say or Type Your Food<textarea id="voice-transcript" rows="4" placeholder="Example: Add two Weet-Bix with 200 millilitres of light milk for breakfast"></textarea></label><div class="quick-action-row"><button id="start-voice-log" class="primary">🎙️ Start Listening</button><button id="stop-voice-log" class="secondary">Stop</button><button id="parse-voice-log" class="secondary">Review Request</button></div><p id="voice-status" class="fine">Voice recognition depends on your browser and device. You can always edit the text before review.</p></div>
-      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal<select id="voice-meal"><option>Breakfast</option><option>Morning Tea</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
+      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal *<select id="voice-meal"><option value="">Choose A Meal</option><option>Breakfast</option><option>Morning Tea</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
     </main>
   </section>
 
@@ -593,14 +593,20 @@
       </div>
 
       <div id="daily-progress-explanation" class="card compact-summary-card"></div>
-      <section class="progress-section meal-progress-section"><div class="section-heading compact-heading"><div><h3 id="daily-meals-heading">Today’s Meals</h3><p>Plan first. Confirm meals later. Tap a meal only when you need to review or change it.</p></div></div><div id="daily-meal-status" class="daily-meal-status"></div></section>
-      <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Nutrition Progress</h3><p>Solid bars show eaten amounts; lighter bars show food and drinks still planned.</p></div></div><div id="daily-progress-grid" class="progress-grid"></div></section>
+      <section class="progress-section meal-progress-section"><div class="section-heading compact-heading"><div><h3 id="daily-meals-heading">Today’s Meals</h3><p>Entries count immediately. Tap a meal when you need to review, change or delete something.</p></div></div><div id="daily-meal-status" class="daily-meal-status"></div></section>
+      <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Nutrition Progress</h3><p>Bars show the foods and drinks entered for this day.</p></div></div><div id="daily-progress-grid" class="progress-grid"></div></section>
       <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Five Food Groups</h3><p>Personalised Australian daily serve targets.</p></div></div><div id="daily-food-group-progress" class="food-group-progress-grid"></div><div id="weekly-food-group-progress" class="weekly-food-groups"></div></section>
-      <section class="compact-update-strip" aria-label="Quick hydration and steps update">
-        <label>Additional Drinks Not Already Logged (mL)<input id="today-water" type="number" min="0" step="50" inputmode="numeric"></label>
+      <section class="compact-update-strip drink-update-strip" aria-label="Quick hydration and steps update">
+        <div class="section-heading compact-heading"><div><h3>Add A Drink</h3><p>Choose what you drank so fluids and nutrition are counted correctly.</p></div></div>
+        <div class="form-grid">
+          <label>Drink Type<select id="quick-drink-type"><option value="">Choose A Drink</option><option value="water">Water</option><option value="tea">Tea Or Coffee, No Milk Or Sugar</option><option value="light-milk-au">Light Milk</option><option value="juice">Fruit Juice</option><option value="soft-drink">Regular Soft Drink</option><option value="diet-soft-drink">Diet Or Zero Soft Drink</option><option value="cordial">Cordial</option><option value="smoothie">Smoothie</option><option value="soup">Soup Or Broth</option><option value="other">Other Drink</option></select></label>
+          <label>Amount (mL)<input id="quick-drink-amount" type="number" min="1" step="50" inputmode="numeric" value="250"></label>
+          <label id="quick-drink-other-wrap" class="full hidden">Drink Name<input id="quick-drink-other" placeholder="For example, iced coffee"></label>
+        </div>
+        <button id="add-quick-drink" class="primary" type="button">Add Drink</button>
         <label>Daily Fluid Target (mL)<input id="today-fluid-target" type="number" min="250" step="50" inputmode="numeric"></label>
         <label>Steps<input id="today-steps" type="number" min="0" step="100" inputmode="numeric"></label>
-        <small>These fields save automatically. Drinks entered in the Diary are counted automatically.</small>
+        <small>Drinks with energy or nutrients are also added to the Diary. Water and zero-energy drinks update hydration without double counting.</small>
       </section>
       <button class="floating-mic" data-open-feature="quick-log" aria-label="Voice or text food log">🎙️</button>
     </main>
@@ -690,7 +696,7 @@
 
   <section id="send-feedback" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Send Feedback</h2><p>Tell us what works and what needs improvement.</p></div></header><main class="page narrow"><div class="card"><div class="form-grid"><label>Feedback Type<select id="feedback-type"><option>Something I Like</option><option>Something I Dislike</option><option>Something Seems Inaccurate</option><option>I Found a Bug</option><option>Suggest a New Feature</option><option>Other Feedback</option></select></label><label>Screen or Feature<input id="feedback-screen" placeholder="Optional"></label><label class="full">Your Feedback<textarea id="feedback-message" rows="7" required></textarea></label><label class="toggle full"><input id="feedback-response-ok" type="checkbox"><span>You may contact me about this feedback.</span></label></div><button id="submit-feedback" class="primary wide">Prepare Feedback</button><p class="fine">App version and basic device information are included. Diary text, food entries, weight, photos and address details are not attached automatically.</p><div id="feedback-status" class="status-box hidden"></div></div></main></section>
 
-  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.7 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing and Leaving</h3><p><strong>Reset App for Testing</strong> removes this device’s profile and trial data so setup can be tested again.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
+  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.8 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing and Leaving</h3><p><strong>Reset App for Testing</strong> removes this device’s profile and trial data so setup can be tested again.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
 
   <section id="founder-tools" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Founder Trial Tools</h2><p>Local founder-only testing controls.</p></div></header><main class="page"><div id="founder-lock-card" class="card"><h3>Developer Access</h3><p>Set or enter a six-digit local PIN. This protects the tools on this device only.</p><label>Founder PIN<input id="founder-pin" type="password" inputmode="numeric" maxlength="6"></label><button id="founder-unlock" class="primary">Unlock</button><small id="founder-lock-status" class="field-error"></small></div><div id="founder-dashboard" class="hidden"><div class="card"><h3>Invite Trial Testers</h3><p>Create up to 10 invitation links for friends and family.</p><div class="form-grid"><label>Feedback Email<input id="founder-feedback-email" type="email" placeholder="Address that receives tester feedback"></label><label>Name<input id="invite-name"></label><label>Email or Note<input id="invite-contact"></label></div><button id="create-invite" class="primary">Create Invitation</button><div id="invite-list"></div><p class="fine">In this static trial, invitation records and the 10-person limit are stored on this device. Secure cross-device enforcement will require a protected server in a future build.</p></div><div class="card"><h3>Developer Insights</h3><div id="developer-insights"></div><button id="export-insights" class="secondary">Export Local Insights</button><p class="fine">These figures cover this browser only until a privacy-protected analytics service is connected.</p></div><div class="card"><h3>Feedback Received on This Device</h3><div id="founder-feedback-list"></div></div></div></main></section>
 
@@ -730,5 +736,6 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js" defer crossorigin="anonymous"></script>
 <script src="alpha06.js"></script>
 <script src="alpha064.js"></script>
+<script src="alpha068.js"></script>
 </body>
 </html>

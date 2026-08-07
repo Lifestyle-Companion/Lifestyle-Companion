@@ -1,0 +1,14 @@
+ALPHA 0.6.8 TESTING CHECKLIST
+
+1. Reset App for Testing and complete onboarding from scratch.
+2. Check Australian state/territory selector and time-zone behaviour.
+3. Tap several companions and confirm details open immediately.
+4. Confirm Detailed Nutrition Goals starts collapsed and Daily Fluids remains visible.
+5. Search familiar foods including carrot cake, bacon, cheese, ham, sausages, pasta, juice and cappuccino.
+6. Add foods to meals and verify they count immediately without Planned/Eaten confirmation.
+7. Edit quantities, delete one food and clear an entire meal.
+8. Test mobile search while keyboard is open.
+9. Voice-log “carrot cake”; verify the full phrase and choose a required meal.
+10. Add water, milk, juice and a soft drink through Add A Drink.
+11. Add and edit weight history; test unchanged repeat Save.
+12. Check the Weight Trend chart and readable dates.

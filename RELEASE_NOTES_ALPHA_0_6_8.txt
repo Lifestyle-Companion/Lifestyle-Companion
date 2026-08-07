@@ -1,0 +1,20 @@
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.8
+
+Focus: stabilise onboarding, food entry, Diary use, hydration, voice logging and weight history before barcode and nutrition-panel scanning.
+
+Key changes:
+- Fresh-start testing remains available from Settings > Data, Backup & Privacy > Reset App for Testing.
+- Australian state/territory is selected from a list after choosing Australia.
+- Companion cards open an immediate detail preview instead of requiring a long scroll.
+- Stronger heading hierarchy and consistent Title Case for major headings.
+- Detailed Nutrition Goals are collapsed by default; Daily Fluids remains visible.
+- Ordinary Diary entries count immediately. Planned/Eaten confirmation is removed from normal use.
+- Clear meal and Delete Food controls are available.
+- Food search is adjusted for the mobile keyboard.
+- Voice logging requires a meal selection when no meal context is known.
+- Quick Add Drink asks what was consumed and sends nutrient drinks to the Diary.
+- Weight check-ins prevent unchanged duplicate saves and use brief spoken confirmation.
+- Weight Trend uses readable Australian dates and tighter scaling.
+- Familiar Australian generic foods and meals were added to improve testing coverage.
+
+Barcode and nutrition-panel capture remain the next major development stage after this stabilisation round.

@@ -1,68 +1,63 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.5
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.6
 
 PURPOSE
-Alpha 0.6.5 refines the Alpha 0.6.3 family-testing feedback supplied by Mal, Tracey, Shelly and Corey. It is a self-contained static web-app trial for publishing to the existing Healthy Eating Companion GitHub Pages address.
+Alpha 0.6.6 is the next small-step family-testing build following Alpha 0.6.5. It focuses on making food search and Diary testing substantially more useful, repairing Normal/Fasting Day energy handling, improving companion meal planning, and refining Shopping List behaviour.
 
 IMPORTANT — KEEPING EXISTING TEST DATA
-Alpha 0.6.5 deliberately keeps the same browser-storage keys used by Alpha 0.6.3:
+Alpha 0.6.6 deliberately keeps the same browser-storage keys used by Alpha 0.6.5 and earlier Alpha 0.6 builds:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-When Alpha 0.6.5 replaces Alpha 0.6.4 at the SAME GitHub Pages website address, in the SAME browser and on the SAME device, the existing profile, diary, plans, recipes, Shopping List and other trial records should migrate forward rather than being intentionally deleted.
+When Alpha 0.6.6 replaces Alpha 0.6.5 at the SAME GitHub Pages website address, in the SAME browser and on the SAME device, existing profiles, diary records, plans, recipes, favourites, weight history, Shopping Lists and other trial records are designed to migrate forward rather than being intentionally deleted.
 
-Browser data can still be lost if a tester clears Safari/website data, uses Private Browsing, changes to a different GitHub Pages address, changes browser/device, or removes the site’s stored data. Use Settings > Data, Backup & Privacy > Download Backup before major testing changes.
+Browser data can still be lost if a tester clears Safari/website data, uses Private Browsing, changes to a different site address, changes browser/device, or removes the site's stored data. Use Settings > Data, Backup & Privacy > Download Backup before publishing a new build.
 
-MAIN ALPHA 0.6.5 CHANGES
-- Local Australian day/date handling replaces UTC-derived “today”.
-- Optional country, state/province, postcode and IANA time-zone fields, with automatic daylight-saving rules and travel time-zone choices.
-- Surname added to profile setup; additional contact/address fields remain reserved but hidden.
-- Home summary uses Current Weight, Goal Weight and Daily Energy Target, and shows the last weight-entry date.
-- Companion message card supports Tips, Quotes, Jokes, Did You Know?, Encouragement and Mix Them Up; tap for another item.
-- Energy-calculation details are collapsed behind a question-mark help control.
-- Goal-type changes no longer validate against an incompatible old goal weight; maintenance weight retains one decimal place where appropriate.
-- Opening Diary, Daily Progress, Meal Planner or Food Library from Home resets the relevant date/context to Today; dated links retain their requested date.
-- Applicable screens now provide separate Back and Home controls.
-- Daily Progress displays named planned foods with Mark Eaten, Change, Replace, Move and Skip actions.
-- Daily fluid target is editable and defaults to the profile reference (2,600 mL for the adult-male trial example).
-- Food Library tab state is protected from delayed online searches.
-- Saved Foods renamed Favourite Foods; My Foods renamed Foods I Created.
-- Clear context changed to a clearly labelled Cancel Adding action.
-- Floating action changed to Create or Scan and closes when an option, another tab, Back/Home or outside area is selected.
-- Recipe builder now searches ingredients, supports missing/custom or scanned ingredients, uses food-specific measures, calculates total and per-serving nutrition, preserves draft fields, and allows recipes to be starred into Favourite Foods.
-- Additional trial foods and measures support the Bacon, Egg and Cheese Muffin workflow, sausages and steaks.
-- Structured Send Feedback form added.
-- Optional local anonymous feature-use counts and a PIN-protected Founder Trial Tools area added.
-- Founder can generate up to 10 local invitation links.
-- Reset App for Testing and Leave Healthy Eating Companion options added.
-- Complete data backup and restore added.
+MAIN ALPHA 0.6.6 CHANGES
+- Repaired the stale Normal-Day target problem. A Normal Day now uses the profile recommendation unless the user deliberately enables a date-specific custom target.
+- Normal and Fasting targets are kept separate. Switching Day Type updates the displayed target and explanation immediately.
+- Day-energy labels now follow the selected date rather than always saying Today.
+- Exercise-credit wording in Health Profile setup is clearer about whether separately logged exercise should increase the food-energy allowance.
+- Added the local Australian Food Composition Database Release 3 dataset: 1,588 Australian food records with core nutrition values for much broader Diary and recipe testing.
+- Australian guided foods and exact Australian matches rank ahead of international online results.
+- Food Library searches start blank for each new add/replacement flow, while Back within the same active task can preserve the search.
+- Food Library now offers a contextual Suggest Breakfast / Suggest Lunch / Suggest Dinner etc action when adding to a particular meal.
+- Meal Planner opens new planning sessions with meal checkboxes cleared.
+- Accepted planning controls disappear once the selected planning task is complete; View Day Plan, Undo and Plan More Meals remain where appropriate.
+- Meal planning now accounts for everything already Eaten or Planned before calculating the remaining allowance.
+- On Normal Days, the planner keeps a sensible reserve for unticked meal occasions.
+- On Fasting Days, unticked meals are treated as intentionally skipped; the fasting allowance is divided only across selected meal occasions.
+- Added smaller fasting-friendly meal suggestions and safeguards so the companion does not force another meal when too little energy remains.
+- Planner scoring now considers earlier companion suggestions in the same planning session so whole-day food-group/nutrient balance improves rather than every meal chasing the same gap.
+- Revised displayed macronutrient targets to avoid the previously excessive protein share.
+- Fibre is treated as a minimum target rather than a problem when exceeded.
+- Total Sugars is informational. Free Sugars is shown separately when the underlying food data supports it.
+- Shopping List Add/Speak controls stay available via a sticky quick bar.
+- Shopping voice review uses an Australian grocery vocabulary to improve interpretation of common terms such as SAO Biscuits and Shredded Cheese after speech recognition.
+- Shopping categories were expanded and obvious items are reclassified automatically.
+- Added Select All / Deselect All and Clear Entire List controls.
+- Shared and printable Shopping Lists are grouped under category headings rather than repeating Other on every line.
 
-FOUNDER TRIAL TOOLS
-The founder button is deliberately hidden from ordinary testers. After publishing, Mal can enable it on his own installation by opening the normal app address once with:
-?founder=1
+AUSTRALIAN FOOD DATA
+Alpha 0.6.6 includes a compact local dataset derived from Australian Food Composition Database Release 3, published by Food Standards Australia New Zealand (FSANZ). It contains 1,588 foods. See AFCD_DATA_NOTICE_ALPHA_0_6_6.txt for attribution, licence information and important data limitations.
 
-Example only:
-https://YOUR-GITHUB-PAGES-ADDRESS/index.html?founder=1
-
-The app then stores Founder mode on that browser. The first visit to Founder Trial Tools asks Mal to set a six-digit local PIN.
+The local AFCD records are primarily reference values per 100 g. Healthy Eating Companion's own guided records continue to provide friendlier measures such as rashers, slices and item sizes where available. Broader food-specific household measures are a future refinement.
 
 CURRENT STATIC-TRIAL LIMITATIONS
-- Invitation slots and invitation records are held on Mal’s browser only. They are not centrally enforced across devices.
-- Anonymous usage counts are held on each tester’s device. They are not yet automatically combined into one founder dashboard.
-- Feedback is stored locally and then handed to Share/Copy or the tester’s email app. It is not sent to a central server automatically.
-- “Leave Healthy Eating Companion” removes the local registration/profile and app data from that browser. There is no central account server to deregister from in this static trial.
-- Secure central invitations, analytics, feedback collection and true account deletion require a protected backend service in a future development phase.
-- Online food data, barcode services and OCR require internet access and real-device testing.
+- AFCD data greatly improves generic Australian food coverage, but packaged brands still depend on online databases/barcode sources and current product labels.
+- Food-group serve estimates for imported AFCD foods remain provisional in this founder build; detailed Australian Dietary Guidelines mapping can be strengthened later.
+- Voice recognition itself is supplied by the browser/device. Alpha 0.6.6 improves post-recognition interpretation but cannot control what Apple's or another device's speech service initially hears.
+- Invitations, local analytics and feedback collection remain static-browser prototypes until a protected backend is introduced.
+- Camera scanning, barcode services, OCR and speech input still require real-device/HTTPS testing.
 
 HOW TO PUBLISH
-1. Download and unzip the Alpha 0.6.5 package.
-2. Replace the files in the existing GitHub Pages repository with the complete contents of the Alpha 0.6.5 folder.
-3. Keep the existing repository/site address unchanged to preserve browser data.
+1. Download and unzip the Alpha 0.6.6 package.
+2. In the existing GitHub Pages repository, replace the Alpha 0.6.5 files with the complete Alpha 0.6.6 contents.
+3. Keep the existing repository/site address unchanged.
 4. Wait for GitHub Pages to finish publishing.
-5. Open the normal site address and confirm Alpha 0.6.5 appears.
+5. Open the normal site address and confirm Alpha 0.6.6 appears.
 6. Do not clear Safari or website data during the update.
 
 HOW TO RUN LOCALLY
-Extract the folder and open index.html, or serve the complete folder from an HTTPS-capable web server. Camera access normally requires HTTPS.
+Serve the complete folder from a web server. HTTPS is recommended and is normally required for camera and some speech/scanning features.
 
-
-See RELEASE_NOTES_ALPHA_0_6_5.txt and TESTING_CHECKLIST_ALPHA_0_6_5.txt for this build.
+See RELEASE_NOTES_ALPHA_0_6_6.txt and TESTING_CHECKLIST_ALPHA_0_6_6.txt.

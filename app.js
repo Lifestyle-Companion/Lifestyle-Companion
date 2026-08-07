@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.5",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.6",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -744,9 +744,14 @@ function calculateRecommendationSet({
     energyKj = Math.round((targetCal * 4.184) / 100) * 100;
   }
 
-  const protein = roundWhole((goal === "lose" ? 1.6 : 1.4) * weightKg);
-  const fat = energyKj ? roundWhole(((energyKj / 4.184) * 0.28) / 9) : roundWhole(0.8 * weightKg);
-  const carbs = energyKj ? Math.max(0, roundWhole(((energyKj / 4.184) - protein * 4 - fat * 9) / 4)) : 0;
+  // Alpha 0.6.6: keep the displayed macro targets inside a practical whole-day balance.
+  // Weight-loss plans use a moderately higher protein share without allowing protein to consume nearly half of total energy.
+  const targetCalories = energyKj ? energyKj / 4.184 : null;
+  const proteinShare = goal === "lose" ? 0.25 : 0.20;
+  const fatShare = 0.30;
+  const protein = targetCalories ? roundWhole((targetCalories * proteinShare) / 4) : roundWhole(1.0 * weightKg);
+  const fat = targetCalories ? roundWhole((targetCalories * fatShare) / 9) : roundWhole(0.8 * weightKg);
+  const carbs = targetCalories ? Math.max(0, roundWhole((targetCalories - protein * 4 - fat * 9) / 4)) : 0;
   const chosenGoal = selectedGoalWeight || recommendedGoalWeight;
   const activityOptions = {1.2:"Mostly seated",1.375:"Lightly active",1.55:"Moderately active",1.725:"Very active",1.9:"Heavy physical work"};
 

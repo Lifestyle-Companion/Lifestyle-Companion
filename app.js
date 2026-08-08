@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.8",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.9",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -99,7 +99,7 @@ function toast(message){
   element.textContent = message;
   element.classList.add("show");
   clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => element.classList.remove("show"), 5000);
+  window.toastTimer = setTimeout(() => element.classList.remove("show"), 2000);
 }
 function friendlyError(id, text, spoken, inputId){
   $(id).textContent = text;
@@ -322,6 +322,31 @@ const COUNTRY_CONFIG = {
     regions:[], postcode:null
   }
 };
+const PROFILE_REGION_OPTIONS = {
+  "Australia":[["Australian Capital Territory","ACT"],["New South Wales","NSW"],["Northern Territory","NT"],["Queensland","QLD"],["South Australia","SA"],["Tasmania","TAS"],["Victoria","VIC"],["Western Australia","WA"]],
+  "New Zealand":[["Auckland","Auckland"],["Bay of Plenty","Bay of Plenty"],["Canterbury","Canterbury"],["Gisborne","Gisborne"],["Hawke's Bay","Hawke's Bay"],["Manawatū-Whanganui","Manawatū-Whanganui"],["Marlborough","Marlborough"],["Nelson","Nelson"],["Northland","Northland"],["Otago","Otago"],["Southland","Southland"],["Taranaki","Taranaki"],["Tasman","Tasman"],["Waikato","Waikato"],["Wellington","Wellington"],["West Coast","West Coast"]],
+  "United States": COUNTRY_CONFIG["United States"].regions.map(x=>[x,x]),
+  "Canada": COUNTRY_CONFIG.Canada.regions.map(x=>[x,x]),
+  "United Kingdom": [["England","England"],["Northern Ireland","Northern Ireland"],["Scotland","Scotland"],["Wales","Wales"]],
+  "Other": []
+};
+const AU_TIMEZONE_BY_REGION={ACT:"Australia/Sydney",NSW:"Australia/Sydney",NT:"Australia/Darwin",QLD:"Australia/Brisbane",SA:"Australia/Adelaide",TAS:"Australia/Hobart",VIC:"Australia/Melbourne",WA:"Australia/Perth"};
+function profileRegionCode(){return $("profile-region")?.value||"";}
+function updateProfileRegionOptions(preserve=true){
+  const country=$("profile-country")?.value||"Australia",select=$("profile-region");if(!select)return;
+  const prior=preserve?select.value:"",opts=PROFILE_REGION_OPTIONS[country]||[];
+  const label=$("profile-region-label");if(label){const text=country==="Australia"?"State Or Territory":country==="United States"?"State":country==="Canada"?"Province Or Territory":country==="New Zealand"?"Region":country==="United Kingdom"?"Country": "State, Territory Or Province";label.childNodes[0].nodeValue=text;}
+  select.innerHTML=`<option value="">Select</option>`+opts.map(([name,value])=>`<option value="${escapeHtml(value)}">${escapeHtml(name)}</option>`).join("");
+  if(prior&&opts.some(([,value])=>value===prior))select.value=prior;
+  if(country==="Australia"&&select.value&&AU_TIMEZONE_BY_REGION[select.value]&&$("home-timezone"))$("home-timezone").value=AU_TIMEZONE_BY_REGION[select.value];
+}
+function australianPostcodeMatchesRegion(postcode,region){
+  if(!postcode||!region)return true;const p=Number(String(postcode).replace(/\D/g,""));if(!Number.isFinite(p))return false;
+  const inRange=(a,b)=>p>=a&&p<=b;
+  return ({ACT:inRange(200,299)||inRange(2600,2618)||inRange(2900,2920),NSW:inRange(1000,2599)||inRange(2619,2899)||inRange(2921,2999),NT:inRange(800,999),QLD:inRange(4000,4999)||inRange(9000,9999),SA:inRange(5000,5999),TAS:inRange(7000,7999),VIC:inRange(3000,3999)||inRange(8000,8999),WA:inRange(6000,6999)})[region] ?? true;
+}
+$("profile-country")?.addEventListener("change",()=>{updateProfileRegionOptions(false);if($("profile-country").value!=="Australia"&&$("home-timezone"))$("home-timezone").value=deviceTimeZone();});
+$("profile-region")?.addEventListener("change",()=>{if($("profile-country")?.value==="Australia"&&AU_TIMEZONE_BY_REGION[profileRegionCode()]&&$("home-timezone"))$("home-timezone").value=AU_TIMEZONE_BY_REGION[profileRegionCode()];});
 function suggestedCountryForLanguage(language){
   return {"en-AU":"Australia","en-NZ":"New Zealand","en-GB":"United Kingdom","en-US":"United States"}[language] || "Australia";
 }
@@ -524,11 +549,28 @@ function applyCompanionDefinition(definition){
   data.companion.characterName = `${definition.name} the ${definition.species}`;
   data.companion.personality = definition.personality;
 }
+let companionPreviewCandidateId = null;
+function companionPreviewMarkup(companion){
+  if(!companion) return "";
+  return `<div class="companion-preview-portrait"><img src="assets/companions/${escapeHtml(companion.id)}.svg" alt="${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}"></div><div><span class="source-chip verified">Australian Companion</span><h3 id="companion-preview-modal-title">${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}</h3><p class="companion-tagline">${escapeHtml(companion.tagline)}</p><p><strong>Speaking Style:</strong> ${escapeHtml(companion.speakingStyle)}</p><p><strong>Especially Helpful With:</strong> ${companion.strengths.map(escapeHtml).join(" · ")}</p><blockquote>“${escapeHtml(companion.intro)}”</blockquote></div>`;
+}
 function renderCompanionPreview(){
   const companion = selectedCompanionDefinition();
   const panel = $("companion-preview");
-  if(!panel || !companion) return;
-  panel.innerHTML = `<div class="companion-preview-portrait"><img src="assets/companions/${escapeHtml(companion.id)}.svg" alt="${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}"></div><div><span class="source-chip verified">Australian Companion</span><h3>${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}</h3><p class="companion-tagline">${escapeHtml(companion.tagline)}</p><p><strong>Speaking style:</strong> ${escapeHtml(companion.speakingStyle)}</p><p><strong>Especially helpful with:</strong> ${companion.strengths.map(escapeHtml).join(" · ")}</p><blockquote>“${escapeHtml(companion.intro)}”</blockquote></div>`;
+  if(panel && companion) panel.innerHTML = companionPreviewMarkup(companion);
+}
+function closeCompanionPreviewModal(){
+  $("companion-preview-modal")?.classList.add("hidden");
+  companionPreviewCandidateId=null;
+}
+function openCompanionPreviewModal(companion){
+  if(!companion)return;
+  companionPreviewCandidateId=companion.id;
+  const body=$("companion-preview-modal-body");
+  if(body)body.innerHTML=companionPreviewMarkup(companion);
+  const choose=$("companion-preview-modal-choose");
+  if(choose)choose.textContent=`Choose ${companion.name}`;
+  $("companion-preview-modal")?.classList.remove("hidden");
 }
 function renderCharacters(){
   const grid = $("character-grid");
@@ -538,17 +580,19 @@ function renderCharacters(){
   ).join("");
   grid.querySelectorAll("[data-companion-id]").forEach(button => button.addEventListener("click", () => {
     const definition = COMPANIONS.find(item => item.id === button.dataset.companionId);
-    applyCompanionDefinition(definition);
-    grid.querySelectorAll("[data-companion-id]").forEach(item => {
-      const chosen = item === button;
-      item.classList.toggle("selected", chosen);
-      item.setAttribute("aria-pressed", String(chosen));
-    });
-    renderCompanionPreview();
-    updateCompanionUI();
+    openCompanionPreviewModal(definition);
   }));
   renderCompanionPreview();
 }
+$("companion-preview-modal-back")?.addEventListener("click",closeCompanionPreviewModal);
+$("companion-preview-modal-close")?.addEventListener("click",closeCompanionPreviewModal);
+$("companion-preview-modal")?.addEventListener("click",event=>{if(event.target===$("companion-preview-modal"))closeCompanionPreviewModal();});
+$("companion-preview-modal-choose")?.addEventListener("click",()=>{
+  const definition=COMPANIONS.find(item=>item.id===companionPreviewCandidateId);if(!definition)return;
+  applyCompanionDefinition(definition);
+  $("character-grid")?.querySelectorAll("[data-companion-id]").forEach(item=>{const chosen=item.dataset.companionId===definition.id;item.classList.toggle("selected",chosen);item.setAttribute("aria-pressed",String(chosen));});
+  renderCompanionPreview();updateCompanionUI();save();closeCompanionPreviewModal();
+});
 function syncCompanionForm(){
   data.companion.enabled = selected("companion-choice") !== "no";
   applyCompanionDefinition(selectedCompanionDefinition());
@@ -616,6 +660,9 @@ $("personal-next").addEventListener("click", () => {
   if(!givenName){ error = "Please enter your given name."; spoken = "Please enter your given name before we continue."; }
   else if(!validEmail(email)){ error = "Please check your email address."; spoken = "Please check your email address before we continue."; }
   if(error) return friendlyError("personal-error", error, spoken);
+  const profileCountry=$("profile-country")?.value||"Australia",profileRegion=$("profile-region")?.value||"",profilePostcode=$("profile-postcode")?.value.trim()||"";
+  if(profileCountry==="Australia"&&!profileRegion) return friendlyError("personal-error","Please choose your Australian state or territory.","Please choose your state or territory.");
+  if(profileCountry==="Australia"&&profilePostcode&&!australianPostcodeMatchesRegion(profilePostcode,profileRegion)) return friendlyError("personal-error","That postcode does not appear to match the selected state or territory. Please check both entries.","Please check that your postcode matches the selected state or territory.");
 
   data.personal = {
     ...data.personal,
@@ -625,7 +672,7 @@ $("personal-next").addEventListener("click", () => {
     preferredName,
     preferredPronunciation: $("preferred-pronunciation").value.trim(),
     country: $("profile-country")?.value || data.personal.country || "Australia",
-    region: $("profile-region")?.value.trim() || "",
+    region: $("profile-region")?.value || "",
     postcode: $("profile-postcode")?.value.trim() || "",
     homeTimeZone: $("home-timezone")?.value.trim() || deviceTimeZone(),
     activeTimeZone: $("home-timezone")?.value.trim() || data.personal.activeTimeZone || deviceTimeZone(),
@@ -704,7 +751,7 @@ function goalLabel(value){
   return value === "lose" ? "Lose weight" : value === "maintain" ? "Maintain weight" : value === "gain" ? "Gain weight" : "Not set";
 }
 function lossRateLabel(value){
-  return value === "slow" ? "Slow & steady" : value === "fast" ? "Fast" : "Recommended";
+  return value === "slow" ? "Slow & Steady" : value === "fast" ? "Fast" : "Recommended";
 }
 function recommendedGoalFor(goal, weightKg, healthyLow, healthyHigh){
   if(goal === "maintain") return roundWeight(weightKg);
@@ -744,7 +791,7 @@ function calculateRecommendationSet({
     energyKj = Math.round((targetCal * 4.184) / 100) * 100;
   }
 
-  // Alpha 0.6.8: keep the displayed macro targets inside a practical whole-day balance.
+  // Alpha 0.6.9: keep the displayed macro targets inside a practical whole-day balance.
   // Weight-loss plans use a moderately higher protein share without allowing protein to consume nearly half of total energy.
   const targetCalories = energyKj ? energyKj / 4.184 : null;
   const proteinShare = goal === "lose" ? 0.25 : 0.20;
@@ -856,13 +903,13 @@ function renderRecommendations(){
   const r = data.recommendations;
   if(!r || !Object.keys(r).length) return;
   const items = [
-    ["BMI planning estimate", formatWeight(r.bmi), "One screening measure only; it does not define your health"],
-    ["Reference weight range", `${r.healthyLow}–${r.healthyHigh} kg`, "General BMI reference, not a compulsory destination"],
-    ["Recommended goal", `${formatWeight(r.recommendedGoalWeight)} kg`, "Guidance, not a compulsory target"],
-    ["Daily energy", energyDisplay(r.energyKj), `Based on ${formatWeight(r.basedOnWeightKg)} kg`],
-    ["Daily protein", `${roundWhole(r.protein)} g`, "Rounded starting estimate"],
-    ["Daily fat", `${roundWhole(r.fat)} g`, "Rounded starting estimate"],
-    ["Daily carbohydrate", r.carbs ? `${roundWhole(r.carbs)} g` : "Set manually", "Remaining energy estimate"]
+    ["BMI Planning Estimate", formatWeight(r.bmi), "One screening measure only; it does not define your health"],
+    ["Reference Weight Range", `${r.healthyLow}–${r.healthyHigh} kg`, "General BMI reference, not a compulsory destination"],
+    ["Recommended Goal", `${formatWeight(r.recommendedGoalWeight)} kg`, "Guidance, not a compulsory target"],
+    ["Daily Energy", energyDisplay(r.energyKj), `Based on ${formatWeight(r.basedOnWeightKg)} kg`],
+    ["Daily Protein", `${roundWhole(r.protein)} g`, "Rounded starting estimate"],
+    ["Daily Fat", `${roundWhole(r.fat)} g`, "Rounded starting estimate"],
+    ["Daily Carbohydrate", r.carbs ? `${roundWhole(r.carbs)} g` : "Set manually", "Remaining energy estimate"]
   ];
   $("recommendation-grid").innerHTML = items.map(item =>
     `<div class="recommendation"><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong><small>${escapeHtml(item[2])}</small></div>`
@@ -884,8 +931,9 @@ function renderRecommendations(){
   if($("micronutrient-grid")){
     const age = ageFromDob(data.personal.dob);
     const hydration = hydrationReference();
-    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Daily fluids", `${hydration.fluidsMl.toLocaleString()} mL`, "Includes water and other logged drinks. Estimated moisture in solid food is shown separately."],["Sodium limit", "2,000 mg"],["Added sugar limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
-    $("micronutrient-grid").innerHTML = micros.map(x=>`<div class="recommendation"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]||"General daily reference"}</small></div>`).join("");
+    const micros = [["Fibre", data.health.sex === "male" ? "30 g" : "25 g"],["Sodium Limit", "2,000 mg"],["Added Sugar Limit", "50 g"],["Calcium", age >= 70 ? "1,300 mg" : "1,000 mg"],["Iron", data.health.sex === "female" && age < 51 ? "18 mg" : "8 mg"],["Potassium", "3,500 mg"],["Magnesium", data.health.sex === "male" ? "420 mg" : "320 mg"],["Vitamin C", data.health.sex === "male" ? "90 mg" : "75 mg"],["Vitamin D", age >= 70 ? "20 µg" : "15 µg"],["Vitamin B12", "2.4 µg"],["Folate", "400 µg"]];
+    $("micronutrient-grid").innerHTML = micros.map(x=>`<div class="recommendation"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]||"General Daily Reference"}</small></div>`).join("");
+    if($("daily-fluid-recommendation"))$("daily-fluid-recommendation").innerHTML=`<div class="recommendation"><span>Daily Fluids</span><strong>${hydration.fluidsMl.toLocaleString()} mL</strong><small>Includes water and other logged drinks. Estimated moisture in solid food is shown separately.</small></div>`;
     data.recommendations.waterMl=hydration.totalMl;
     data.recommendations.fluidsMl=hydration.fluidsMl;
     data.recommendations.hydrationReference=hydration.label;
@@ -1103,9 +1151,11 @@ document.querySelectorAll(".room").forEach(button => button.addEventListener("cl
 }));
 
 function formatSavedLocation(){
-  const p = data.personal || {};
-  const locality = [p.suburb,p.region,p.postcode].filter(Boolean).join(" ").trim();
-  return [locality,p.country].filter(Boolean).join(", ") || "Location not set";
+  const p=data.personal||{},country=p.country||"";
+  let region=p.region||"";
+  const match=(PROFILE_REGION_OPTIONS[country]||[]).find(([,value])=>value===region);if(match)region=match[0];
+  const locality=[p.suburb,region,p.postcode].filter(Boolean).join(" ").trim();
+  return [locality,country].filter(Boolean).join(", ")||"Location Not Set";
 }
 function renderSettings(){
   const companionText = data.companion.enabled
@@ -1211,6 +1261,11 @@ function friendlyWeightDate(value){
   if(!value)return "";
   return new Intl.DateTimeFormat("en-AU",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).format(new Date(`${value}T12:00:00`)).replace(",","");
 }
+let lastSavedCheckinSnapshot = null;
+function currentCheckinSnapshot(){return {date:$("checkin-date")?.value||todayISO(),weight:roundWeight(Number($("checkin-weight")?.value)||0),goal:roundWeight(Number($("checkin-goal")?.value)||0),note:$("checkin-note")?.value.trim()||""};}
+function checkinSnapshotsEqual(a,b){return !!a&&!!b&&a.date===b.date&&Number(a.weight)===Number(b.weight)&&Number(a.goal)===Number(b.goal)&&(a.note||"")===(b.note||"");}
+function setCheckinSaveState(saved){const b=$("save-checkin");if(!b)return;b.disabled=!!saved;b.textContent=saved?"Saved ✓":"Save Check-In And Review Plan";}
+function markCheckinDirty(){if(!lastSavedCheckinSnapshot)return;setCheckinSaveState(checkinSnapshotsEqual(currentCheckinSnapshot(),lastSavedCheckinSnapshot));}
 function renderWeightCheckin(){
   const latest=latestApplicableWeightRecord();
   $("checkin-date").value = todayISO();
@@ -1219,61 +1274,34 @@ function renderWeightCheckin(){
   if($("checkin-note"))$("checkin-note").value="";
   $("checkin-error").textContent = "";
   $("checkin-result").classList.add("hidden");
-  renderWeightHistoryOnly();
-  updateCompanionUI();
+  lastSavedCheckinSnapshot=null;setCheckinSaveState(false);
+  renderWeightHistoryOnly();updateCompanionUI();
 }
-let lastSavedCheckinSignature = "";
-function checkinSignature(){ return [$("checkin-date")?.value||"", Number($("checkin-weight")?.value||0), Number($("checkin-goal")?.value||0), $("checkin-note")?.value.trim()||""].join("|"); }
-["checkin-date","checkin-weight","checkin-goal","checkin-note"].forEach(id=>$(id)?.addEventListener("input",()=>{ if($("save-checkin")){ $("save-checkin").disabled=false; $("save-checkin").textContent="Save Check-In And Review Plan"; } }));
+["checkin-date","checkin-weight","checkin-goal","checkin-note"].forEach(id=>$(id)?.addEventListener("input",markCheckinDirty));
 $("save-checkin").addEventListener("click", () => {
-  const currentSignature=checkinSignature();
-  if(currentSignature===lastSavedCheckinSignature){ $("checkin-result").innerHTML="<strong>Already Saved</strong><p>No changes to save.</p>"; $("checkin-result").classList.remove("hidden"); return; }
-  const date = $("checkin-date").value || todayISO();
-  const weight = Number($("checkin-weight").value);
-  const goal = Number($("checkin-goal").value);
-  const note = $("checkin-note")?.value.trim() || "Progress Check-in";
+  const snapshot=currentCheckinSnapshot(),date=snapshot.date,weight=snapshot.weight,goal=snapshot.goal,note=snapshot.note||"Progress Check-In";
+  if(checkinSnapshotsEqual(snapshot,lastSavedCheckinSnapshot)){toast("Already Saved — No Changes To Save");return;}
   if(!weight || weight < 30 || weight > 400) return friendlyError("checkin-error", "Please enter a valid weight.", "Please check your weight.");
-  const latestBefore=latestApplicableWeightRecord();
-  const currentWeightBefore=Number(latestBefore?.weightKg || data.health.currentWeightKg || weight);
-  const goalError = validateGoalWeight(data.health.goal, currentWeightBefore, goal, data.recommendations.healthyLow || 0);
-  if(goalError) return friendlyError("checkin-error", goalError, goalError);
-
+  const latestBefore=latestApplicableWeightRecord(),currentWeightBefore=Number(latestBefore?.weightKg || data.health.currentWeightKg || weight);
+  const goalError = validateGoalWeight(data.health.goal, currentWeightBefore, goal, data.recommendations.healthyLow || 0);if(goalError) return friendlyError("checkin-error", goalError, goalError);
   const existing = data.weightHistory.find(item => item.date === date);
-  if(existing){
-    existing.weightKg = roundWeight(weight);
-    existing.note = note || "Updated Check-in";
-    existing.timeZone=activeTimeZone(); existing.recordedAt=new Date().toISOString();
-  }else data.weightHistory.push({date,weightKg:roundWeight(weight),note,timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
-
-  const latestAfter=latestApplicableWeightRecord();
-  const latestWeight=Number(latestAfter?.weightKg || data.health.currentWeightKg || weight);
-  const savedIsCurrent=!!latestAfter && latestAfter.date===date;
-  const previousCalculationWeight = Number(data.health.lastCalculationWeightKg || currentWeightBefore || latestWeight);
-  const goalChanged = Math.abs(goal - Number(data.health.selectedGoalWeight || 0)) >= 0.1;
-  const meaningfulCurrentWeightChange = savedIsCurrent && Math.abs(latestWeight - previousCalculationWeight) >= 1;
-
-  data.health.currentWeightKg = roundWeight(latestWeight);
-  data.health.selectedGoalWeight = roundWeight(goal);
-  data.recommendations.selectedGoalWeight = roundWeight(goal);
-
-  let message;
-  if(meaningfulCurrentWeightChange || goalChanged){
-    recalculateFromStored();
-    message = data.recommendations.manual
-      ? `Check-in saved. Your current goal and health estimates were refreshed, while your manually chosen energy and nutrient targets were retained.`
-      : `Check-in saved. Recommendations were recalculated using your latest dated weight of ${formatWeight(latestWeight)} kg.`;
-  }else if(!savedIsCurrent){
-    message = `Historical weight saved for ${friendlyWeightDate(date)}. Your current weight remains ${formatWeight(latestWeight)} kg because a newer entry exists.`;
-  }else{
-    message = "Check-in saved. The change was less than 1 kg, so your recommendations stayed steady to avoid reacting to a small fluctuation.";
+  if(existing && Number(existing.weightKg)===Number(weight) && (existing.note||"Progress Check-In")===note && Number(data.health.selectedGoalWeight||goal)===Number(goal)){
+    lastSavedCheckinSnapshot=snapshot;setCheckinSaveState(true);toast("Already Saved — No Changes To Save");return;
   }
-  save();
-  lastSavedCheckinSignature=currentSignature;
-  $("save-checkin").textContent="Saved ✓"; $("save-checkin").disabled=true;
-  $("checkin-result").innerHTML = `<strong>Saved</strong><p>${escapeHtml(message)} Current daily energy: ${escapeHtml(energyDisplay(data.recommendations.energyKj))}.</p>`;
-  $("checkin-result").classList.remove("hidden");
-  renderWeightHistoryOnly();
-  if(data.companion.enabled) speakText(meaningfulCurrentWeightChange||goalChanged ? message : "Weight and date saved.");
+  const persist=()=>{
+    if(existing){existing.weightKg=roundWeight(weight);existing.note=note||"Updated Check-In";existing.timeZone=activeTimeZone();existing.recordedAt=new Date().toISOString();}
+    else data.weightHistory.push({date,weightKg:roundWeight(weight),note,timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
+    const latestAfter=latestApplicableWeightRecord(),latestWeight=Number(latestAfter?.weightKg || data.health.currentWeightKg || weight),savedIsCurrent=!!latestAfter&&latestAfter.date===date,previousCalculationWeight=Number(data.health.lastCalculationWeightKg||currentWeightBefore||latestWeight),goalChanged=Math.abs(goal-Number(data.health.selectedGoalWeight||0))>=0.1,meaningfulCurrentWeightChange=savedIsCurrent&&Math.abs(latestWeight-previousCalculationWeight)>=1;
+    data.health.currentWeightKg=roundWeight(latestWeight);data.health.selectedGoalWeight=roundWeight(goal);data.recommendations.selectedGoalWeight=roundWeight(goal);
+    let message;
+    if(meaningfulCurrentWeightChange||goalChanged){recalculateFromStored();message=data.recommendations.manual?"Check-In saved. Your health estimates were refreshed while your manual targets were retained.":`Check-In saved. Recommendations were recalculated using ${formatWeight(latestWeight)} kg.`;}
+    else if(!savedIsCurrent)message=`Historical weight saved for ${friendlyWeightDate(date)}. Your current weight remains ${formatWeight(latestWeight)} kg because a newer entry exists.`;
+    else message="Check-In saved. Your recommendations stayed steady because the change was less than 1 kg.";
+    save();lastSavedCheckinSnapshot=currentCheckinSnapshot();setCheckinSaveState(true);$("checkin-result").innerHTML=`<strong>Saved ✓</strong><p>${escapeHtml(message)} Current daily energy: ${escapeHtml(energyDisplay(data.recommendations.energyKj))}.</p>`;$("checkin-result").classList.remove("hidden");renderWeightHistoryOnly();if(data.companion.enabled)speakText("Weight and date saved.");
+  };
+  if(existing && Number(existing.weightKg)!==Number(weight)){
+    if(confirm(`A weight is already recorded for ${friendlyWeightDate(date)}. Replace ${formatWeight(existing.weightKg)} kg with ${formatWeight(weight)} kg?`))persist();
+  }else persist();
 });
 function renderWeightHistoryOnly(){
   const history=[...(data.weightHistory||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")));
@@ -1288,6 +1316,7 @@ document.addEventListener("click",event=>{
   const item=(data.weightHistory||[]).find(x=>x.date===row.dataset.editWeightDate);if(!item)return;
   $("checkin-date").value=item.date;$("checkin-weight").value=formatWeight(item.weightKg);if($("checkin-note"))$("checkin-note").value=item.note||"";
   $("checkin-result").innerHTML=`<strong>Editing Historical Entry</strong><p>Saving ${escapeHtml(friendlyWeightDate(item.date))} will not replace your current weight if a newer dated entry exists.</p>`;$("checkin-result").classList.remove("hidden");
+  lastSavedCheckinSnapshot=null;setCheckinSaveState(false);
   $("checkin-date").scrollIntoView({behavior:"smooth",block:"center"});
 });
 
@@ -1311,7 +1340,9 @@ function populateForms(){
   $("preferred-name").value = data.personal.preferredName || "";
   $("preferred-pronunciation").value = data.personal.preferredPronunciation || "";
   if($("profile-country")) $("profile-country").value=data.personal.country||"Australia";
+  updateProfileRegionOptions(false);
   if($("profile-region")) $("profile-region").value=data.personal.region||"";
+  updateProfileRegionOptions(true);
   if($("profile-postcode")) $("profile-postcode").value=data.personal.postcode||"";
   if($("home-timezone")) $("home-timezone").value=data.personal.homeTimeZone||deviceTimeZone();
   if($("timezone-behaviour")) $("timezone-behaviour").value=data.personal.timeZoneBehaviour||"ask";

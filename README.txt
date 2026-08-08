@@ -1,53 +1,87 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.7
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.9
 
 PURPOSE
-Alpha 0.6.7 follows Alpha 0.6.6 and focuses on a Diary-first redesign. The Diary is now the main place to build a day, add foods, ask the companion for a single meal suggestion and confirm what was actually eaten. The separate Meal Planner remains for bulk planning several meals.
+Alpha 0.6.9 is a stabilisation build following founder testing of Alpha 0.6.7. It simplifies everyday Diary entry, improves profile setup and weight-history behaviour, makes the bundled Australian food database much easier to reach, and fixes several mobile usability problems found during real-device testing.
 
-IMPORTANT — KEEPING EXISTING TEST DATA
-Alpha 0.6.7 deliberately keeps the same browser-storage keys used by the Alpha 0.6 family:
+STARTING FRESH OR KEEPING EXISTING DATA
+Alpha 0.6.9 deliberately keeps the same two main browser-storage keys used by the Alpha 0.6 family:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-When Alpha 0.6.7 replaces Alpha 0.6.6 at the SAME GitHub Pages website address, in the SAME browser and on the SAME device, existing profiles, Diary records, plans, recipes, favourites, weight history, Shopping Lists and other trial records are designed to migrate forward rather than being intentionally deleted.
+Replacing Alpha 0.6.7 at the SAME GitHub Pages website address does not intentionally clear existing tester records.
 
-Browser data can still be lost if a tester clears Safari/website data, uses Private Browsing, changes to a different site address, changes browser/device, or removes the site's stored data. Use Settings > Data, Backup & Privacy > Download Backup before publishing a new build.
+For a completely fresh onboarding test on one device:
+1. Optional: Settings → Data, Backup & Privacy → Download Backup.
+2. Settings → Reset App for Testing.
+3. Confirm the reset.
+4. The app reloads at the Welcome screen and that device can be set up like a new user.
 
-MAIN ALPHA 0.6.7 CHANGES
-- Diary rebuilt around compact grouped meal sections.
-- Add Food and Suggest are available directly in each meal.
-- Single-meal companion suggestions use optional quick questions and stay inside the Diary.
-- Planned/Eaten confirmation is simplified; Ate as Planned can confirm a planned meal quickly.
-- Detailed Day Type/Energy controls are collapsed behind Edit Day.
-- Separate Meal Planner is retained for bulk/multi-meal planning.
-- Normal Day target integrity repaired: use the current accepted profile recommendation, never a silent stale 2,000 Cal fallback.
-- Flexible Fasting Day keeps a separate target and switching Day Type previews the correct value immediately.
-- Fasting multi-meal planning has a hard whole-day cap and accounts for foods already Eaten or Planned.
-- Normal Day bulk planning reserves room for unticked meal occasions; Fasting Day treats unticked meal occasions as skipped.
-- New Add Food tasks start with a blank Food Library search.
-- Local and online Food Library results no longer overwrite one another when changing tabs.
-- Common close spellings receive useful local matches; irrelevant online results are suppressed.
-- Historical weight edits no longer replace the newest current weight.
-- Weight history uses friendly Australian dates and a compact recent-history presentation.
-- Settings hides phone/address fields that setup never requested and labels the visible region information as Location.
-- The 1,588-food Australian Food Composition Database Release 3 local search dataset from Alpha 0.6.6 remains included.
+Reset App for Testing affects only that browser/device. It does not intentionally reset other testers.
 
-AUSTRALIAN FOOD DATA
-The bundled local dataset is derived from Australian Food Composition Database Release 3, published by Food Standards Australia New Zealand (FSANZ), and contains 1,588 foods. See AFCD_DATA_NOTICE_ALPHA_0_6_7.txt for attribution, licence information and limitations.
+MAIN ALPHA 0.6.9 CHANGES
 
-CURRENT STATIC-TRIAL LIMITATIONS
-- Packaged brands still depend on online databases/barcode sources and current product labels.
-- Food-group mapping for imported AFCD foods remains a founder-trial approximation in some cases.
-- Voice recognition itself is supplied by the browser/device; the app can improve interpretation after recognition but cannot control the initial transcript.
-- Invitations, cross-device analytics and feedback remain limited by the static GitHub Pages architecture.
-- Camera scanning, barcode services, OCR and speech input still require real-device HTTPS testing.
+DIARY — ONE SIMPLE RECORDED STATE
+- Foods added to the Diary now count immediately.
+- Ordinary users no longer have to manage Planned versus Eaten states.
+- Individual entries can be edited, copied or deleted later.
+- A whole meal can be cleared from the meal menu, with confirmation and an Undo opportunity.
+- Future-date planning still works, but the status bookkeeping is kept out of the user’s way.
+- Single-meal companion suggestions remain inside the Diary; the separate Meal Planner is retained for multi-meal planning.
+
+FOOD LIBRARY AND FOOD ENTRY
+- A new Add Food task starts with a blank search.
+- Blank All Resources now exposes familiar starter foods plus a curated selection from the bundled Australian Food Composition Database instead of hiding the AFCD records until a search is typed.
+- All 1,588 bundled AFCD Release 3 records remain searchable locally.
+- Added everyday aliases and ranking for common terms such as cappuccino, carrot cake, bacon, English muffin, sausages, steak, yoghurt, cheese, potato, pumpkin, bread, juice and soft drink.
+- Live search tries to keep the first useful result visible above the iOS keyboard.
+- General food, recipe and voice logging no longer silently defaults to Breakfast or Dinner. A meal must be chosen unless the user started the action from a specific Diary meal.
+- Voice/text matching preserves the complete recognised phrase. A phrase such as “carrot cake” should not silently collapse into a plain carrot match.
+
+PROFILE AND ONBOARDING
+- When Australia is selected, State Or Territory is a selectable list rather than a free-text field.
+- Australian postcode/state combinations receive a plausibility check.
+- Australian home time zones are suggested from the selected state/territory and daylight-saving behaviour remains time-zone based.
+- “Sex Used For Energy Calculation” remains the calculation field, with a clearer explanation of why it is requested.
+- Section headings and major labels have a stronger visual hierarchy and use consistent Title Case.
+- Companion cards now open an immediate companion preview so the user does not have to scroll below the full list to read the description.
+
+YOUR RECOMMENDATIONS
+- Daily Fluids remains visible as a core target.
+- Detailed Nutrition Goals is collapsed by default and can be expanded by users who want the finer nutrient targets.
+
+WEIGHT AND PROGRESS
+- Saving an unchanged Weight Check-In is protected against duplicates.
+- After a successful save, the button changes to Saved ✓ until the entry is changed.
+- Entering a different weight on a date that already exists prompts before replacing it.
+- Routine spoken confirmation is shortened to “Weight and date saved.”
+- Progress History uses the Weight Check-In history as its source and renders a visible, tightly scaled weight-trend chart with Australian-friendly date labels.
+- The history summary distinguishes Food Diary Days, Weight Check-Ins and Activities.
+
+HYDRATION
+- The old bare “Additional Drinks” volume field has been replaced with Add A Drink.
+- Water and Zero-Calorie Drink can be quick-added to hydration.
+- Milk, juice, tea/coffee, soft drink, cordial, smoothies, soup/broth and Other direct the user to choose the exact food/drink so nutrition as well as fluid can be recorded.
+- Daily Fluid Target remains separately visible and adjustable.
+
+FOOD DATA IN THIS BUILD
+- Australian Food Composition Database Release 3: 1,588 bundled local records.
+- Existing Australian trial/generic foods and user-created foods.
+- Existing Open Food Facts and USDA online-search prototypes where internet access is available.
+
+IMPORTANT FOOD-DATA NOTE
+The larger local AFCD library is intended to make founder testing much more practical, but reference foods are not the same as a current branded package label. Packaged foods should ultimately be verified against their current label. Barcode lookup and nutrition-panel recognition remain prototype features and are intended to be the next major testing focus after Alpha 0.6.9 stabilisation.
 
 HOW TO PUBLISH
-1. In Alpha 0.6.6, download a backup first.
-2. Download and unzip the Alpha 0.6.7 package.
-3. Replace the existing repository files with the complete Alpha 0.6.7 contents.
-4. Keep the existing repository/site address unchanged.
-5. Wait for GitHub Pages to publish.
-6. Open the normal site address and confirm Alpha 0.6.7 appears.
-7. Do not clear Safari or website data during the update.
+1. Download a backup first if existing test data matters.
+2. Unzip this package.
+3. Replace the existing GitHub Pages repository files with the complete Alpha 0.6.9 contents.
+4. Commit/publish the changed files.
+5. Open the normal site address and confirm “Alpha 0.6.9” appears.
+6. If the old version is cached, refresh/reopen Safari or the installed web app.
 
-See RELEASE_NOTES_ALPHA_0_6_7.txt and TESTING_CHECKLIST_ALPHA_0_6_7.txt for more detail.
+FOUNDER-TRIAL LIMITATIONS
+- This remains a static GitHub Pages founder trial.
+- Data is primarily stored in the browser on each device.
+- Secure cross-device accounts, central invitations, central analytics and central feedback require a protected backend in a later phase.
+- Real-device camera, speech, barcode and OCR behaviour still needs device testing.
+- Nutrition calculations and food suggestions are for product development/testing and are not medical advice.

@@ -1,10 +1,10 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.9
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.10
 
 PURPOSE
-Alpha 0.6.9 is a stabilisation build following founder testing of Alpha 0.6.7. It simplifies everyday Diary entry, improves profile setup and weight-history behaviour, makes the bundled Australian food database much easier to reach, and fixes several mobile usability problems found during real-device testing.
+Alpha 0.6.10 is a stabilisation build following founder testing of Alpha 0.6.7. It simplifies everyday Diary entry, improves profile setup and weight-history behaviour, makes the bundled Australian food database much easier to reach, and fixes several mobile usability problems found during real-device testing.
 
 STARTING FRESH OR KEEPING EXISTING DATA
-Alpha 0.6.9 deliberately keeps the same two main browser-storage keys used by the Alpha 0.6 family:
+Alpha 0.6.10 deliberately keeps the same two main browser-storage keys used by the Alpha 0.6 family:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
@@ -18,7 +18,7 @@ For a completely fresh onboarding test on one device:
 
 Reset App for Testing affects only that browser/device. It does not intentionally reset other testers.
 
-MAIN ALPHA 0.6.9 CHANGES
+MAIN ALPHA 0.6.10 CHANGES
 
 DIARY — ONE SIMPLE RECORDED STATE
 - Foods added to the Diary now count immediately.
@@ -69,14 +69,14 @@ FOOD DATA IN THIS BUILD
 - Existing Open Food Facts and USDA online-search prototypes where internet access is available.
 
 IMPORTANT FOOD-DATA NOTE
-The larger local AFCD library is intended to make founder testing much more practical, but reference foods are not the same as a current branded package label. Packaged foods should ultimately be verified against their current label. Barcode lookup and nutrition-panel recognition remain prototype features and are intended to be the next major testing focus after Alpha 0.6.9 stabilisation.
+The larger local AFCD library is intended to make founder testing much more practical, but reference foods are not the same as a current branded package label. Packaged foods should ultimately be verified against their current label. Barcode lookup and nutrition-panel recognition remain prototype features and are intended to be the next major testing focus after Alpha 0.6.10 stabilisation.
 
 HOW TO PUBLISH
 1. Download a backup first if existing test data matters.
 2. Unzip this package.
-3. Replace the existing GitHub Pages repository files with the complete Alpha 0.6.9 contents.
+3. Replace the existing GitHub Pages repository files with the complete Alpha 0.6.10 contents.
 4. Commit/publish the changed files.
-5. Open the normal site address and confirm “Alpha 0.6.9” appears.
+5. Open the normal site address and confirm “Alpha 0.6.10” appears.
 6. If the old version is cached, refresh/reopen Safari or the installed web app.
 
 FOUNDER-TRIAL LIMITATIONS

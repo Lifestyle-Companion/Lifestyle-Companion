@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.9",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.10",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -791,7 +791,7 @@ function calculateRecommendationSet({
     energyKj = Math.round((targetCal * 4.184) / 100) * 100;
   }
 
-  // Alpha 0.6.9: keep the displayed macro targets inside a practical whole-day balance.
+  // Alpha 0.6.10: keep the displayed macro targets inside a practical whole-day balance.
   // Weight-loss plans use a moderately higher protein share without allowing protein to consume nearly half of total energy.
   const targetCalories = energyKj ? energyKj / 4.184 : null;
   const proteinShare = goal === "lose" ? 0.25 : 0.20;
@@ -1257,6 +1257,9 @@ function latestApplicableWeightRecord(){
   const today=todayISO();
   return [...(data.weightHistory||[])].filter(item=>item?.date&&item.date<=today&&Number(item.weightKg)>0).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")))[0]||null;
 }
+function nearestWeightRecordForDate(date){
+  const target=new Date(`${date}T12:00:00`).getTime();return [...(data.weightHistory||[])].filter(item=>item?.date&&item.date!==date&&Number(item.weightKg)>0).sort((a,b)=>Math.abs(new Date(`${a.date}T12:00:00`).getTime()-target)-Math.abs(new Date(`${b.date}T12:00:00`).getTime()-target)||String(b.date).localeCompare(String(a.date)))[0]||null;
+}
 function friendlyWeightDate(value){
   if(!value)return "";
   return new Intl.DateTimeFormat("en-AU",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).format(new Date(`${value}T12:00:00`)).replace(",","");
@@ -1285,6 +1288,8 @@ $("save-checkin").addEventListener("click", () => {
   const latestBefore=latestApplicableWeightRecord(),currentWeightBefore=Number(latestBefore?.weightKg || data.health.currentWeightKg || weight);
   const goalError = validateGoalWeight(data.health.goal, currentWeightBefore, goal, data.recommendations.healthyLow || 0);if(goalError) return friendlyError("checkin-error", goalError, goalError);
   const existing = data.weightHistory.find(item => item.date === date);
+  const nearby=nearestWeightRecordForDate(date),nearbyDifference=nearby?Math.abs(Number(weight)-Number(nearby.weightKg)):0;
+  if(nearby&&nearbyDifference>2.0&&!confirm(`This weight is ${formatWeight(nearbyDifference)} kg different from your nearby entry of ${formatWeight(nearby.weightKg)} kg on ${friendlyWeightDate(nearby.date)}. Is ${formatWeight(weight)} kg correct?`)){$("checkin-weight")?.focus();return;}
   if(existing && Number(existing.weightKg)===Number(weight) && (existing.note||"Progress Check-In")===note && Number(data.health.selectedGoalWeight||goal)===Number(goal)){
     lastSavedCheckinSnapshot=snapshot;setCheckinSaveState(true);toast("Already Saved — No Changes To Save");return;
   }

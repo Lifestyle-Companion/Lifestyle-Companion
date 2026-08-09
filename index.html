@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.9</title>
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.10</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.9</div>
+      <div class="badge">Founder Trial · Alpha 0.6.10</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.9 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.10 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,7 +120,7 @@
           <div class="section-heading"><div><h3>Meet The Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview hidden" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.9 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
+          <p class="fine">The Alpha 0.6.10 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
@@ -341,7 +341,7 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header compact-home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.9</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.10</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
     <main class="home-main home-main-centred">
       <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
@@ -414,6 +414,7 @@
       <div id="library-entry-context" class="entry-context-banner hidden"></div>
       <div class="resource-search-shell">
         <label class="resource-search"><span>⌕</span><input id="food-search" type="search" placeholder="Search foods, saved meals and recipes"><button id="clear-food-search" type="button" aria-label="Clear search">×</button></label>
+        <div id="food-live-results" class="food-live-results hidden" aria-live="polite"></div>
         <div class="library-tabs resource-tabs" role="tablist">
           <button class="active" data-library-tab="all">All Resources</button>
           <button data-library-tab="recent">Recent</button>
@@ -452,7 +453,7 @@
       <div class="card">
         <div class="form-grid">
           <label>Date<input id="entry-date" type="date"></label>
-          <label>Meal<select id="entry-meal"><option value="">Choose A Meal</option><option>Breakfast</option><option>Morning Tea</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label>
+          <label>Meal<select id="entry-meal"><option value="">Choose A Meal</option><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label>
         </div>
         <div id="entry-variant-options" class="variant-options hidden"></div>
         <div class="form-grid quantity-first-grid">
@@ -499,46 +500,62 @@
     <header class="topbar sticky"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Voice Or Text Log</h2><p>Review what was understood before adding anything.</p></div><button class="help-button" data-help="quick-log">Help With This Screen</button></header>
     <main class="page narrow">
       <div class="card"><label>Say or Type Your Food<textarea id="voice-transcript" rows="4" placeholder="Example: Add two Weet-Bix with 200 millilitres of light milk for breakfast"></textarea></label><div class="quick-action-row"><button id="start-voice-log" class="primary">🎙️ Start Listening</button><button id="stop-voice-log" class="secondary">Stop</button><button id="parse-voice-log" class="secondary">Review Request</button></div><p id="voice-status" class="fine">Voice recognition depends on your browser and device. You can always edit the text before review.</p></div>
-      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal<select id="voice-meal"><option value="">Choose A Meal</option><option>Breakfast</option><option>Morning Tea</option><option>Lunch</option><option>Afternoon Tea</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
+      <div id="voice-review" class="card hidden"><h3>Review Before Adding</h3><div id="voice-review-items"></div><label>Date<input id="voice-date" type="date"></label><label>Meal<select id="voice-meal"><option value="">Choose A Meal</option><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snacks</option><option>Other</option></select></label><div class="quick-action-row"><button id="confirm-voice-log" class="primary">Confirm & Add</button><button id="cancel-voice-review" class="secondary">Edit Text</button></div></div>
     </main>
   </section>
 
   <section id="scan-centre" class="screen content-screen">
-    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Scan &amp; Review Centre</h2></div><button class="icon-help-button" data-help="scan-centre" aria-label="Help with Scan Centre">?</button></header>
+    <header class="topbar sticky compact-feature-header"><button class="back" data-go="food-library">← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Scan &amp; Review Centre</h2></div><button class="icon-help-button" data-help="scan-centre" aria-label="Help with Scan Centre">?</button></header>
     <main class="page scan-centre-page">
-      <div class="card">
+      <div class="card scan-mode-card">
         <div class="scan-mode-grid" role="tablist"><button class="active" data-scan-mode="food">Meal Photo</button><button data-scan-mode="barcode">Barcode</button><button data-scan-mode="label">Nutrition Panel</button></div>
         <p id="scan-mode-copy" class="fine">Take a meal photo, then identify and confirm every food before anything is logged.</p>
-        <label>Take or Choose a Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label>
-        <div id="scan-preview" class="scan-preview empty-state">No image selected.</div>
       </div>
-      <div id="barcode-tools" class="card hidden">
-        <h3>Barcode Lookup</h3>
-        <div class="form-grid"><label>Barcode number<input id="scan-barcode-input" inputmode="numeric" autocomplete="off" placeholder="Scan or enter EAN / UPC"></label></div>
-        <div class="quick-action-row"><button id="start-barcode-camera" class="primary" type="button">Use Camera</button><button id="lookup-barcode" class="secondary" type="button">Look Up Barcode</button><button id="stop-barcode-camera" class="secondary hidden" type="button">Stop Camera</button></div>
-        <video id="barcode-video" class="barcode-video hidden" playsinline muted></video>
-        <p id="barcode-status" class="fine">Products are looked up in Open Food Facts. Manual barcode entry remains available on browsers that cannot scan live video.</p>
+
+      <div id="scan-photo-capture" class="card">
+        <label>Take Or Choose A Photo<input id="scan-image" type="file" accept="image/*" capture="environment"></label>
+        <div id="scan-preview" class="scan-preview empty-state">No Image Selected.</div>
       </div>
+
+      <div id="barcode-tools" class="card hidden barcode-first-card">
+        <h3>Scan Barcode</h3>
+        <p class="fine">Scan the retail barcode first. When it is detected the camera stops and the product is looked up automatically.</p>
+        <button id="start-barcode-camera" class="primary wide" type="button">▦ Scan Barcode With Camera</button>
+        <button id="stop-barcode-camera" class="secondary hidden" type="button">Stop Camera</button>
+        <div id="barcode-camera-shell" class="barcode-camera-shell hidden">
+          <video id="barcode-video" class="barcode-video" playsinline muted></video>
+          <div class="barcode-target" aria-hidden="true"><span></span></div>
+          <strong class="barcode-target-copy">Place Barcode Inside The Box</strong>
+        </div>
+        <p id="barcode-status" class="fine">Ready To Scan. If the barcode is not in the online product database, use Nutrition Panel instead.</p>
+        <details id="manual-barcode-details" class="manual-barcode-details">
+          <summary>Enter Barcode Manually</summary>
+          <label>Barcode Number<input id="scan-barcode-input" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="Enter EAN / UPC"></label>
+          <button id="lookup-barcode" class="secondary wide" type="button" disabled>Look Up Barcode</button>
+        </details>
+      </div>
+
       <div id="label-tools" class="card hidden">
         <h3>Nutrition Panel Recognition</h3>
-        <p class="fine">The photo is processed on this device using OCR. Always compare recognised values with the package before saving.</p>
+        <p class="fine">Photograph the Nutrition Information Panel square-on in good light. The values remain editable and are never saved until you review them.</p>
         <button id="run-label-ocr" class="primary wide" type="button" disabled>Read Nutrition Panel</button>
         <div id="ocr-progress" class="status-box hidden"></div>
         <div id="ocr-review" class="hidden">
-          <label>Recognised Text<textarea id="ocr-text" rows="8"></textarea></label>
-          <div class="status-box scan-review-warning"><strong>Check Every Value Against The Package</strong><p>OCR can misread decimal points, units and columns. The app will never save these figures until you review them.</p></div>
+          <div class="status-box scan-review-warning"><strong>Check Every Value Against The Package</strong><p>OCR can misread decimal points, units and columns. Compare the editable values below with the package before saving.</p></div>
           <div class="form-grid">
             <label>Nutrition Values Shown<select id="ocr-basis"><option value="serving">Per Serving</option><option value="100">Per 100 g / 100 mL</option></select></label>
             <label>Food Name<input id="ocr-food-name"></label><label>Serving Amount<input id="ocr-serving-amount" type="number" step="0.1" value="100"></label><label>Serving Unit<select id="ocr-serving-unit"><option>g</option><option>mL</option><option>serving</option></select></label>
             <label>Calories<input id="ocr-calories" type="number" step="0.1"></label><label>Protein (g)<input id="ocr-protein" type="number" step="0.1"></label><label>Carbohydrate (g)<input id="ocr-carbs" type="number" step="0.1"></label><label>Fat (g)<input id="ocr-fat" type="number" step="0.1"></label><label>Saturated Fat (g)<input id="ocr-sat-fat" type="number" step="0.1"></label><label>Fibre (g)<input id="ocr-fibre" type="number" step="0.1"></label><label>Sugars (g)<input id="ocr-sugar" type="number" step="0.1"></label><label>Sodium (mg)<input id="ocr-sodium" type="number" step="1"></label>
           </div>
-          <button id="use-ocr-values" class="primary wide" type="button">Review as a Custom Food</button>
+          <details class="ocr-raw-details"><summary>Show Recognised Text</summary><label>Recognised Text<textarea id="ocr-text" rows="8"></textarea></label></details>
+          <button id="use-ocr-values" class="primary wide" type="button">Review As A Custom Food</button>
         </div>
       </div>
+
       <div id="photo-tools" class="card">
         <h3>Meal Photo Review</h3>
         <p>Photo recognition must never guess calories silently. Describe or search for each visible food, then confirm quantities in the Food Library.</p>
-        <div class="quick-action-row"><button id="photo-find-food" class="primary" type="button">Find Foods in This Meal</button><button id="photo-add-note" class="secondary" type="button">Keep Photo as a Diary Note</button></div>
+        <div class="quick-action-row"><button id="photo-find-food" class="primary" type="button">Find Foods In This Meal</button><button id="photo-add-note" class="secondary" type="button">Keep Photo As A Diary Note</button></div>
       </div>
       <div id="scan-review-card" class="card hidden"><h3>Review Scanned Product</h3><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review Quantity Before Adding</button></div>
     </main>
@@ -558,14 +575,13 @@
       <div class="card planner-controls-card">
         <fieldset class="planner-meal-fieldset">
           <legend>Which Meals Would You Like Planned?</legend>
-          <label class="select-all-meals"><input id="planner-select-all" type="checkbox"> Select all meals</label>
+          <label class="select-all-meals"><input id="planner-select-all" type="checkbox"> Select All Meals</label>
           <div id="planner-meal-options" class="planner-meal-options">
             <label><input type="checkbox" name="planner-meal" value="Breakfast"> Breakfast</label>
-            <label><input type="checkbox" name="planner-meal" value="Morning Tea"> Morning Tea</label>
             <label><input type="checkbox" name="planner-meal" value="Lunch"> Lunch</label>
-            <label><input type="checkbox" name="planner-meal" value="Afternoon Tea"> Afternoon Tea</label>
             <label><input type="checkbox" name="planner-meal" value="Dinner"> Dinner</label>
             <label><input type="checkbox" name="planner-meal" value="Snacks"> Snacks</label>
+            <label><input type="checkbox" name="planner-meal" value="Other"> Other</label>
           </div>
         </fieldset>
         <div class="form-grid planner-preferences-grid">
@@ -705,7 +721,7 @@
 
   <section id="send-feedback" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Send Feedback</h2><p>Tell us what works and what needs improvement.</p></div></header><main class="page narrow"><div class="card"><div class="form-grid"><label>Feedback Type<select id="feedback-type"><option>Something I Like</option><option>Something I Dislike</option><option>Something Seems Inaccurate</option><option>I Found a Bug</option><option>Suggest a New Feature</option><option>Other Feedback</option></select></label><label>Screen or Feature<input id="feedback-screen" placeholder="Optional"></label><label class="full">Your Feedback<textarea id="feedback-message" rows="7" required></textarea></label><label class="toggle full"><input id="feedback-response-ok" type="checkbox"><span>You may contact me about this feedback.</span></label></div><button id="submit-feedback" class="primary wide">Prepare Feedback</button><p class="fine">App version and basic device information are included. Diary text, food entries, weight, photos and address details are not attached automatically.</p><div id="feedback-status" class="status-box hidden"></div></div></main></section>
 
-  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.9 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing And Leaving</h3><p><strong>Reset App for Testing</strong> removes this device’s profile and trial data so setup can be tested again.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
+  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.10 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing And Leaving</h3><p><strong>Reset App for Testing</strong> removes this device’s profile and trial data so setup can be tested again.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
 
   <section id="founder-tools" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Founder Trial Tools</h2><p>Local founder-only testing controls.</p></div></header><main class="page"><div id="founder-lock-card" class="card"><h3>Developer Access</h3><p>Set or enter a six-digit local PIN. This protects the tools on this device only.</p><label>Founder PIN<input id="founder-pin" type="password" inputmode="numeric" maxlength="6"></label><button id="founder-unlock" class="primary">Unlock</button><small id="founder-lock-status" class="field-error"></small></div><div id="founder-dashboard" class="hidden"><div class="card"><h3>Invite Trial Testers</h3><p>Create up to 10 invitation links for friends and family.</p><div class="form-grid"><label>Feedback Email<input id="founder-feedback-email" type="email" placeholder="Address that receives tester feedback"></label><label>Name<input id="invite-name"></label><label>Email or Note<input id="invite-contact"></label></div><button id="create-invite" class="primary">Create Invitation</button><div id="invite-list"></div><p class="fine">In this static trial, invitation records and the 10-person limit are stored on this device. Secure cross-device enforcement will require a protected server in a future build.</p></div><div class="card"><h3>Developer Insights</h3><div id="developer-insights"></div><button id="export-insights" class="secondary">Export Local Insights</button><p class="fine">These figures cover this browser only until a privacy-protected analytics service is connected.</p></div><div class="card"><h3>Feedback Received on This Device</h3><div id="founder-feedback-list"></div></div></div></main></section>
 

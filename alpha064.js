@@ -15,11 +15,11 @@ const deviceTZ=()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone|
 const toast=message=>{const t=$("toast")||$("a05-toast-copy");if(!t)return; if(t.id==="toast"){t.textContent=message;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2000);}else t.textContent=message;};
 
 function ensureSchemas(){
-  const main=read(MAIN_KEY,{});main.version=APP.version||"0.6.10";main.personal||={};main.personal.surname??="";main.personal.homeTimeZone||=deviceTZ();main.personal.activeTimeZone||=main.personal.homeTimeZone;main.personal.timeZoneBehaviour||="ask";main.analytics||={consent:false};main.developer||={founderEnabled:false};main.trial||={};
+  const main=read(MAIN_KEY,{});main.version=APP.version||"0.6.11";main.personal||={};main.personal.surname??="";main.personal.homeTimeZone||=deviceTZ();main.personal.activeTimeZone||=main.personal.homeTimeZone;main.personal.timeZoneBehaviour||="ask";main.analytics||={consent:false};main.developer||={founderEnabled:false};main.trial||={};
   if(new URLSearchParams(location.search).get("founder")==="1")main.developer.founderEnabled=true;
   const params=new URLSearchParams(location.search);if(params.get("invite")){main.trial.inviteCode=params.get("invite");main.trial.invitedBy=params.get("from")||"Founder Trial";main.trial.feedbackEmail=params.get("feedback")||main.trial.feedbackEmail||"";}
   write(MAIN_KEY,main);
-  const ext=read(EXT_KEY,{});ext.version=APP.version||"0.6.10";ext.fluidTargets||={};ext.ui||={};write(EXT_KEY,ext);
+  const ext=read(EXT_KEY,{});ext.version=APP.version||"0.6.11";ext.fluidTargets||={};ext.ui||={};write(EXT_KEY,ext);
   const admin=read(ADMIN_KEY,{usage:{},feedback:[],invites:[],sessions:0});admin.usage||={};admin.feedback||=[];admin.invites||=[];admin.sessions=(admin.sessions||0)+1;write(ADMIN_KEY,admin);
 }
 ensureSchemas();

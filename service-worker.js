@@ -1,5 +1,5 @@
-const CACHE_NAME = "healthy-eating-companion-alpha-0-6-11-v2";
-const VERSION = "0.6.11";
+const CACHE_NAME = "healthy-eating-companion-alpha-0-6-12-v2";
+const VERSION = "0.6.12";
 const CORE_FILES = [
   `./index.html`,
   `./styles.css?v=${VERSION}`,

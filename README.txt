@@ -1,40 +1,47 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.11
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.12
 
 PURPOSE
-Alpha 0.6.11 is the repair/stabilisation build created after founder testing of Alpha 0.6.10. It concentrates on the weight graph and weight-entry checks, the agreed five-meal Diary structure, a less cluttered Food Library, and a direct barcode-scanning workflow.
+Alpha 0.6.12 is the next founder-testing build after Alpha 0.6.11. It focuses on reliable everyday use: persistence guidance, a polished weight trend, natural serving units, editable voice quantities, better search ranking, profile-aware meal suggestions, package verification, sharing and duplicate-entry protection.
 
 DATA CONTINUITY
-Alpha 0.6.11 keeps the existing Alpha 0.6 browser-storage keys:
+Alpha 0.6.12 keeps the existing Alpha 0.6 browser-storage keys:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-Publishing the complete build at the same GitHub Pages address is intended to retain existing profile, Diary, recipes, favourites, weight history, Shopping List and other founder-test data. Reset App for Testing should only be used when deliberately starting over.
+Publishing the complete build at the same GitHub Pages address is intended to retain existing profile, Diary, recipes, favourites, weight history, Shopping List and other founder-test data in a normal browser storage context.
 
-IMPORTANT ALPHA 0.6.11 CHANGES
-- Diary meal categories are Breakfast, Lunch, Dinner, Snacks and Other only. Legacy Morning Tea and Afternoon Tea entries migrate to Snacks.
-- Local app files are versioned and the service worker now refreshes app-shell files network-first to reduce mixed-version/stale-cache behaviour after deployment.
-- Weight Check-In shows Today / Yesterday / Tomorrow with the full date.
-- Weight displays use one decimal place.
-- A weight more than 2.0 kg from the nearest relevant record produces a clear confirmation showing both weights, the date and exact difference.
-- Change Since Start follows the actual Starting Weight record even if older historical weights are entered later.
-- Progress History has a mobile-safe Weight Trend plus a visible value/date fallback.
-- Food Library removes the duplicate Suggest Meal and Cancel Adding controls from the add-food context.
-- Scan Barcode and Read Nutrition Panel sit immediately below food search.
-- The visible Open Australian AFCD link is removed from the everyday Food Library. Data-source details remain available elsewhere in the app.
-- Scan Barcode opens Barcode mode directly and starts live in-page scanning. The normal barcode path does not require choosing a file or taking a still photo.
-- Live barcode scanning tries native BarcodeDetector first and ZXing second; manual barcode entry remains the fallback.
+IMPORTANT: SAFARI PRIVATE BROWSING
+Safari Private Browsing can delete website storage when private tabs are closed. A website cannot override that privacy behaviour. For persistence testing, use a normal Safari tab or install/open the Companion from the Home Screen. Alpha 0.6.12 also maintains a second local IndexedDB mirror when the browser permits it.
+
+HIGHLIGHTS
+- Weight Trend is now a responsive line graph with dots for each weigh-in.
+- Starting Weight migration is repaired and Change Since Start uses the earliest valid record.
+- Daily Progress removes Recorded/Open Meal badges.
+- Search ranking favours true food identity, Australian matches and saved/verified foods.
+- Cappucino/Capuccino searches are normalised to Cappuccino.
+- Context-aware units add natural measures such as Bar, Sachet, Tub, Bottle and whole-item measures where appropriate.
+- Voice/Text review includes editable Amount and Unit fields.
+- Stored allergies, intolerances, eating pattern and love/like/dislike/never-eat preferences are used more directly by suggestion filtering/ranking.
+- Barcode foods can be compared with a Nutrition Panel before choosing which values to retain.
+- Saved packaged foods can remember when they were last checked and occasionally invite the user to review older records.
+- Foods, saved meals and recipes can be shared as portable Companion files.
+- A full Companion device-copy file can be shared/restored manually.
+- Completed Add To Diary transactions cannot be accidentally submitted again by navigating Back.
+
+AUTOMATIC IPHONE/IPAD SYNC
+True live cross-device sync is not simulated in this static build. It requires a secure authenticated cloud service. Alpha 0.6.12 supplies manual full-device transfer and preserves the future connection architecture for that later service.
 
 HOW TO PUBLISH
-1. Download a backup first if the existing founder-test data matters.
+1. If existing data matters, use Download Backup first.
 2. Unzip this package.
-3. Replace the existing GitHub Pages repository files with the COMPLETE Alpha 0.6.11 contents.
-4. Commit/publish the changed files.
-5. Open the normal site address and confirm Alpha 0.6.11 appears.
-6. Because this build deliberately changes cache behaviour, Safari may refresh once automatically when the new service worker takes control.
+3. Replace the existing GitHub Pages repository files with the COMPLETE Alpha 0.6.12 contents.
+4. Commit/publish all changed files.
+5. Open the normal site address (not Private Browsing) and confirm Alpha 0.6.12 appears.
+6. Safari may refresh once when the new service worker takes control.
 
 FOUNDER-TRIAL LIMITATIONS
-- This remains a static GitHub Pages founder trial with data primarily stored in each browser/device.
-- Secure accounts and true cross-device sync require a protected backend in a later phase.
-- Camera/barcode, speech and nutrition-panel OCR still require real-device testing after deployment.
-- Online product records can be incomplete or outdated and must be checked against the package.
+- Secure accounts and true automatic cross-device sync still require a protected backend.
+- Camera/barcode, Web Share/AirDrop, speech and nutrition-panel OCR require real-device testing after deployment.
+- Online product records can be incomplete or outdated and should be checked against the package.
+- Allergy/dietary suggestion filtering remains a founder-trial aid and is not a clinical safety guarantee.
 - Nutrition calculations and suggestions remain product-development features, not medical advice.

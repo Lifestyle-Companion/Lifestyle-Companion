@@ -1034,6 +1034,7 @@ $("finish-setup").addEventListener("click", () => {
   data.goalMilestones = [];
   data.completed = true;
   data.firstHomePending = false;
+  data.profileStartedDate = data.profileStartedDate || todayISO();
   if(!data.weightHistory.length){
     const startingDate=todayISO();data.health.startingWeightDate=startingDate;
     data.weightHistory.push({date:startingDate,weightKg:data.health.startingWeightKg,note:"Starting weight",isStartingWeight:true,timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
@@ -1117,9 +1118,13 @@ function renderHome(){
   $("message-text").textContent = item.text;
   updateCompanionUI();
 }
+function personalityGuidance(companion){
+  const bank={calm:["No rush. Pick one useful thing to do next and we’ll build from there.","A steady day beats a perfect one. Let’s keep the next choice simple."],encouraging:["You’re moving forward. Let’s make the next meal fit the day you actually have.","Good start. We can adjust the plan as the day changes."],steady:["Keep it practical. Familiar food and a clear portion are a perfectly good plan.","No fuss. Let’s sort the next meal and get on with the day."],thoughtful:["Let’s check the details that matter, then leave the rest alone.","A quick portion and ingredient check can make this much clearer."],loyal:["Busy day? I’m still here. We’ll adapt the plan instead of throwing it out.","Tell me what changed and we’ll work around it."],curious:["There may be an easy swap here. Want to see another way to build this meal?","Let’s find an option you’ll actually enjoy eating."],"light-hearted":["No food police here. Let’s find the next useful choice and keep moving.","A rough meal doesn’t ruin a good day. What’s next?"],social:["Tell me what’s happening today and we’ll fit the food around real life.","Eating with other people counts as real life, so let’s plan for it."],planner:["Let’s look at the whole day before we worry about one meal.","We can reserve room for the meal that matters most and build around it."],confident:["Let’s keep the non-negotiables clear and make the rest easy.","One clear decision at a time. I’ll flag anything that doesn’t fit."],energetic:["Let’s get the important bit sorted quickly and keep moving.","Quick win: choose the next meal, then we’re done here."],direct:["The numbers are information, not a drama. Let’s use them and move on.","Keep it realistic. We only need the next decision to make sense."],protective:["I’ll keep an eye on the restrictions that matter while you choose freely around them.","Safety first, then flexibility. Let’s check this one properly."],resourceful:["If the ideal option isn’t available, we’ll find the best realistic one.","There’s nearly always another workable option. Let’s find it."],relaxed:["No need to force it. A plan that feels natural is easier to keep.","Slow it down. One comfortable adjustment is enough."],patient:["There’s no rush. Steady choices are doing the work over time.","We’re looking for progress you can live with, not speed."]};
+  const pool=bank[companion?.personality]||HOME_GUIDANCE;return pool[Math.floor(Math.random()*pool.length)];
+}
 $("home-companion").addEventListener("click", () => {
   const companion = selectedCompanionDefinition();
-  const message = currentDayIsFasting() && companion?.fasting ? companion.fasting : HOME_GUIDANCE[Math.floor(Math.random() * HOME_GUIDANCE.length)];
+  const message = currentDayIsFasting() && companion?.fasting ? companion.fasting : personalityGuidance(companion);
   const full = data.companion.enabled ? `${displayName() ? displayName() + ", " : ""}${message}` : message;
   toast(full);
   if(data.companion.enabled) speakText(personaliseSpeech(full));
@@ -1276,7 +1281,9 @@ function setCheckinSaveState(saved){const b=$("save-checkin");if(!b)return;b.dis
 function markCheckinDirty(){if(!lastSavedCheckinSnapshot)return;setCheckinSaveState(checkinSnapshotsEqual(currentCheckinSnapshot(),lastSavedCheckinSnapshot));}
 function renderWeightCheckin(){
   const latest=latestApplicableWeightRecord();
-  $("checkin-date").value = todayISO();updateCheckinDateDisplay();
+  $("checkin-date").value = todayISO();
+  const profileStart=data.profileStartedDate||data.health?.startingWeightDate||todayISO();
+  $("checkin-date").min=profileStart;$("checkin-date").max=todayISO();updateCheckinDateDisplay();
   $("checkin-weight").value = formatWeight(latest?.weightKg || data.health.currentWeightKg || data.health.startingWeightKg);
   $("checkin-goal").value = formatWeight(data.health.selectedGoalWeight || data.health.recommendedGoalWeight);
   if($("checkin-note"))$("checkin-note").value="";
@@ -1289,6 +1296,9 @@ function renderWeightCheckin(){
 $("checkin-date")?.addEventListener("input",()=>{updateCheckinDateDisplay();markCheckinDirty();});$("checkin-date")?.addEventListener("change",()=>{updateCheckinDateDisplay();markCheckinDirty();});
 function saveCheckinSnapshot(snapshot,{outlierConfirmed=false}={}){
   const date=snapshot.date,weight=snapshot.weight,goal=snapshot.goal,note=snapshot.note||"Progress Check-In";
+  const profileStart=data.profileStartedDate||data.health?.startingWeightDate||todayISO();
+  if(date>todayISO()) return friendlyError("checkin-error","Future-dated weight check-ins are not allowed.","Choose today or an earlier date.");
+  if(date<profileStart) return friendlyError("checkin-error",`Weight entries cannot be dated before your Companion profile started on ${friendlyWeightDate(profileStart)}.`,`Choose your profile start date or later.`);
   if(checkinSnapshotsEqual(snapshot,lastSavedCheckinSnapshot)){toast("Already Saved — No Changes To Save");return;}
   if(!weight || weight < 30 || weight > 400) return friendlyError("checkin-error", "Please enter a valid weight.", "Please check your weight.");
   const latestBefore=latestApplicableWeightRecord(),currentWeightBefore=Number(latestBefore?.weightKg || data.health.currentWeightKg || weight);

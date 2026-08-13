@@ -46,4 +46,4 @@ FOUNDER-TRIAL LIMITATIONS
 - Allergy/dietary suggestion filtering remains a founder-trial aid and is not a clinical safety guarantee.
 - Nutrition calculations and suggestions remain product-development features, not medical advice.
 
-Alpha 0.6.17: focused food-capture, weight-date, planner, progress-language and Companion/Home-circle polish build. See RELEASE_NOTES_ALPHA_0_6_14.txt and TESTING_CHECKLIST_ALPHA_0_6_14.txt.
+Alpha 0.6.18: focused food-capture, weight-date, planner, progress-language and Companion/Home-circle polish build. See RELEASE_NOTES_ALPHA_0_6_14.txt and TESTING_CHECKLIST_ALPHA_0_6_14.txt.

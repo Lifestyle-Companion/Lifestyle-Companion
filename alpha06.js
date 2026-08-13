@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.16",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.18",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -2522,3 +2522,156 @@ const alpha0617ResourceFoodRowBase=resourceFoodRow;
 resourceFoodRow=function(food){let html=alpha0617ResourceFoodRowBase(food);const cal=Number(food?.nutrients?.calories);const caloric=/cake|bavarian|pie|sausage|bread|biscuit|cracker|chocolate|bar|cereal|spread|margarine|cheese|meat|chicken|beef|pork/i.test(`${food?.name||''} ${food?.category||''}`);if(cal===0&&caloric)html=html.replace(/0\s*Cal/g,'Nutrition incomplete').replace('resource-row ','resource-row food-warning ');return html;};
 
 ext.version='0.6.17';saveExt();
+
+
+/* ================================================================
+   Alpha 0.6.18 founder workflow, recent-food and Australian-menu patch
+   ================================================================ */
+const ALPHA0618_BUILD='0.6.18';
+
+/* A. Progress periods exactly as agreed: 7d, 2w, 30d, 3m, 6m, 1y, All.
+   The old developer-style Food Diary Days summary is removed, not merely
+   visually de-emphasised. */
+(function alpha0618Periods(){
+  const period=q('.history-period'); if(!period)return;
+  period.innerHTML='<button data-period="7">7 Days</button><button data-period="14">2 Weeks</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button>';
+})();
+const alpha0618RenderHistoryBase=renderHistory;
+renderHistory=function(period){
+  alpha0618RenderHistoryBase(period);
+  const summary=by('history-summary'); if(summary){summary.innerHTML='';summary.style.display='none';summary.closest('.card')?.classList.add('alpha0618-history-controls-only');}
+};
+
+/* B. Natural piece units. Online/community databases often expose only 100 g;
+   HEC can still let a person say “4 fish fingers”. The conversion is explicitly
+   labelled as an estimate unless a package-verified per-piece weight exists. */
+function alpha0618NaturalUnits(food){
+  if(!food)return food;
+  const name=normalise(food.name);
+  if(/fish finger/.test(name) && !Object.keys(food.units||{}).some(k=>/finger|piece|item/.test(k))){
+    const c=clone(food), baseG=/100\s*g/i.test(c.serving||'')?100:(n(c.defaultUnit==='g'&&c.defaultAmount)||100);
+    c.units={...(c.units||{}),finger:25/baseG};
+    c.unitLabels={...(c.unitLabels||{}),finger:'fish finger (est. 25 g)'};
+    c.aliases=[...(c.aliases||[]),'fish finger','fish fingers','finger'];
+    return c;
+  }
+  return food;
+}
+const alpha0618GetFoodBase=getFood;
+getFood=function(id){return alpha0618NaturalUnits(alpha0618GetFoodBase(id));};
+
+/* C. Copy means copy anywhere: same date is allowed and destination meal is
+   explicit. This fixes “Breakfast tomorrow only” when the user meant Dinner today. */
+requestCopyEntry=function(id){
+  const found=findEntry(id);if(!found)return;
+  const meals=['Breakfast','Lunch','Dinner','Snacks','Other'];
+  openModal(`Copy ${found.entry.name}`,'Choose where the independent copy should go.','Copy',()=>{
+    const date=by('modal-copy-date')?.value||found.date,meal=by('modal-copy-meal')?.value||found.entry.meal;
+    const copy={...clone(found.entry),id:uid('entry'),date,localDate:date,meal,status:'eaten',timeZone:activeTimeZone(),createdAt:new Date().toISOString()};
+    ext.diary[date]||=[];ext.diary[date].push(copy);saveExt();
+    if(date===ext.ui.diaryDate)renderDiary();
+    showActionToast(`${copy.name} copied to ${meal} on ${relativeDateLabel(date)}.`,()=>{ext.diary[date]=(ext.diary[date]||[]).filter(e=>e.id!==copy.id);saveExt();if(date===ext.ui.diaryDate)renderDiary();},8000);
+  },`<label>Copy To Date<input id="modal-copy-date" type="date" value="${esc(found.date)}"></label><label>Copy To Meal<select id="modal-copy-meal">${meals.map(m=>`<option ${m===found.entry.meal?'selected':''}>${m}</option>`).join('')}</select></label>`);
+};
+
+/* D. Recent foods retain the current meal context/filter. Tapping the food row
+   opens the normal quantity/unit review; the + control remains a deliberate
+   quick-add. Rapid double taps are ignored for 650 ms, but intentional repeats
+   are still allowed after feedback (e.g. three cappuccinos). */
+ext.ui.recentMealFilter ||= '';
+function alpha0618RecentTargetMeal(entry){return ext.ui.pendingMeal||ext.ui.recentMealFilter||entry?.meal||'Snacks';}
+function alpha0618RenderRecent(){
+  const targetDate=ext.ui.recentPlanMode?(ext.ui.plannerDate||isoToday()):(ext.ui.diaryDate||isoToday());
+  if(!ext.ui.recentMealFilter)ext.ui.recentMealFilter=ext.ui.pendingMeal||'All';
+  const cutoff=shiftISO(isoToday(),-13),all=[];
+  Object.entries(ext.diary||{}).forEach(([date,items])=>{if(date<cutoff||date>isoToday())return;(items||[]).forEach(e=>{if(e.status!=='skipped')all.push({date,...e});});});
+  all.sort((a,b)=>`${b.date} ${b.time||''}`.localeCompare(`${a.date} ${a.time||''}`));
+  const filter=ext.ui.recentMealFilter||'All',filtered=filter==='All'?all:all.filter(e=>e.meal===filter);
+  const groups=[];for(const e of filtered){let g=groups.find(x=>x.date===e.date&&x.meal===e.meal);if(!g){g={date:e.date,meal:e.meal,items:[]};groups.push(g);}g.items.push(e);}
+  const chips=['All','Breakfast','Lunch','Dinner','Snacks','Other'].map(m=>`<button type="button" data-alpha0618-recent-filter="${m}" class="${m===filter?'active':''}">${m}</button>`).join('');
+  const html=groups.map(g=>`<section class="recent-meal-group"><header><div><strong>${esc(g.meal)} · Recent Meal</strong><small>${esc(relativeDateLabel(g.date))}</small></div>${g.items.length>1?`<button data-recent-meal-add="${esc(g.date)}|${esc(g.meal)}">Add Meal To Diary</button>`:''}</header>${g.items.map(e=>`<div class="recent-entry-row alpha0618-recent-row" data-alpha0618-recent-edit="${esc(e.id)}"><span><strong>${esc(e.name)}</strong><small>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)} · ${formatNumber(e.nutrients?.calories)} Cal</small></span><button data-recent-entry-add="${esc(e.id)}" aria-label="Quick add ${esc(e.name)}">＋ Add Food</button></div>`).join('')}</section>`).join('');
+  by('food-results').innerHTML=`<div class="recent-meal-filter"><span>Recent 14 Days</span><div>${chips}</div><small>Tap a food to change its amount or unit. Use + Add Food for a quick repeat.</small></div>${html||'<div class="resource-empty"><strong>No Recent Foods Yet.</strong><p>Foods used in the last 14 days will appear here.</p></div>'}`;
+}
+const alpha0618RenderLibraryBase=renderLibrary;
+renderLibrary=function(){alpha0618RenderLibraryBase();if((ext.ui.libraryTab||'all')==='recent')alpha0618RenderRecent();};
+let alpha0618RecentLockUntil=0;
+document.addEventListener('click',e=>{
+  const filter=e.target.closest('[data-alpha0618-recent-filter]');if(filter){ext.ui.recentMealFilter=filter.dataset.alpha0618RecentFilter;saveExt();alpha0618RenderRecent();return;}
+  const quick=e.target.closest('[data-recent-entry-add]');if(quick){const now=Date.now();if(now<alpha0618RecentLockUntil){e.preventDefault();e.stopImmediatePropagation();return;}alpha0618RecentLockUntil=now+650;return;}
+  const row=e.target.closest('[data-alpha0618-recent-edit]');if(row&&!e.target.closest('button')){const found=findEntry(row.dataset.alpha0618RecentEdit);if(!found)return;const food=getFood(found.entry.foodId)||snapshotFood(found.entry),targetMeal=alpha0618RecentTargetMeal(found.entry),targetDate=ext.ui.recentPlanMode?(ext.ui.plannerDate||isoToday()):(ext.ui.diaryDate||isoToday());prepareEntry(food,{date:targetDate,meal:targetMeal,status:'eaten',amount:found.entry.amount,unit:found.entry.unit});}
+},true);
+
+/* Returning to Recent keeps the destination meal instead of snapping back to
+   Breakfast simply because Breakfast was the last filter shown. */
+document.addEventListener('click',e=>{const tab=e.target.closest('[data-library-tab="recent"]');if(tab&&ext.ui.pendingMeal)ext.ui.recentMealFilter=ext.ui.pendingMeal;},true);
+
+/* E. Reliable search Back. Capture the click before older handlers run and
+   restore the exact search state once. */
+by('entry-editor-back')?.addEventListener('click',e=>{
+  const snap=ext.ui.foodSearchSnapshot;if(!snap)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  ext.ui.foodSearch=snap.query||'';ext.ui.libraryTab=snap.tab||'all';saveExt();
+  openFeature('food-library');setTimeout(()=>{if(by('food-search'))by('food-search').value=snap.query||'';renderLibrary();window.scrollTo(0,snap.scrollY||0);},50);
+},true);
+
+/* F. DD-like guided sausage path. Search words already supplied by the user
+   skip redundant questions. This is a generic Australian estimate, not a
+   claim about a butcher/brand product. */
+function alpha0618SausageDefaults(query){const q=alpha0617SearchText(query);return {meat:/\bpork\b/.test(q)?'Pork':/\bchicken\b/.test(q)?'Chicken':/\blamb\b/.test(q)?'Lamb':/\bkangaroo\b/.test(q)?'Kangaroo':/\bvegetarian|veggie\b/.test(q)?'Vegetarian':/\bbeef\b/.test(q)?'Beef':'',flavour:/herb|garlic|flavour|flavored|flavoured/.test(q)?'Flavoured':/\bplain\b/.test(q)?'Plain':'',cook:/barbecue|barbecued|bbq/.test(q)?'Barbecued':/\bgrill/.test(q)?'Grilled':/\bfried/.test(q)?'Fried':/\bbaked/.test(q)?'Baked':''};}
+function alpha0618Choice(title,choices,onPick){openModal('Sausage',title,'Close',()=>{},`<div class="alpha0618-wizard-list">${choices.map(c=>`<button type="button" class="secondary wide" data-alpha0618-wizard-choice="${esc(c)}">${esc(c)}</button>`).join('')}</div>`);by('a05-modal-confirm')?.classList.add('hidden');qa('[data-alpha0618-wizard-choice]').forEach(b=>b.addEventListener('click',()=>{closeModal();onPick(b.dataset.alpha0618WizardChoice);},{once:true}));}
+function alpha0618SausageFood(state){
+  const per100={Beef:[280,16,6,22,8,0,1,827],Pork:[300,16,5,24,9,0,1,780],Chicken:[201,17,5,13,4,0,1,650],Lamb:[285,17,5,22,9,0,1,760],Kangaroo:[190,23,4,9,3,0,1,650],Vegetarian:[190,14,11,10,2,4,2,620]}[state.meat]||[260,16,6,19,7,0,1,750];
+  const grams={"Long Thin":73,"Long Thick":101,"Cocktail":38}[state.size]||100;const ratio=grams/100;
+  const vals=per100.map((v,i)=>i===7?v*ratio:v*ratio); const names=['calories','protein','carbs','fat','satFat','fibre','sugar','sodium'];const nuts={};names.forEach((k,i)=>nuts[k]=round1(vals[i]));
+  const id=`guided-sausage-${Date.now()}`;const f={id,name:`${state.meat} Sausage, ${state.flavour}, ${state.cook}`,brand:'Generic Australian Guided Entry',category:'Meat & Seafood',country:'Australia',aliases:['sausage','snag'],defaultAmount:1,defaultUnit:'item',units:{item:1,g:1/grams},unitLabels:{item:`${state.size.toLowerCase()} sausage (${grams} g)`,g:'g'},serving:`1 ${state.size.toLowerCase()} sausage (${grams} g)`,nutrients:nuts,score:5,source:'HEC Guided Australian Estimate · Verify Butcher/Package for Exact Values',verified:false};FOODS.push(f);FOOD_BY_ID.set(id,f);return f;
+}
+function alpha0618StartSausageWizard(query){const s=alpha0618SausageDefaults(query);const nextMeat=()=>s.meat?nextFlavour():alpha0618Choice('What kind of sausage?',['Beef','Pork','Chicken','Lamb','Kangaroo','Vegetarian','Other'],v=>{s.meat=v==='Other'?'Beef':v;nextFlavour();});const nextFlavour=()=>s.flavour?nextCook():alpha0618Choice('Is it plain or flavoured?',['Plain','Flavoured'],v=>{s.flavour=v;nextCook();});const nextCook=()=>s.cook?nextSize():alpha0618Choice('How was it cooked?',['Grilled','Barbecued','Baked','Fried','Air-Fried','Raw'],v=>{s.cook=v;nextSize();});const nextSize=()=>alpha0618Choice('Choose the closest size. You can use grams instead.',['Long Thin','Long Thick','Cocktail','Grams'],v=>{s.size=v==='Grams'?'Long Thin':v;const f=alpha0618SausageFood(s);prepareEntry(f,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||''});if(v==='Grams'){setTimeout(()=>{if(by('entry-unit'))by('entry-unit').value='g';if(by('entry-amount'))by('entry-amount').value=100;updateEntryPreview();},20);}});nextMeat();}
+
+/* G. Australian chain menus. These are menu-discovery guides. Items for which
+   this static founder build does not hold current full nutrition are clearly
+   marked “Current nutrition verification required” rather than added as 0 Cal.
+   Current official menu names are intentionally separated from nutrition data
+   so a future protected updater can refresh values without redesigning search. */
+const ALPHA0618_CHAIN_MENUS={
+  kfc:{label:'KFC Australia',aliases:['kfc'],items:['Zinger® Burger','Original Crispy Burger','Original Crispy Bacon & Cheese Burger','Original Crispy BBQ Bacon Stacker® Burger','Double Tender™ Burger','Zinger® Bacon & Cheese Burger','Zinger Stacker® Burger','Zinger® Crunch Burger™','Original Recipe Chicken','Wicked Wings®','Original Tenders™','Nuggets','Chips','Potato & Gravy']},
+  mcd:{label:"McDonald’s Australia",aliases:['mcdonalds','mcdonald s','maccas','macca s'],items:['Big Mac®','Double Big Mac®','Quarter Pounder®','Double Quarter Pounder®','Cheeseburger','Double Cheeseburger','Hamburger','McSpicy®','McCrispy®','McChicken®','Filet-O-Fish®','Bacon & Egg McMuffin®','Sausage McMuffin®','Sausage & Egg McMuffin®','Mighty McMuffin®','Big Brekkie Burger','Brekkie McWrap®','Hotcakes with Butter & Syrup','Hash Brown','Chicken McNuggets®']},
+  hj:{label:"Hungry Jack’s Australia",aliases:['hungry jacks','hungry jack s','hungryjack'],items:['Whopper®','Double Whopper®','Ultimate Double Whopper®','Whopper® Cheese','Angry Whopper®','Bacon Deluxe','Cowboy Whopper®','BBQ Brekky Wrap','Big BBQ Brekky Wrap','Mega BBQ Brekky Wrap',"Jack’s Brekky Roll",'Cheeseburger','Grilled Chicken Burger','Nuggets','Hash Browns']}
+};
+function alpha0618ChainFor(query){const q=alpha0617SearchText(query).replace(/'/g,' ');return Object.values(ALPHA0618_CHAIN_MENUS).find(c=>c.aliases.some(a=>q.includes(a)))||null;}
+function alpha0618ChainGuide(query){const c=alpha0618ChainFor(query);if(!c)return'';const q=alpha0617SearchText(query),tail=q.replace(c.aliases.find(a=>q.includes(a))||'','').trim();let items=c.items.filter(x=>!tail||normalise(x).split(' ').some(t=>normalise(tail).includes(t))||normalise(x).includes(tail));if(!items.length)items=c.items;return `<section class="alpha0618-chain-guide"><strong>${esc(c.label)}</strong><small>Australian menu guide · choose an item. HEC will never turn missing nutrition into 0 Cal.</small>${items.slice(0,20).map(x=>`<button type="button" data-alpha0618-chain-item="${esc(c.label)}|${esc(x)}">${esc(x)}</button>`).join('')}</section>`;}
+function alpha0618ChainItem(chain,name){
+  // A small set has current official data in this founder build; all other menu
+  // names remain discoverable but must be verified before Diary entry.
+  const known={
+    "Hungry Jack’s Australia|Whopper®":{kj:2437,protein:28.1,fat:45.2,satFat:13.4,carbs:46.6,sugar:11.6,sodium:846},
+    "Hungry Jack’s Australia|Whopper® Cheese":{kj:2747,protein:32.7,fat:51,satFat:17.2,carbs:47.5,sugar:12.2,sodium:1162},
+    "Hungry Jack’s Australia|BBQ Brekky Wrap":{kj:2469,protein:37.2,fat:33.2,satFat:14.4,carbs:35.8,sugar:8.5,sodium:1024},
+    "Hungry Jack’s Australia|Jack’s Brekky Roll":{kj:2477,protein:34.7,fat:36.9,satFat:15.7,carbs:30.9,sugar:7.4,sodium:1050},
+    "KFC Australia|Zinger® Burger":{kj:1874}
+  }[`${chain}|${name}`];
+  if(!known)return null;const cal=Math.round(known.kj/4.184);return {id:`chain-${Date.now()}`,name,brand:chain,category:'Takeaway / Restaurant',country:'Australia',aliases:[chain,name],defaultAmount:1,defaultUnit:'serve',units:{serve:1},unitLabels:{serve:'1 item'},serving:'1 item',nutrients:{calories:cal,protein:known.protein??null,carbs:known.carbs??null,fat:known.fat??null,satFat:known.satFat??null,fibre:null,sugar:known.sugar??null,sodium:known.sodium??null},score:6,source:`Current Australian Official Menu Data Snapshot · Alpha 0.6.18`,verified:true};
+}
+function alpha0618ShowUnverifiedChainItem(chain,name){openModal(name,`${chain} currently lists this item, but Alpha 0.6.18 does not yet hold a complete current nutrition record for it. HEC will not add a false 0-Cal item.`,`Close`,()=>{},`<div class="status-box"><strong>Current Nutrition Verification Required</strong><p>Use Read Nutrition Panel / package data where applicable, or wait for the protected menu updater planned for the shared-data phase.</p></div>`);}
+
+document.addEventListener('click',e=>{const w=e.target.closest('[data-alpha0618-sausage-wizard]');if(w){alpha0618StartSausageWizard(by('food-search')?.value||'sausage');return;}const item=e.target.closest('[data-alpha0618-chain-item]');if(item){const [chain,name]=item.dataset.alpha0618ChainItem.split('|'),f=alpha0618ChainItem(chain,name);if(!f){alpha0618ShowUnverifiedChainItem(chain,name);return;}FOODS.push(f);FOOD_BY_ID.set(f.id,f);prepareEntry(f,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||''});}},true);
+
+/* H. Search presentation prioritises guided intent and Australia. “Burger King”
+   is suppressed as an Australian chain query; Hungry Jack’s is the local brand. */
+const alpha0618RenderLibraryGuidesBase=renderLibrary;
+renderLibrary=function(){
+  alpha0618RenderLibraryGuidesBase();
+  const results=by('food-results'),query=by('food-search')?.value||'';if(!results||!query)return;
+  const qn=alpha0617SearchText(query);
+  if(/\bburger king\b/.test(qn)){results.innerHTML='<div class="resource-empty"><strong>Burger King Is Not An Australian Chain.</strong><p>Try Hungry Jack’s for the Australian menu, or search the individual food name.</p></div>';return;}
+  const chain=alpha0618ChainGuide(query);if(chain)results.insertAdjacentHTML('afterbegin',chain);
+  if(/\bsausage\b/.test(qn)&&!/\bsausage roll\b/.test(qn))results.insertAdjacentHTML('afterbegin',`<section class="alpha0618-primary-intent"><button type="button" data-alpha0618-sausage-wizard="1"><strong>Sausage — Guided Entry</strong><small>Choose meat → plain/flavoured → cooking method → size/grams. Words you already typed are skipped.</small></button></section>`);
+};
+
+/* I. Chain aliases and natural Australian brand wording rank properly. */
+const alpha0618SearchTextBase=alpha0617SearchText;
+function alpha0618SearchText(value){return alpha0618SearchTextBase(value).replace(/\bmaccas\b/g,'mcdonalds').replace(/\bmacca s\b/g,'mcdonalds').replace(/\bhungry jack s\b/g,'hungry jacks');}
+const alpha0618RankBase=searchRank;
+searchRank=function(food,query){const q=alpha0618SearchText(query);if(/\bburger king\b/.test(q)&&normalise(food.brand).includes('burger king'))return 0;return alpha0618RankBase(food,q);};
+
+/* J. Version/data continuity. */
+ext.version='0.6.18';saveExt();

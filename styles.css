@@ -409,3 +409,14 @@ fieldset>legend,.section-heading h3,.card>h3,.card>h4{font-size:clamp(1.18rem,3.
 
 /* Alpha 0.6.17 */
 .alpha0617-guide{margin:10px 0 14px;padding:14px;border:1px solid #cfd8d2;border-radius:14px;background:#fff}.alpha0617-guide>strong{display:block;font-size:1.05rem}.alpha0617-guide>small{display:block;margin-top:4px;line-height:1.35}.alpha0617-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}.alpha0617-chips button{border:1px solid #aebbb4;background:#f7faf8;border-radius:999px;padding:8px 11px;font:inherit}.alpha0617-overall-weight{display:flex;flex-direction:column;gap:2px;margin:0 0 10px}.alpha0617-overall-weight strong{font-size:1.55rem}.alpha0617-overall-weight span{font-weight:700}.food-warning .resource-main small{font-weight:600}
+
+
+/* Alpha 0.6.18 */
+#history-summary{display:none!important}.alpha0618-history-controls-only{padding-bottom:18px}
+.alpha0618-recent-row{cursor:pointer}.recent-meal-filter small{display:block;margin-top:8px;color:var(--muted)}
+.alpha0618-primary-intent,.alpha0618-chain-guide{margin:10px 0 14px;padding:12px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.82)}
+.alpha0618-primary-intent>button{width:100%;text-align:left;border:0;background:transparent;padding:6px;color:var(--ink)}
+.alpha0618-primary-intent strong,.alpha0618-chain-guide>strong{display:block;font-size:1.06rem}.alpha0618-primary-intent small,.alpha0618-chain-guide>small{display:block;color:var(--muted);margin-top:4px}
+.alpha0618-chain-guide button{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:12px 4px;color:var(--ink)}
+.alpha0618-chain-guide button:first-of-type{margin-top:8px}.alpha0618-wizard-list{display:grid;gap:8px}
+@media(max-width:520px){.history-period{grid-template-columns:repeat(3,1fr)}.alpha0618-chain-guide button{min-height:46px}}

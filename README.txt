@@ -46,4 +46,4 @@ FOUNDER-TRIAL LIMITATIONS
 - Allergy/dietary suggestion filtering remains a founder-trial aid and is not a clinical safety guarantee.
 - Nutrition calculations and suggestions remain product-development features, not medical advice.
 
-Alpha 0.6.18: universal guided food-search architecture, Australian menu localisation, Recent/copy workflow fixes, natural units and expanded Weight Trend periods. See RELEASE_NOTES_ALPHA_0_6_18.txt and TESTING_CHECKLIST_ALPHA_0_6_18.txt.
+Alpha 0.6.19: universal guided food-search architecture, Australian menu localisation, Recent/copy workflow fixes, natural units and expanded Weight Trend periods. See RELEASE_NOTES_ALPHA_0_6_18.txt and TESTING_CHECKLIST_ALPHA_0_6_18.txt.

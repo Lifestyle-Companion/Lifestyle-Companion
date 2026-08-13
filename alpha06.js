@@ -818,10 +818,33 @@ function cachedOnlineMatches(query){
   return (ext.onlineFoods||[]).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>=620).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name)).map(x=>x.food);
 }
 function renderFoodLiveMatches(query){
-  const box=by("food-live-results");if(!box)return;const term=String(query||"").trim();if(!term||document.activeElement!==by("food-search")){box.classList.add("hidden");box.innerHTML="";return;}
-  const ranked=allFoods().filter(food=>food.category!=="Recipe").map(food=>({food,rank:searchRank(food,term)})).filter(x=>x.rank>=520).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name)).slice(0,3);
-  if(!ranked.length){box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Keep typing for a closer match.</small></div>`;box.classList.remove("hidden");return;}
-  box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Tap a result without hiding the keyboard.</small></div>${ranked.map(({food})=>`<button type="button" class="live-match-row" data-food-add="${esc(food.id)}"><span><strong>${esc(food.name)}</strong><small>${esc([food.brand,food.serving].filter(Boolean).join(" · "))}</small></span><b>＋</b></button>`).join("")}`;box.classList.remove("hidden");
+  const box=by("food-live-results");if(!box)return;const term=String(query||"").trim();
+  if(!term||document.activeElement!==by("food-search")){box.classList.add("hidden");box.innerHTML="";return;}
+
+  // Alpha 0.6.19: the live panel is a GUIDE FIRST surface. Database rows may
+  // support the guide, but they are never allowed to replace the guided path.
+  if(typeof alpha0618R2GuideLabels==="function" && typeof alpha0618R2Text==="function"){
+    const qn=alpha0618R2Text(term);
+    if(/\bburger king\b/.test(qn)){
+      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.19</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
+      box.classList.remove("hidden");return;
+    }
+    const chain=typeof alpha0618ChainFor==="function"?alpha0618ChainFor(term):null;
+    if(chain){
+      const alias=(chain.aliases||[]).find(a=>qn.includes(a))||"";
+      const tail=qn.replace(alias,"").trim();
+      const items=(chain.items||[]).filter(x=>!tail||alpha0618R2Text(x).includes(tail)).slice(0,3);
+      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.19</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
+      box.classList.remove("hidden");return;
+    }
+    const guides=alpha0618R2GuideLabels(term);
+    const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · choose type, preparation and amount</small></span><b>›</b></button>`).join("");
+    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.19</small></div>${guideHtml}`;
+    box.classList.remove("hidden");return;
+  }
+
+  // Safe fallback used only while the script is still initialising.
+  box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Preparing guided food choices…</small></div>`;box.classList.remove("hidden");
 }
 function renderLibrary(){
   qa("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab===activeLibraryTab()));
@@ -1521,7 +1544,7 @@ function init(){
 }
 
 /* ===== Alpha 0.6.16 integrated founder-testing refinements ===== */
-const BUILD='0.6.16';
+const BUILD='0.6.19';
 const DAY_MS=86400000;
 const el=id=>document.getElementById(id);
 const norm=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -2534,7 +2557,7 @@ const ALPHA0618_BUILD='0.6.18';
    visually de-emphasised. */
 (function alpha0618Periods(){
   const period=q('.history-period'); if(!period)return;
-  period.innerHTML='<button data-period="7">7 Days</button><button data-period="14">2 Weeks</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button>';
+  period.innerHTML='<button data-period="7">7 Days</button><button data-period="14">14 Days</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button>';
 })();
 const alpha0618RenderHistoryBase=renderHistory;
 renderHistory=function(period){
@@ -2684,7 +2707,7 @@ ext.version='0.6.18';saveExt();
    remain available underneath as evidence/data sources, but the first path
    presented to the user is a consistent guided refinement flow.
 */
-const ALPHA0618R2_BUILD='0.6.18-r2';
+const ALPHA0618R2_BUILD='0.6.19';
 
 const ALPHA0618_GUIDED_FAMILIES=[
   {key:'pie',label:'Pie',aliases:['pie','pies'],steps:[
@@ -2758,12 +2781,15 @@ function alpha0618R2Detect(step,text){
 }
 function alpha0618R2GuideLabels(query){
   const text=alpha0618R2Text(query),family=alpha0618R2Family(text),labels=[];
-  if(family.key==='pie'&&text.includes('curry'))labels.push({label:'Pie, Curry',family});
-  else if(family.key==='pie'&&text.includes('meat'))labels.push({label:'Pie, Meat',family});
-  else if(family.key==='bread'&&text.includes('white'))labels.push({label:'Bread, White',family});
-  else if(family.key==='sausage'&&['beef','pork','chicken','lamb'].some(x=>text.includes(x)))labels.push({label:`Sausage, ${alpha0618R2Title(['beef','pork','chicken','lamb'].find(x=>text.includes(x)))}`,family});
+  // Broad Pie deliberately starts with the two founder-requested pathways:
+  // Curry Pie first, then Pie for the full guided family chooser.
+  if(family.key==='pie'&&!/curry|meat|beef|lamb|chicken|vegetable|apple|fruit|sweet/.test(text)){
+    labels.push({label:'Pie, Curry',family},{label:'Pie',family});
+  }else if(family.key==='pie'&&text.includes('curry'))labels.push({label:'Pie, Curry',family},{label:'Pie',family});
+  else if(family.key==='pie'&&text.includes('meat'))labels.push({label:'Pie, Meat',family},{label:'Pie',family});
+  else if(family.key==='bread'&&text.includes('white'))labels.push({label:'Bread, White',family},{label:'Bread',family});
+  else if(family.key==='sausage'&&['beef','pork','chicken','lamb'].some(x=>text.includes(x)))labels.push({label:`Sausage, ${alpha0618R2Title(['beef','pork','chicken','lamb'].find(x=>text.includes(x)))}`,family},{label:'Sausage',family});
   else labels.push({label:family.label,family});
-  if(labels[0].label!==family.label)labels.push({label:family.label,family});
   return labels.slice(0,2);
 }
 function alpha0618R2BuildTerms(query,family,state){
@@ -2833,14 +2859,12 @@ renderFoodLiveMatches=function(query){
   const box=by('food-live-results');if(!box)return;const term=String(query||'').trim();
   if(!term||document.activeElement!==by('food-search')){box.classList.add('hidden');box.innerHTML='';return;}
   const qn=alpha0618R2Text(term);
-  if(/\bburger king\b/.test(qn)){box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules are applied first.</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
+  if(/\bburger king\b/.test(qn)){box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.19</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
   const chain=alpha0618ChainFor(term);
-  if(chain){const items=chain.items.filter(x=>{const tail=qn.replace(chain.aliases.find(a=>qn.includes(a))||'','').trim();return !tail||alpha0618R2Text(x).includes(tail);}).slice(0,3);box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first.</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
+  if(chain){const alias=chain.aliases.find(a=>qn.includes(a))||'',tail=qn.replace(alias,'').trim();const items=chain.items.filter(x=>!tail||alpha0618R2Text(x).includes(tail)).slice(0,3);box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.19</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
   const guides=alpha0618R2GuideLabels(term);
-  const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · refine type, preparation and amount</small></span><b>›</b></button>`).join('');
-  const limit=Math.max(0,3-guides.length),ranked=allFoods().filter(food=>food.category!=='Recipe').map(food=>({food,rank:searchRank(food,term)})).filter(x=>x.rank>=520).sort((a,b)=>b.rank-a.rank||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name)).slice(0,limit);
-  const raw=ranked.map(({food})=>`<button type="button" class="live-match-row" data-food-add="${esc(food.id)}"><span><strong>${esc(food.name)}</strong><small>${esc([food.brand,food.serving].filter(Boolean).join(' · '))}</small></span><b>＋</b></button>`).join('');
-  box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided choices are shown first for every food search.</small></div>${guideHtml}${raw}`;box.classList.remove('hidden');
+  const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · choose type, preparation and amount</small></span><b>›</b></button>`).join('');
+  box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.19</small></div>${guideHtml}`;box.classList.remove('hidden');
 };
 
 /* The full All Resources list follows the same rule: guided route first,
@@ -2867,4 +2891,4 @@ document.addEventListener('click',e=>{
   alpha0618StartUniversalWizard(query,label);
 },true);
 
-ext.version='0.6.18';ext.ui.universalGuidedSearch=true;saveExt();
+ext.version='0.6.19';ext.ui.universalGuidedSearch=true;saveExt();

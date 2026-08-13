@@ -13,3 +13,15 @@ ALPHA 0.6.18 FOUNDER TEST CHECKLIST
 11. Search Burger King; confirm HEC does not present it as an Australian chain and suggests Hungry Jack’s.
 12. Open an unverified chain item; confirm HEC says current nutrition verification is required instead of showing 0 Cal.
 13. Confirm profile, Diary, My Foods, recipes, weight history and shopping list survive the update.
+
+ALPHA 0.6.18 REVISION 2 — UNIVERSAL SEARCH PRIORITY TESTS
+[ ] Search CURRY PIE: first guided choices are Pie, Curry and Pie.
+[ ] Open Pie, Curry: already-typed Curry is not asked again; refine filling/protein/source, then choose closest record and amount/unit.
+[ ] Search SAUSAGE, WHITE BREAD, EGG, POTATO, RICE, PASTA, STEAK, FISH, YOGHURT, COFFEE and BURGER: each starts with the same guided-entry pattern rather than a raw database-only list.
+[ ] Search an unconfigured food such as DRAGONFRUIT: it still receives the universal guided shell and closest-record choice rather than bypassing the guided system.
+[ ] Search KFC, MCDONALD'S/MACCAS and HUNGRY JACK'S: Australian menu handling remains ahead of generic results.
+[ ] Search BURGER KING: HEC redirects the Australian context toward Hungry Jack's rather than ranking US Burger King foods first.
+[ ] Back from quantity review restores the exact search term and library context.
+[ ] Recent retains the current destination meal; tapping a recent row opens quantity/unit review; + Add Food remains intentional quick-repeat.
+[ ] Copy allows same day or another day and any of Breakfast/Lunch/Dinner/Snacks/Other.
+[ ] Weight Trend shows 7 Days, 2 Weeks, 30 Days, 3 Months, 6 Months, 1 Year and All.

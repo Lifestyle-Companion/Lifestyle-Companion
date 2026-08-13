@@ -2675,3 +2675,196 @@ searchRank=function(food,query){const q=alpha0618SearchText(query);if(/\bburger 
 
 /* J. Version/data continuity. */
 ext.version='0.6.18';saveExt();
+
+/* ================================================================
+   Alpha 0.6.18 REVISION 2 — Universal Guided Food Search Engine
+   ================================================================
+   Founder rule: guided entry is the normal search architecture for EVERY
+   food family, not a collection of one-off patches. Raw database results
+   remain available underneath as evidence/data sources, but the first path
+   presented to the user is a consistent guided refinement flow.
+*/
+const ALPHA0618R2_BUILD='0.6.18-r2';
+
+const ALPHA0618_GUIDED_FAMILIES=[
+  {key:'pie',label:'Pie',aliases:['pie','pies'],steps:[
+    {key:'style',question:'What kind of pie?',choices:['Curry','Meat','Chicken & Vegetable','Vegetable','Fruit / Sweet','Other'],detect:{'Curry':['curry'],'Meat':['meat','beef','lamb','steak'],'Chicken & Vegetable':['chicken vegetable','chicken & vegetable'],'Vegetable':['vegetable','veggie'],'Fruit / Sweet':['apple','fruit','sweet']}},
+    {key:'protein',question:'What is the main filling?',choices:['Beef','Lamb','Chicken','Vegetable','Other / Not Sure'],when:s=>['Curry','Meat','Other'].includes(s.style),detect:{Beef:['beef','steak'],Lamb:['lamb'],Chicken:['chicken'],Vegetable:['vegetable','veggie']}},
+    {key:'source',question:'Where is the pie from?',choices:['Homemade','Bakery / Fresh','Commercial / Ready To Eat','Purchased Frozen','Takeaway / Restaurant','Not Sure'],detect:{Homemade:['homemade','home made'], 'Bakery / Fresh':['bakery','fresh'], 'Commercial / Ready To Eat':['commercial','ready to eat'], 'Purchased Frozen':['frozen'], 'Takeaway / Restaurant':['takeaway','restaurant']}}
+  ]},
+  {key:'sausage',label:'Sausage',aliases:['sausage','sausages','snag','snags'],steps:[
+    {key:'protein',question:'What kind of sausage?',choices:['Beef','Pork','Chicken','Lamb','Kangaroo','Vegetarian','Other / Not Sure'],detect:{Beef:['beef'],Pork:['pork'],Chicken:['chicken'],Lamb:['lamb'],Kangaroo:['kangaroo'],Vegetarian:['vegetarian','veggie']}},
+    {key:'style',question:'Is it plain or flavoured?',choices:['Plain','Flavoured','Not Sure'],detect:{Plain:['plain'],Flavoured:['flavoured','flavored','garlic','herb','honey','bbq']}},
+    {key:'cook',question:'How was it prepared?',choices:['Grilled','Barbecued','Baked','Air-Fried','Fried','Raw','Other / Not Sure'],detect:{Grilled:['grilled','grill'],Barbecued:['barbecue','barbecued','bbq'],Baked:['baked'], 'Air-Fried':['air fried','air-fried'],Fried:['fried'],Raw:['raw']}}
+  ]},
+  {key:'egg',label:'Egg',aliases:['egg','eggs'],steps:[
+    {key:'cook',question:'How was the egg prepared?',choices:['Poached','Boiled','Fried','Microwave-Poached','Scrambled','Omelette','Baked','Raw','Other / Not Sure'],detect:{Poached:['poached'],Boiled:['boiled'],Fried:['fried'],'Microwave-Poached':['microwave poached','microwave-poached'],Scrambled:['scrambled'],Omelette:['omelette','omelet'],Baked:['baked'],Raw:['raw']}}
+  ]},
+  {key:'bread',label:'Bread',aliases:['bread','toast'],steps:[
+    {key:'style',question:'What kind of bread?',choices:['White','Wholemeal','Multigrain / Mixed Grain','Rye','Sourdough','Flatbread / Pita','Other / Not Sure'],detect:{White:['white'],Wholemeal:['wholemeal','whole wheat'],'Multigrain / Mixed Grain':['multigrain','mixed grain'],Rye:['rye'],Sourdough:['sourdough'],'Flatbread / Pita':['flatbread','flat bread','pita','lebanese']}},
+    {key:'form',question:'What form is it?',choices:['Sliced Bread','Toast','Bread Roll','Flatbread / Wrap','Other / Not Sure'],detect:{'Sliced Bread':['slice','sliced'],'Toast':['toast'],'Bread Roll':['roll'],'Flatbread / Wrap':['wrap','flatbread','pita']}}
+  ]},
+  {key:'potato',label:'Potato',aliases:['potato','potatoes','chips','fries'],steps:[
+    {key:'form',question:'What kind of potato?',choices:['Whole / Pieces','Mashed','Chips / Fries','Roast','Baked Potato','Hash Brown','Other / Not Sure'],detect:{'Whole / Pieces':['whole','pieces'],'Mashed':['mash','mashed'],'Chips / Fries':['chips','fries'],'Roast':['roast','roasted'],'Baked Potato':['baked'],'Hash Brown':['hash brown']}},
+    {key:'cook',question:'How was it prepared?',choices:['Boiled','Baked','Roasted','Fried','Air-Fried','Microwaved','Raw','Other / Not Sure'],detect:{Boiled:['boiled'],Baked:['baked'],Roasted:['roasted','roast'],Fried:['fried'],'Air-Fried':['air fried','air-fried'],Microwaved:['microwaved','microwave'],Raw:['raw']}}
+  ]},
+  {key:'rice',label:'Rice',aliases:['rice'],steps:[
+    {key:'style',question:'What kind of rice?',choices:['White','Brown','Basmati','Jasmine','Fried Rice','Risotto','Other / Not Sure'],detect:{White:['white'],Brown:['brown'],Basmati:['basmati'],Jasmine:['jasmine'],'Fried Rice':['fried rice'],Risotto:['risotto']}},
+    {key:'cook',question:'How is it recorded?',choices:['Cooked','Uncooked / Dry','Ready Meal / Takeaway','Other / Not Sure'],detect:{Cooked:['cooked'],'Uncooked / Dry':['uncooked','dry','raw'],'Ready Meal / Takeaway':['ready meal','takeaway']}}
+  ]},
+  {key:'pasta',label:'Pasta',aliases:['pasta','spaghetti','macaroni','noodles'],steps:[
+    {key:'form',question:'What kind of pasta or noodles?',choices:['Pasta','Spaghetti','Macaroni','Noodles','Lasagne','Other / Not Sure'],detect:{Pasta:['pasta'],Spaghetti:['spaghetti'],Macaroni:['macaroni'],Noodles:['noodles'],Lasagne:['lasagne','lasagna']}},
+    {key:'cook',question:'How is it recorded?',choices:['Cooked','Uncooked / Dry','With Sauce / Prepared Meal','Other / Not Sure'],detect:{Cooked:['cooked'],'Uncooked / Dry':['uncooked','dry'],'With Sauce / Prepared Meal':['sauce','prepared','meal']}}
+  ]},
+  {key:'meat',label:'Meat',aliases:['steak','beef','lamb','pork','chicken','turkey','meat'],steps:[
+    {key:'protein',question:'What kind of meat?',choices:['Beef','Lamb','Pork','Chicken','Turkey','Kangaroo','Other / Not Sure'],detect:{Beef:['beef','steak'],Lamb:['lamb'],Pork:['pork'],Chicken:['chicken'],Turkey:['turkey'],Kangaroo:['kangaroo']}},
+    {key:'cook',question:'How was it prepared?',choices:['Grilled','Barbecued','Roasted','Baked','Fried','Air-Fried','Stewed / Casserole','Raw','Other / Not Sure'],detect:{Grilled:['grilled','grill'],Barbecued:['barbecue','bbq'],Roasted:['roasted','roast'],Baked:['baked'],Fried:['fried'],'Air-Fried':['air fried','air-fried'],'Stewed / Casserole':['stewed','stew','casserole'],Raw:['raw']}}
+  ]},
+  {key:'fish',label:'Fish / Seafood',aliases:['fish','salmon','tuna','prawn','prawns','seafood','fish finger','fish fingers'],steps:[
+    {key:'form',question:'What kind of fish or seafood?',choices:['Fish Fillet / Piece','Fish Fingers','Salmon','Tuna','Prawns','Other / Not Sure'],detect:{'Fish Fingers':['fish finger'],'Salmon':['salmon'],Tuna:['tuna'],Prawns:['prawn'],'Fish Fillet / Piece':['fillet','fish']}},
+    {key:'cook',question:'How was it prepared?',choices:['Grilled','Baked','Fried','Air-Fried','Steamed','Raw','Other / Not Sure'],detect:{Grilled:['grilled'],Baked:['baked'],Fried:['fried'],'Air-Fried':['air fried','air-fried'],Steamed:['steamed'],Raw:['raw']}}
+  ]},
+  {key:'dairy',label:'Dairy Food',aliases:['yoghurt','yogurt','cheese','milk'],steps:[
+    {key:'form',question:'What dairy food is it?',choices:['Yoghurt','Cheese','Milk','Other / Not Sure'],detect:{Yoghurt:['yoghurt','yogurt'],Cheese:['cheese'],Milk:['milk']}},
+    {key:'style',question:'Choose the closest type.',choices:['Regular / Full Fat','Reduced Fat / Light','Low Fat','Flavoured','Plain','Other / Not Sure'],detect:{'Regular / Full Fat':['regular fat','full fat'],'Reduced Fat / Light':['reduced fat','light'],'Low Fat':['low fat'],Flavoured:['flavoured','flavored'],Plain:['plain']}}
+  ]},
+  {key:'cereal',label:'Breakfast Cereal',aliases:['cereal','weet bix','weet-bix','oats','porridge'],steps:[
+    {key:'form',question:'What kind of cereal?',choices:['Wheat Biscuit / Weet-Bix Style','Oats / Porridge','Flakes','Muesli / Granola','Other / Not Sure'],detect:{'Wheat Biscuit / Weet-Bix Style':['weet bix','weet-bix','wheat biscuit'],'Oats / Porridge':['oats','porridge'],'Flakes':['flakes'],'Muesli / Granola':['muesli','granola']}}
+  ]},
+  {key:'coffee',label:'Coffee / Hot Drink',aliases:['coffee','cappuccino','latte','flat white','mocha','tea'],steps:[
+    {key:'form',question:'What drink is it?',choices:['Cappuccino','Latte','Flat White','Long Black','Mocha','Tea','Other / Not Sure'],detect:{Cappuccino:['cappuccino'],Latte:['latte'],'Flat White':['flat white'],'Long Black':['long black'],Mocha:['mocha'],Tea:['tea']}},
+    {key:'style',question:'Choose the closest milk or style.',choices:['Full Cream Milk','Reduced Fat / Light Milk','Skim Milk','Plant Milk','No Milk / Black','Other / Not Sure'],detect:{'Full Cream Milk':['full cream'],'Reduced Fat / Light Milk':['light milk','reduced fat'],'Skim Milk':['skim'],'Plant Milk':['soy','almond','oat milk'],'No Milk / Black':['black']}}
+  ]},
+  {key:'burger',label:'Burger',aliases:['burger','hamburger','cheeseburger'],steps:[
+    {key:'protein',question:'What kind of burger?',choices:['Beef','Chicken','Fish','Vegetarian','Other / Not Sure'],detect:{Beef:['beef','hamburger','cheeseburger'],Chicken:['chicken'],Fish:['fish'],Vegetarian:['vegetarian','veggie']}},
+    {key:'source',question:'Where is it from?',choices:['Homemade','Takeaway / Restaurant','Packaged / Frozen','Other / Not Sure'],detect:{Homemade:['homemade'],'Takeaway / Restaurant':['takeaway','restaurant','kfc','mcdonalds','hungry jacks'],'Packaged / Frozen':['frozen','packaged']}}
+  ]},
+  {key:'sandwich',label:'Sandwich / Wrap',aliases:['sandwich','wrap','roll'],steps:[
+    {key:'form',question:'What is it?',choices:['Sandwich','Wrap','Roll','Toastie / Toasted Sandwich','Other / Not Sure'],detect:{Sandwich:['sandwich'],Wrap:['wrap'],Roll:['roll'],'Toastie / Toasted Sandwich':['toastie','toasted sandwich']}},
+    {key:'source',question:'Where is it from?',choices:['Homemade','Takeaway / Cafe','Packaged / Ready Made','Other / Not Sure'],detect:{Homemade:['homemade'],'Takeaway / Cafe':['takeaway','cafe'],'Packaged / Ready Made':['packaged','ready made']}}
+  ]}
+];
+
+function alpha0618R2Text(value){return alpha0618SearchText(value).replace(/[®™]/g,'').replace(/\s+/g,' ').trim();}
+function alpha0618R2Title(value){return String(value||'').trim().split(/\s+/).map(w=>w?`${w[0].toUpperCase()}${w.slice(1).toLowerCase()}`:'').join(' ');}
+function alpha0618R2Family(query){
+  const text=alpha0618R2Text(query);
+  return ALPHA0618_GUIDED_FAMILIES.find(f=>f.aliases.some(a=>text.includes(a)))||{key:'generic',label:alpha0618R2Title(text||'Food'),aliases:[text],steps:[]};
+}
+function alpha0618R2Detect(step,text){
+  if(!step?.detect)return'';
+  for(const [choice,words] of Object.entries(step.detect))if(words.some(w=>text.includes(w)))return choice;
+  return'';
+}
+function alpha0618R2GuideLabels(query){
+  const text=alpha0618R2Text(query),family=alpha0618R2Family(text),labels=[];
+  if(family.key==='pie'&&text.includes('curry'))labels.push({label:'Pie, Curry',family});
+  else if(family.key==='pie'&&text.includes('meat'))labels.push({label:'Pie, Meat',family});
+  else if(family.key==='bread'&&text.includes('white'))labels.push({label:'Bread, White',family});
+  else if(family.key==='sausage'&&['beef','pork','chicken','lamb'].some(x=>text.includes(x)))labels.push({label:`Sausage, ${alpha0618R2Title(['beef','pork','chicken','lamb'].find(x=>text.includes(x)))}`,family});
+  else labels.push({label:family.label,family});
+  if(labels[0].label!==family.label)labels.push({label:family.label,family});
+  return labels.slice(0,2);
+}
+function alpha0618R2BuildTerms(query,family,state){
+  const terms=[family.label,query];
+  Object.values(state||{}).forEach(v=>{if(v&&!/not sure|other/i.test(v))terms.push(v.replace(/\s*\/.*$/,''));});
+  return [...new Set(terms.map(alpha0618R2Text).filter(Boolean))].join(' ');
+}
+function alpha0618R2CandidateFoods(query,family,state){
+  const terms=alpha0618R2BuildTerms(query,family,state), familyToken=alpha0618R2Text(family.aliases?.[0]||family.label);
+  const pool=allFoods().filter(f=>f.category!=='Recipe');
+  let ranked=pool.map(food=>({food,rank:searchRank(food,terms)})).filter(x=>x.rank>0);
+  if(family.key!=='generic'){
+    const familyPool=pool.filter(food=>alpha0618R2Text(`${food.name} ${food.aliases?.join(' ')||''}`).includes(familyToken));
+    if(familyPool.length){const ids=new Set(ranked.map(x=>x.food.id));for(const food of familyPool){if(!ids.has(food.id))ranked.push({food,rank:searchRank(food,family.label)+80});}}
+  }
+  ranked.sort((a,b)=>b.rank-a.rank||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name));
+  const seen=new Set();return ranked.map(x=>x.food).filter(f=>{const k=alpha0618R2Text(`${f.name}|${f.brand||''}`);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,12);
+}
+function alpha0618R2EnhanceUnits(food,family){
+  const c=clone(food), name=alpha0618R2Text(c.name), units={...(c.units||{})}, labels={...(c.unitLabels||{})};
+  const hasPiece=Object.keys(units).some(k=>/piece|item|slice|serve|pie|burger|roll|finger/.test(k));
+  if(family.key==='pie'&&!hasPiece){units.pie=1.8;labels.pie='pie (est. 180 g)';}
+  if(family.key==='bread'&&!Object.keys(units).some(k=>/slice/.test(k))){units.slice=0.4;labels.slice='slice (about 40 g)';}
+  if(family.key==='burger'&&!hasPiece){units.item=1;labels.item='burger / item';}
+  if(family.key==='sandwich'&&!hasPiece){units.item=1;labels.item='sandwich / wrap / roll';}
+  c.units=units;c.unitLabels=labels;return c;
+}
+function alpha0618R2Choice(title,copy,choices,onPick){
+  openModal(title,copy,'Close',()=>{},`<div class="alpha0618-wizard-list">${choices.map(c=>`<button type="button" class="secondary wide" data-alpha0618-r2-choice="${esc(c)}">${esc(c)}</button>`).join('')}</div>`);
+  by('a05-modal-confirm')?.classList.add('hidden');
+  qa('[data-alpha0618-r2-choice]').forEach(b=>b.addEventListener('click',()=>{const value=b.dataset.alpha0618R2Choice;closeModal();onPick(value);},{once:true}));
+}
+function alpha0618R2Finish(query,family,state){
+  const candidates=alpha0618R2CandidateFoods(query,family,state);
+  if(!candidates.length){
+    openModal(family.label,'HEC could not find a sufficiently close nutrition record for those choices. Nothing will be added with guessed or zero nutrition.','Close',()=>{},`<div class="status-box"><strong>Try One Of These</strong><p>Go Back and broaden the choices, scan a barcode, read the nutrition panel, or create a My Food from the package.</p></div>`);return;
+  }
+  alpha0618R2Choice(family.label,'Choose the closest food. The next screen lets you set the exact amount and unit.',candidates.map(f=>f.name),name=>{
+    const food=candidates.find(f=>f.name===name)||candidates[0], enhanced=alpha0618R2EnhanceUnits(food,family);
+    prepareEntry(enhanced,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||''});
+  });
+}
+function alpha0618StartUniversalWizard(query,label=''){
+  const text=alpha0618R2Text(query),family=alpha0618R2Family(label||text),state={};
+  // Infer answers already supplied by the user so HEC never asks redundant questions.
+  for(const step of family.steps||[]){const detected=alpha0618R2Detect(step,text);if(detected)state[step.key]=detected;}
+  if(family.key==='pie'&&text.includes('curry'))state.style='Curry';
+  const steps=(family.steps||[]).filter(step=>!step.when||step.when(state));
+  let index=0;
+  function advance(){
+    while(index<steps.length){const step=steps[index++];if(state[step.key])continue;if(step.when&&!step.when(state))continue;
+      alpha0618R2Choice(family.label,step.question,step.choices,value=>{state[step.key]=value;advance();});return;
+    }
+    alpha0618R2Finish(text,family,state);
+  }
+  if(!steps.length){
+    const candidates=alpha0618R2CandidateFoods(text,family,state);
+    if(candidates.length===1){prepareEntry(alpha0618R2EnhanceUnits(candidates[0],family),{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||''});return;}
+  }
+  advance();
+}
+
+/* Universal guided choices occupy the first positions in the live search panel.
+   Raw database matches are still visible underneath, but are no longer allowed
+   to displace the normal guided pathway. */
+renderFoodLiveMatches=function(query){
+  const box=by('food-live-results');if(!box)return;const term=String(query||'').trim();
+  if(!term||document.activeElement!==by('food-search')){box.classList.add('hidden');box.innerHTML='';return;}
+  const qn=alpha0618R2Text(term);
+  if(/\bburger king\b/.test(qn)){box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules are applied first.</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
+  const chain=alpha0618ChainFor(term);
+  if(chain){const items=chain.items.filter(x=>{const tail=qn.replace(chain.aliases.find(a=>qn.includes(a))||'','').trim();return !tail||alpha0618R2Text(x).includes(tail);}).slice(0,3);box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first.</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
+  const guides=alpha0618R2GuideLabels(term);
+  const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · refine type, preparation and amount</small></span><b>›</b></button>`).join('');
+  const limit=Math.max(0,3-guides.length),ranked=allFoods().filter(food=>food.category!=='Recipe').map(food=>({food,rank:searchRank(food,term)})).filter(x=>x.rank>=520).sort((a,b)=>b.rank-a.rank||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name)).slice(0,limit);
+  const raw=ranked.map(({food})=>`<button type="button" class="live-match-row" data-food-add="${esc(food.id)}"><span><strong>${esc(food.name)}</strong><small>${esc([food.brand,food.serving].filter(Boolean).join(' · '))}</small></span><b>＋</b></button>`).join('');
+  box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided choices are shown first for every food search.</small></div>${guideHtml}${raw}`;box.classList.remove('hidden');
+};
+
+/* The full All Resources list follows the same rule: guided route first,
+   databases second. This makes the architecture universal rather than a
+   special sausage/pie patch. */
+const alpha0618R2RenderLibraryBase=renderLibrary;
+renderLibrary=function(){
+  alpha0618R2RenderLibraryBase();
+  const results=by('food-results'),query=by('food-search')?.value||'',tab=ext.ui.libraryTab||'all';
+  if(!results||!query||tab==='recent')return;
+  const qn=alpha0618R2Text(query);if(/\bburger king\b/.test(qn))return;
+  if(alpha0618ChainFor(query))return;
+  const guides=alpha0618R2GuideLabels(query);
+  const html=`<section class="alpha0618-r2-universal-guide"><strong>Guided Food Entry</strong><small>HEC uses the same guided workflow for every food. Words you already typed are skipped.</small>${guides.map(g=>`<button type="button" data-alpha0618-r2-guide="${esc(g.label)}"><span><b>${esc(g.label)}</b><small>Refine this food</small></span><b>›</b></button>`).join('')}</section>`;
+  results.insertAdjacentHTML('afterbegin',html);
+};
+
+document.addEventListener('click',e=>{
+  const guide=e.target.closest('[data-alpha0618-r2-guide]');if(!guide)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  let label=guide.dataset.alpha0618R2Guide||'',query=by('food-search')?.value||label;
+  if(label==='Hungry Jacks'){query='Hungry Jacks';ext.ui.foodSearch=query;by('food-search').value=query;saveExt();renderLibrary();renderFoodLiveMatches(query);return;}
+  ext.ui.foodSearchSnapshot={query,tab:ext.ui.libraryTab||'all',scrollY:window.scrollY};saveExt();
+  alpha0618StartUniversalWizard(query,label);
+},true);
+
+ext.version='0.6.18';ext.ui.universalGuidedSearch=true;saveExt();

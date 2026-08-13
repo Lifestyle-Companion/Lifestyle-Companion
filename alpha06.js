@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.15",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.16",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -89,7 +89,7 @@ FOODS.push(
   {id:"beef-steak",name:"Beef Steak, Grilled",brand:"Generic Australian",category:"Meat & Seafood",country:"Australia",aliases:["steak","beef steak","grilled steak"],defaultAmount:1,defaultUnit:"medium",units:{small:.67,medium:1,large:1.5,g:1/150},unitLabels:{small:"1 Small Steak (100 g)",medium:"1 Medium Steak (150 g)",large:"1 Large Steak (225 g)",g:"g"},serving:"1 Medium Steak (150 g)",nutrients:nutrient(330,42,0,18,7,0,0,110),score:7,source:"Australian Generic Trial Estimate",verified:false,ingredients:"Beef",allergens:[],waterMl:85,foodGroups:{proteinFoods:2}}
 );
 FOODS.forEach(food => Object.assign(food, FOOD_METADATA[food.id] || {waterMl:food.waterMl||0,foodGroups:food.foodGroups||{}}));
-// Alpha 0.6.15: keep a plain egg separate from egg dishes so search and preparation are easier to understand.
+// Alpha 0.6.16: keep a plain egg separate from egg dishes so search and preparation are easier to understand.
 FOODS.push(
   {id:"scrambled-eggs",name:"Scrambled Eggs",brand:"Generic Australian",category:"Dairy & Eggs",country:"Australia",aliases:["scrambled egg","scrambled eggs"],defaultAmount:1,defaultUnit:"serve",units:{serve:1,g:1/100},unitLabels:{serve:"1 Serving (about 2 Large Eggs)",g:"g"},serving:"1 Serving (about 2 Large Eggs)",nutrients:nutrient(144,12.6,.8,9.6,3.2,0,.4,142),score:8,source:"Guided Australian Egg Dish Estimate",verified:false,ingredients:"Eggs; additions vary",allergens:["egg"],waterMl:76,foodGroups:{proteinFoods:1}},
   {id:"omelette",name:"Omelette",brand:"Generic Australian",category:"Dairy & Eggs",country:"Australia",aliases:["omelet","omelette","egg omelette"],defaultAmount:1,defaultUnit:"serve",units:{serve:1,g:1/120},unitLabels:{serve:"1 Omelette (about 2 Large Eggs)",g:"g"},serving:"1 Omelette (about 2 Large Eggs)",nutrients:nutrient(150,13,1.2,10,3.4,0,.5,155),score:8,source:"Guided Australian Egg Dish Estimate",verified:false,ingredients:"Eggs; fillings vary",allergens:["egg"],waterMl:76,foodGroups:{proteinFoods:1}},
@@ -138,7 +138,7 @@ const MEAL_SUGGESTIONS = [
 ];
 
 const EXT_DEFAULTS = {
-  version:"0.6.15", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
+  version:"0.6.16", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
   family:{enabled:false,name:"",email:""}, connections:{}, customFoods:[], savedFoodIds:[], recipes:[], mealTemplates:[], shoppingVoiceAliases:{},
   ui:{diaryDate:isoToday(),progressDate:isoToday(),plannerDate:isoToday(),diaryView:"all",libraryTab:"all",foodSearch:"",foodSearchByTab:{},scanMode:"food",pendingMeal:"",plannerResults:{},plannerRejected:{},plannerAccepted:{},plannerSessionActive:false,singleMealPreferences:{},recipeDraft:[],recipeName:"",recipeServings:4,recipeNotes:"",returnToRecipe:false,replacingEntryId:"",pendingDrink:null}
 };
@@ -153,13 +153,13 @@ function merge(target, source){
 function loadExt(){
   let current = null;
   try { current = JSON.parse(localStorage.getItem(EXT_KEY)); } catch {}
-  if(current){ const loaded=merge(clone(EXT_DEFAULTS),current); loaded.version="0.6.15"; return loaded; }
+  if(current){ const loaded=merge(clone(EXT_DEFAULTS),current); loaded.version="0.6.16"; return loaded; }
   for(const legacyKey of LEGACY_EXT_KEYS){
     try {
       const legacy = JSON.parse(localStorage.getItem(legacyKey));
       if(legacy){
         const migrated = merge(clone(EXT_DEFAULTS),legacy);
-        migrated.version = "0.6.15";
+        migrated.version = "0.6.16";
         if(legacy.daily?.date){
           migrated.water[legacy.daily.date] = legacy.daily.water || 0;
           migrated.steps[legacy.daily.date] = legacy.daily.steps || 0;
@@ -1261,7 +1261,7 @@ by("run-label-ocr")?.addEventListener("click",async()=>{
 });
 by("use-ocr-values")?.addEventListener("click",()=>{const pairs=[["custom-food-name","ocr-food-name"],["custom-serving-amount","ocr-serving-amount"],["custom-serving-unit","ocr-serving-unit"],["custom-cal","ocr-calories"],["custom-protein","ocr-protein"],["custom-carbs","ocr-carbs"],["custom-fat","ocr-fat"],["custom-sat-fat","ocr-sat-fat"],["custom-fibre","ocr-fibre"],["custom-sugar","ocr-sugar"],["custom-sodium","ocr-sodium"]];pairs.forEach(([to,from])=>{if(by(to)&&by(from))by(to).value=by(from).value;});openFeature("custom-food");showActionToast("Recognised Values Copied For Review.",null,2000);});
 by("photo-find-food")?.addEventListener("click",()=>{ext.ui.libraryTab="all";ext.ui.pendingMeal=ext.ui.pendingMeal||"";saveExt();openFeature("food-library");showActionToast("Search And Add Each Food Visible In The Photo.",null,2000);});
-by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal Photos Stay In This Browser Session Only In Alpha 0.6.15.",null,5000));
+by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal Photos Stay In This Browser Session Only In Alpha 0.6.16.",null,5000));
 by("review-scan-food")?.addEventListener("click",()=>{if(scanBarcodeFood)prepareEntry(scanBarcodeFood,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"",source:scanBarcodeFood.source});});
 
 // Meal planner
@@ -1441,7 +1441,7 @@ by("print-shopping-list")?.addEventListener("click",()=>{renderShoppingPrint();d
 function speakShopping(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showActionToast("Speech entry is unavailable in this browser.",null,5000);return;}const r=new SR();r.lang="en-AU";r.interimResults=false;r.maxAlternatives=3;r.onresult=e=>{const alternatives=[...e.results[0]].map(x=>x.transcript),matches=alternatives.map(text=>{const parsed=parseShoppingSpeech(text);return {text,parsed,match:catalogueMatch(parsed.item)}}),best=matches.find(x=>x.match?.confidence==="exact"||x.match?.confidence==="learned")||matches.find(x=>x.match)||matches[0];ext.ui.lastShoppingVoiceHeard=best.text;by("shopping-item").value=best.match?.name||best.parsed.item;if(best.parsed.quantity)by("shopping-quantity").value=best.parsed.quantity;saveExt();by("shopping-item").dispatchEvent(new Event("change"));const interpreted=best.match?.name||best.parsed.item;if(normalise(interpreted)!==normalise(best.text)||best.parsed.quantity)showActionToast(`Heard “${best.text}”. Interpreted as ${best.parsed.quantity?best.parsed.quantity+" ":""}${interpreted}. Review before adding.`,null,7000);};r.start();}
 by("speak-shopping-item")?.addEventListener("click",speakShopping);by("shopping-quick-speak")?.addEventListener("click",speakShopping);by("shopping-quick-add")?.addEventListener("click",()=>{by("shopping-add-card")?.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>by("shopping-item")?.focus(),350);});
 
-by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,2000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database Release 3</strong> is now built into Alpha 0.6.15 for local searching of 1,588 Australian foods. Values come from Food Standards Australia New Zealand and are shown per the selected quantity.</p><p class="fine">AFCD values are reference averages and can vary by brand, batch, season, processing and ingredient source. Australian data may not be appropriate in other countries. See the AFCD data notice supplied with this build for attribution and licence information.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
+by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,2000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database Release 3</strong> is now built into Alpha 0.6.16 for local searching of 1,588 Australian foods. Values come from Food Standards Australia New Zealand and are shown per the selected quantity.</p><p class="fine">AFCD values are reference averages and can vary by brand, batch, season, processing and ingredient source. Australian data may not be appropriate in other countries. See the AFCD data notice supplied with this build for attribution and licence information.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
 
 // Food preferences and family readiness
 function renderFoodPreferences(){
@@ -1502,9 +1502,9 @@ const HELP={
 };
 document.addEventListener("click",event=>{const b=event.target.closest("[data-help]");if(!b)return;const copy=HELP[b.dataset.help]||"Help is available for this screen.";openModal("Help With This Screen",copy,"Close",()=>{});by("a05-modal-confirm").className="primary";if(mainData().companion?.enabled&&typeof window.speakText==="function")window.speakText(copy);});
 
-// Alpha 0.6.15 migration: keep existing records, enforce the five agreed meal categories, and preserve explicit day targets.
+// Alpha 0.6.16 migration: keep existing records, enforce the five agreed meal categories, and preserve explicit day targets.
 function refreshDiaryEnergyPreview(target){const slide=by("diary-day-summary")?.querySelector(".summary-slide");if(!slide)return;const date=diaryDate(),recorded=dayNutrition(date,["eaten","planned"]).calories,exercise=(ext.exercise||[]).filter(x=>(x.localDate||x.date?.slice(0,10))===date).reduce((sum,x)=>sum+n(x.credit),0),goal=n(target)?n(target)+exercise:0;slide.innerHTML=`<span>${date===isoToday()?"Today’s Energy":relativeDateLabel(date).split(" · ")[0]+" Energy"}</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${goal?`${formatNumber(goal)} Cal`:"Needs Review"}</strong></div><div><small>Recorded</small><strong>${formatNumber(recorded)} Cal</strong></div><div><small>Remaining</small><strong>${goal?`${formatNumber(Math.max(0,goal-recorded))} Cal`:"—"}</strong></div></div>`;}
-ext.version="0.6.15";Object.keys(ext.diary||{}).forEach(date=>{ext.diary[date]=(ext.diary[date]||[]).filter(entry=>entry&&entry.status!=="skipped").map(entry=>({...entry,status:"eaten",meal:(entry.meal==="Morning Tea"||entry.meal==="Afternoon Tea")?"Snacks":(mealNames().includes(entry.meal)?entry.meal:"Other")}));if(!ext.diary[date].length)delete ext.diary[date];});ext.ui.plannerResults={};ext.ui.plannerRejected={};ext.ui.plannerAccepted={};ext.ui.plannerSessionActive=false;ext.dayTypeTargets||={fasting:500};if(!n(ext.dayTypeTargets.fasting))ext.dayTypeTargets.fasting=500;const recoveredNormal=recommendedNormalTarget();if(recoveredNormal){ext.dayTypeTargets.normal=recoveredNormal;ext.dayTypeTargets.normalSource="profile";}else if(ext.dayTypeTargets.normalSource!=="profile"){delete ext.dayTypeTargets.normal;delete ext.dayTypeTargets.normalSource;}Object.values(ext.daySettings||{}).forEach(settings=>{if(!settings)return;if(settings.type==="normal"&&!settings.customTarget){if(recoveredNormal)settings.targetCal=recoveredNormal;else delete settings.targetCal;}if(settings.customTarget===undefined)settings.customTarget=false;});normaliseShoppingCategories();saveExt();
+ext.version="0.6.16";Object.keys(ext.diary||{}).forEach(date=>{ext.diary[date]=(ext.diary[date]||[]).filter(entry=>entry&&entry.status!=="skipped").map(entry=>({...entry,status:"eaten",meal:(entry.meal==="Morning Tea"||entry.meal==="Afternoon Tea")?"Snacks":(mealNames().includes(entry.meal)?entry.meal:"Other")}));if(!ext.diary[date].length)delete ext.diary[date];});ext.ui.plannerResults={};ext.ui.plannerRejected={};ext.ui.plannerAccepted={};ext.ui.plannerSessionActive=false;ext.dayTypeTargets||={fasting:500};if(!n(ext.dayTypeTargets.fasting))ext.dayTypeTargets.fasting=500;const recoveredNormal=recommendedNormalTarget();if(recoveredNormal){ext.dayTypeTargets.normal=recoveredNormal;ext.dayTypeTargets.normalSource="profile";}else if(ext.dayTypeTargets.normalSource!=="profile"){delete ext.dayTypeTargets.normal;delete ext.dayTypeTargets.normalSource;}Object.values(ext.daySettings||{}).forEach(settings=>{if(!settings)return;if(settings.type==="normal"&&!settings.customTarget){if(recoveredNormal)settings.targetCal=recoveredNormal;else delete settings.targetCal;}if(settings.customTarget===undefined)settings.customTarget=false;});normaliseShoppingCategories();saveExt();
 
 // Initial setup and integration
 function init(){
@@ -1520,8 +1520,8 @@ function init(){
   if(mainData().completed){const profile=mainData();if(profile.firstHomePending){openFeature("home");profile.firstHomePending=false;localStorage.setItem(MAIN_KEY,JSON.stringify(profile));}else openFeature("daily-progress");}
 }
 
-/* ===== Alpha 0.6.15 integrated founder-testing refinements ===== */
-const BUILD='0.6.15';
+/* ===== Alpha 0.6.16 integrated founder-testing refinements ===== */
+const BUILD='0.6.16';
 const DAY_MS=86400000;
 const el=id=>document.getElementById(id);
 const norm=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -1555,7 +1555,7 @@ function migrate612(){
     }
     localStorage.setItem(MAIN_KEY,JSON.stringify(main));
     saveExt();
-  }catch(error){console.warn('Alpha 0.6.15 migration',error);}
+  }catch(error){console.warn('Alpha 0.6.16 migration',error);}
 }
 migrate612();
 
@@ -1822,7 +1822,7 @@ window.addEventListener('pagehide',mirrorWrite);document.addEventListener('visib
 navigator.storage?.persist?.().catch(()=>{});
 mirrorRestoreIfNeeded();mirrorWrite();
 function addPersistenceNotice(){
-  if(el('hec-private-storage-note'))return;const host=document.querySelector('#settings main')||document.querySelector('#welcome .welcome-card');if(!host)return;host.insertAdjacentHTML('afterbegin',`<div id="hec-private-storage-note" class="status-box storage-safety-note"><strong>Saving Your Companion Data</strong><p>Use Healthy Eating Companion in a normal Safari tab or Home Screen app. <strong>Private Browsing can delete website data when private tabs are closed</strong>, which no website can override. Alpha 0.6.15 also keeps a second local IndexedDB mirror when the browser allows it.</p></div>`);
+  if(el('hec-private-storage-note'))return;const host=document.querySelector('#settings main')||document.querySelector('#welcome .welcome-card');if(!host)return;host.insertAdjacentHTML('afterbegin',`<div id="hec-private-storage-note" class="status-box storage-safety-note"><strong>Saving Your Companion Data</strong><p>Use Healthy Eating Companion in a normal Safari tab or Home Screen app. <strong>Private Browsing can delete website data when private tabs are closed</strong>, which no website can override. Alpha 0.6.16 also keeps a second local IndexedDB mirror when the browser allows it.</p></div>`);
 }
 addPersistenceNotice();
 
@@ -1840,7 +1840,7 @@ document.querySelectorAll('.badge').forEach(b=>{if(/Founder Trial/.test(b.textCo
 if(document.title.includes('Founder Trial'))document.title=`Healthy Eating Companion — Founder Trial Alpha ${BUILD}`;
 setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.querySelector('#weight-history'))renderWeightHistoryOnly();if(document.querySelector('#progress-history.active'))renderHistory(currentPeriod());},300);
 
-/* ---------- Alpha 0.6.15 focused founder-testing refinements ---------- */
+/* ---------- Alpha 0.6.16 focused founder-testing refinements ---------- */
   const LIBRARY_BACKUP_KEY = 'healthyEatingCompanionProtectedLibrary';
   const $ = id => document.getElementById(id);
   const safeText = value => (typeof esc === 'function' ? esc(String(value ?? '')) : String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
@@ -1856,7 +1856,7 @@ setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.quer
     const saved = new Set(ext.savedFoodIds || []);
     const onlineFoods = (ext.onlineFoods || []).filter(f => saved.has(f.id));
     const payload = {
-      version:'0.6.15', savedAt:new Date().toISOString(),
+      version:'0.6.16', savedAt:new Date().toISOString(),
       customFoods: clone(ext.customFoods || []),
       onlineFoods: clone(onlineFoods),
       savedFoodIds: clone(ext.savedFoodIds || []),
@@ -2038,7 +2038,7 @@ setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.quer
       const ok=await ensureBarcodeLibrary();if(!ok)throw new Error('Scanner unavailable');const reader=new ZXingBrowser.BrowserMultiFormatReader();scanBarcodeControls=await reader.decodeFromVideoDevice(undefined,video,result=>{const text=result?.getText?.()||result?.text;if(text)handleDetectedBarcode(text);});$('barcode-status').textContent='Camera Ready. Hold A Retail Barcode Steady Inside The Box — No Photo Is Needed.';
     }catch{$('barcode-status').textContent='Camera access is unavailable. If you previously allowed it, check the HE Companion/Safari camera permission in iPhone Settings. You can also enter the barcode manually.';}
   };
-  // Replace old button handler with a cloned button so only the Alpha 0.6.15 handler runs.
+  // Replace old button handler with a cloned button so only the Alpha 0.6.16 handler runs.
   const oldStart=$('start-barcode-camera');if(oldStart){const b=oldStart.cloneNode(true);oldStart.replaceWith(b);b.addEventListener('click',startBarcodeCamera);}
   const oldStop=$('stop-barcode-camera');if(oldStop){const b=oldStop.cloneNode(true);oldStop.replaceWith(b);b.addEventListener('click',()=>fullStopBarcodeCamera('Barcode Camera Stopped.'));}
 
@@ -2070,7 +2070,7 @@ setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.quer
 
 
 /* ================================================================
-   Alpha 0.6.15 founder-polish patch
+   Alpha 0.6.16 founder-polish patch
    - stronger Australian food language recognition
    - context-aware serving units
    - safer Daily Progress colour bands + explicit over/under amounts
@@ -2243,8 +2243,174 @@ resourceFoodRow=function(food){
 };
 by('start-voice-log')?.addEventListener('click',()=>by('stop-voice-log')?.classList.remove('hidden'));
 
-ext.version='0.6.15';saveExt();
+ext.version='0.6.16';saveExt();
 
 
 init();
 })();
+
+
+/* ================================================================
+   Alpha 0.6.16 founder workflow & food-integrity patch
+   ================================================================ */
+const ALPHA0616_BUILD='0.6.16';
+
+/* A. Continuous meal-entry session: when Add Food was opened from Breakfast,
+   Lunch, Dinner, Snacks or Other, a successful add returns to that same food
+   search context so another item can be added immediately. A clear Done button
+   ends the session and returns to the meal. */
+function alpha0616MealSessionActive(){return !!(ext.ui?.mealEntrySession?.meal&&ext.ui?.mealEntrySession?.date);}
+function alpha0616SetMealSession(meal,date){ext.ui.mealEntrySession={meal,date:date||ext.ui.diaryDate||isoToday()};ext.ui.pendingMeal=meal;ext.ui.diaryDate=date||ext.ui.diaryDate||isoToday();saveExt();}
+function alpha0616ClearMealSession(){if(ext.ui){delete ext.ui.mealEntrySession;}saveExt();}
+const alpha0616OpenFeature=openFeature;
+openFeature=function(id,options={}){
+  alpha0616OpenFeature(id,options);
+  if(id==='food-library')setTimeout(alpha0616RenderMealSessionBanner,0);
+};
+function alpha0616RenderMealSessionBanner(){
+  const context=by('library-entry-context'); if(!context)return;
+  const session=ext.ui?.mealEntrySession;
+  context.querySelector('.meal-entry-session-actions')?.remove();
+  if(!session?.meal)return;
+  context.classList.remove('hidden');
+  if(!context.textContent.includes('Adding to')) context.insertAdjacentHTML('afterbegin',`<span>Adding to <strong>${esc(session.meal)}</strong> on ${esc(relativeDateLabel(session.date))}</span>`);
+  context.insertAdjacentHTML('beforeend',`<div class="meal-entry-session-actions"><button type="button" class="primary" data-finish-meal-entry="${esc(session.meal)}">Done Adding To ${esc(session.meal)}</button><small>Add as many foods as you need. You will stay in ${esc(session.meal)} until you tap Done.</small></div>`);
+}
+const alpha0616RenderLibrary=renderLibrary;
+renderLibrary=function(){alpha0616RenderLibrary();alpha0616RenderMealSessionBanner();};
+document.addEventListener('click',event=>{
+  const add=event.target.closest('[data-add-to-meal]');
+  if(add){alpha0616SetMealSession(add.dataset.addToMeal,ext.ui.diaryDate||isoToday());}
+  const finish=event.target.closest('[data-finish-meal-entry]');
+  if(finish){const meal=finish.dataset.finishMealEntry,date=ext.ui?.mealEntrySession?.date||ext.ui.diaryDate||isoToday();alpha0616ClearMealSession();ext.ui.pendingMeal='';ext.ui.diaryDate=date;ext.ui.focusMeal=meal;saveExt();alpha0616OpenFeature('food-diary');return;}
+},true);
+const alpha0616SaveEditorEntry=saveEditorEntry;
+saveEditorEntry=function(andSaveFood=false){
+  const session=ext.ui?.mealEntrySession?{...ext.ui.mealEntrySession}:null;
+  const wasEditing=!!editorState?.entryId;
+  const before=Object.values(ext.diary||{}).reduce((n,list)=>n+(list?.length||0),0);
+  alpha0616SaveEditorEntry(andSaveFood);
+  const after=Object.values(ext.diary||{}).reduce((n,list)=>n+(list?.length||0),0);
+  if(!wasEditing&&session?.meal&&after>before){
+    ext.ui.mealEntrySession=session;ext.ui.pendingMeal=session.meal;ext.ui.diaryDate=session.date;ext.ui.libraryTab='all';ext.ui.foodSearch='';saveExt();
+    setTimeout(()=>{alpha0616OpenFeature('food-library',{freshSearch:true});showActionToast(`Added to ${session.meal}. Add another food, or tap Done when ${session.meal} is complete.`,null,2800);},0);
+  }
+};
+
+/* B. Delete/Undo refreshes whichever diary/progress screen is currently open,
+   rather than leaving a deleted item visually present until navigation. */
+function alpha0616RefreshVisibleDay(){
+  if(q('#food-diary.active'))renderDiary();
+  if(q('#daily-progress.active'))renderDailyProgress();
+  if(q('#progress-history.active'))renderHistory(currentPeriod());
+}
+const alpha0616RequestDeleteEntry=requestDeleteEntry;
+requestDeleteEntry=function(id){
+  const found=findEntry(id);if(!found)return;
+  openModal(`Delete ${found.entry.name}?`,`This will remove the entry from ${formatDate(found.date)}. Your saved food or meal remains available.`,'Delete',()=>{
+    const removed=clone(found.entry);ext.diary[found.date].splice(found.index,1);if(!ext.diary[found.date].length)delete ext.diary[found.date];saveExt();alpha0616RefreshVisibleDay();
+    showActionToast(`${removed.name} deleted.`,()=>{ext.diary[found.date] ||= [];ext.diary[found.date].splice(found.index,0,removed);saveExt();alpha0616RefreshVisibleDay();},8000);
+  });
+};
+
+/* C. Energy is Australian-label friendly: always expose both Cal and kJ in
+   review cards. Calories remain the app's planning unit, with kJ derived using
+   the standard 4.184 kJ per kcal conversion. */
+function alpha0616Kj(cal){const c=Number(cal);return Number.isFinite(c)?Math.round(c*4.184):0;}
+const alpha0616NutritionCards=nutritionCards;
+nutritionCards=function(values){
+  let html=alpha0616NutritionCards(values||{});
+  const cal=Number(values?.calories);
+  if(Number.isFinite(cal)) html=html.replace(/(<strong>\s*Calories\s*<\/strong>[\s\S]*?<b>)([^<]*)(<\/b>)/i,(m,a,b,c)=>`${a}${formatNumber(cal)} Cal · ${alpha0616Kj(cal).toLocaleString('en-AU')} kJ${c}`);
+  return html;
+};
+
+/* D. Nutrition-panel OCR: retain native kJ, derive Calories when required,
+   prefer the package serving column when a serving size is detected, and show
+   a dedicated kJ review field beside Calories. */
+function alpha0616EnergyColumns(text){
+  const lines=String(text||'').replace(/\r/g,'\n').split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const line=lines.find(x=>/^energy\b/i.test(x))||'';
+  const kj=[...line.matchAll(/(\d+(?:[.,]\d+)?)\s*k[jl]\b/gi)].map(m=>Number(String(m[1]).replace(',','.')));
+  const cal=[...line.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:kcal|cal)\b/gi)].map(m=>Number(String(m[1]).replace(',','.')));
+  return {kj,cal};
+}
+const alpha0616ParseNutritionPanel=parseNutritionPanel;
+parseNutritionPanel=function(text){
+  const p=alpha0616ParseNutritionPanel(text);const e=alpha0616EnergyColumns(text);const both=/per\s*(serv(?:ing|e)|100\s*(g|ml))/i.test(String(text||''))&&/per\s*100\s*(g|ml)/i.test(String(text||''));
+  p.energyKj={perServing:0,per100:0};
+  if(e.kj.length>=2&&both){p.energyKj.perServing=e.kj[0];p.energyKj.per100=e.kj[e.kj.length-1];}
+  else if(e.kj.length){if(p.servingAmount)p.energyKj.perServing=e.kj[0];else p.energyKj.per100=e.kj[e.kj.length-1];}
+  if(p.energyKj.perServing&&!p.perServing.calories)p.perServing.calories=p.energyKj.perServing/4.184;
+  if(p.energyKj.per100&&!p.per100.calories)p.per100.calories=p.energyKj.per100/4.184;
+  if(p.servingAmount&&Object.values(p.perServing||{}).some(v=>Number(v)>0))p.basis='serving';
+  return p;
+};
+function alpha0616EnsureKjField(){
+  const cal=by('ocr-calories');if(!cal||by('ocr-kj'))return;
+  const label=cal.closest('label');if(!label)return;label.insertAdjacentHTML('afterend','<label>Energy (kJ)<input id="ocr-kj" type="number" step="1" inputmode="decimal"><small class="field-hint">Shown on many Australian nutrition panels.</small></label>');
+  by('ocr-kj')?.addEventListener('input',()=>{const kj=n(by('ocr-kj').value);if(kj>0){by('ocr-calories').value=round1(kj/4.184);}});
+  cal.addEventListener('input',()=>{const c=n(cal.value);if(c>0)by('ocr-kj').value=Math.round(c*4.184);});
+}
+const alpha0616FillOcrReview=fillOcrReview;
+fillOcrReview=function(parsed,basis=parsed?.basis||'serving'){
+  alpha0616EnsureKjField();alpha0616FillOcrReview(parsed,basis);
+  const kj=basis==='100'?Number(parsed?.energyKj?.per100||0):Number(parsed?.energyKj?.perServing||0);
+  if(by('ocr-kj'))by('ocr-kj').value=kj?Math.round(kj):(n(by('ocr-calories')?.value)?Math.round(n(by('ocr-calories').value)*4.184):'');
+  if(parsed?.servingAmount&&by('ocr-basis'))by('ocr-basis').value='serving';
+  if(by('ocr-progress')&&parsed?.servingAmount)by('ocr-progress').insertAdjacentHTML?.('beforeend','');
+};
+setTimeout(alpha0616EnsureKjField,0);
+
+/* E. Saved-food integrity. Search hides records explicitly superseded by a
+   newer canonical record and collapses exact barcode duplicates. Historical
+   Diary entries are untouched because they remain nutrition snapshots. */
+ext.foodCanonical ||= {superseded:{},lastIntegrityRun:null};
+function alpha0616FoodAuthority(food){
+  const meta=ext.foodVerification?.[food.id]||{};let score=0;
+  if(meta.packageVerifiedAt)score+=500;if(meta.method==='nutrition-panel'||/nutrition panel/i.test(String(food.source||'')))score+=350;
+  if(food.barcode)score+=220;if(food.verified)score+=150;if(food.source==='User Created')score+=120;
+  const stamp=meta.packageVerifiedAt||meta.savedAt||food.updatedAt||food.createdAt;if(stamp){const t=new Date(stamp).getTime();if(Number.isFinite(t))score+=Math.min(100,Math.max(0,(t-Date.UTC(2020,0,1))/31557600000));}
+  return score;
+}
+function alpha0616DedupeFoods(list){
+  const out=[],seenBarcode=new Map();
+  for(const food of list||[]){
+    if(!food||ext.foodCanonical?.superseded?.[food.id])continue;
+    const code=String(food.barcode||'').replace(/\D/g,'');
+    if(code){const old=seenBarcode.get(code);if(old){if(alpha0616FoodAuthority(food)>alpha0616FoodAuthority(old)){const i=out.indexOf(old);if(i>=0)out[i]=food;seenBarcode.set(code,food);}continue;}seenBarcode.set(code,food);}
+    out.push(food);
+  }
+  return out;
+}
+const alpha0616AllFoods=allFoods;
+allFoods=function(){return alpha0616DedupeFoods(alpha0616AllFoods());};
+function alpha0616MarkSuperseded(oldId,newId){if(!oldId||!newId||oldId===newId)return;ext.foodCanonical ||= {superseded:{}};ext.foodCanonical.superseded[oldId]={replacedBy:newId,at:new Date().toISOString()};saveExt();}
+
+/* When a saved scanned product has the same barcode as an existing record,
+   prefer the most recently package-verified copy in searches. */
+function alpha0616RunFoodIntegrity(){
+  const foods=[...FOODS,...(ext.customFoods||[]),...(ext.onlineFoods||[])];const groups={};
+  foods.forEach(f=>{const code=String(f?.barcode||'').replace(/\D/g,'');if(code)(groups[code] ||= []).push(f);});
+  Object.values(groups).forEach(group=>{if(group.length<2)return;const best=[...group].sort((a,b)=>alpha0616FoodAuthority(b)-alpha0616FoodAuthority(a))[0];group.forEach(f=>{if(f.id!==best.id&&alpha0616FoodAuthority(best)>alpha0616FoodAuthority(f))alpha0616MarkSuperseded(f.id,best.id);});});
+  ext.foodCanonical.lastIntegrityRun=new Date().toISOString();saveExt();
+}
+setTimeout(alpha0616RunFoodIntegrity,300);
+
+/* F. Source status made clearer: current package-verified foods say so, while
+   unverified online/package data remains visibly reviewable. */
+const alpha0616ResourceFoodRow=resourceFoodRow;
+resourceFoodRow=function(food){
+  let html=alpha0616ResourceFoodRow(food);const meta=ext.foodVerification?.[food.id];
+  const badge=meta?.packageVerifiedAt?'Package Verified':(meta?.method==='nutrition-panel'?'Nutrition Panel':food.barcode?'Barcode':food.source==='User Created'?'Manual':'');
+  if(badge&&!html.includes(`>${badge}<`))html=html.replace(/<strong>([\s\S]*?)<\/strong>/,`<strong>$1 <span class="food-source-badge alpha0616-source">${esc(badge)}</span></strong>`);
+  return html;
+};
+
+/* G. Back from an entry editor/search retains the active meal-entry session;
+   Home or an explicit Done ends it. */
+document.addEventListener('click',event=>{
+  if(event.target.closest('[data-go="home"], #home-button, .home-button'))alpha0616ClearMealSession();
+});
+
+ext.version='0.6.16';saveExt();

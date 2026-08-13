@@ -406,3 +406,6 @@ fieldset>legend,.section-heading h3,.card>h3,.card>h4{font-size:clamp(1.18rem,3.
 .meal-entry-session-actions .primary{width:auto;min-height:44px}.meal-entry-session-actions small{flex:1;min-width:180px}
 .field-hint{display:block;font-size:.78rem;font-weight:500;color:var(--muted,#617887);margin-top:5px}
 .food-source-badge.alpha0616-source{white-space:nowrap;display:inline-flex;margin-left:6px;vertical-align:middle}
+
+/* Alpha 0.6.17 */
+.alpha0617-guide{margin:10px 0 14px;padding:14px;border:1px solid #cfd8d2;border-radius:14px;background:#fff}.alpha0617-guide>strong{display:block;font-size:1.05rem}.alpha0617-guide>small{display:block;margin-top:4px;line-height:1.35}.alpha0617-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}.alpha0617-chips button{border:1px solid #aebbb4;background:#f7faf8;border-radius:999px;padding:8px 11px;font:inherit}.alpha0617-overall-weight{display:flex;flex-direction:column;gap:2px;margin:0 0 10px}.alpha0617-overall-weight strong{font-size:1.55rem}.alpha0617-overall-weight span{font-weight:700}.food-warning .resource-main small{font-weight:600}

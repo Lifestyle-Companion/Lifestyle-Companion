@@ -2414,3 +2414,111 @@ document.addEventListener('click',event=>{
 });
 
 ext.version='0.6.16';saveExt();
+
+/* ================================================================
+   Alpha 0.6.17 founder search, flow & polish patch
+   ================================================================ */
+const ALPHA0617_BUILD='0.6.17';
+
+/* Search language normalisation: Australians may type brand names and foods
+   in natural variants. Keep the user's words meaningful, not punctuation. */
+function alpha0617SearchText(value){
+  return normalise(value)
+    .replace(/\bwoolies\b/g,'woolworths')
+    .replace(/\bwoolworth\b/g,'woolworths')
+    .replace(/\bblack n gold\b/g,'black and gold')
+    .replace(/\bblack gold\b/g,'black and gold')
+    .replace(/\bchicko\b|\bchico\b/g,'chiko')
+    .replace(/\bpotatoe\b/g,'potato')
+    .replace(/\s+/g,' ').trim();
+}
+const alpha0617SearchRankBase=searchRank;
+searchRank=function(food,query){
+  const q=alpha0617SearchText(query); if(!q)return alpha0617SearchRankBase(food,q);
+  const shadow={...food,
+    name:alpha0617SearchText(food.name),
+    brand:alpha0617SearchText(food.brand),
+    aliases:[...(food.aliases||[]), ...(normalise(food.brand).includes('woolworths')?['woolies']:[])].map(alpha0617SearchText)
+  };
+  let rank=alpha0617SearchRankBase(shadow,q);
+  const qt=q.split(' ').filter(Boolean), hay=alpha0617SearchText([food.name,food.brand,...(food.aliases||[])].join(' '));
+  const matched=qt.filter(t=>hay.split(' ').some(h=>h===t||fuzzyTokenMatch(t,h))).length;
+  // Specific multi-word searches must not fall back to unrelated foods.
+  if(qt.length>=2&&matched<Math.ceil(qt.length*.67))return 0;
+  if(qt.length>=3&&matched<qt.length-1)return 0;
+  if(matched===qt.length)rank+=qt.length*90;
+  if(alpha0617SearchText(food.brand)&&q.startsWith(alpha0617SearchText(food.brand)))rank+=180;
+  return rank;
+};
+
+const ALPHA0617_BRANDS=['Woolworths','Coles','Aldi','Black & Gold','Seasons Pride','Home Brand','Westacre','Kellogg’s'];
+function alpha0617SearchGuide(query){
+  const q=alpha0617SearchText(query);if(!q)return '';
+  const words=q.split(' '),hasSausage=words.includes('sausage'),hasRoll=words.includes('roll'),hasBeef=words.includes('beef'),hasPork=words.includes('pork'),hasChicken=words.includes('chicken');
+  let html='';
+  if(hasSausage&&!hasRoll){
+    const meatKnown=hasBeef||hasPork||hasChicken;
+    html+=`<section class="alpha0617-guide"><strong>${meatKnown?esc(q.replace(/\b\w/g,c=>c.toUpperCase())):'Sausage'}</strong><small>HEC has understood this as a sausage search. Choose only what is still unknown.</small><div class="alpha0617-chips">`;
+    if(!meatKnown)html+=['Beef sausage','Pork sausage','Chicken sausage'].map(x=>`<button type="button" data-alpha-search-set="${esc(x)}">${esc(x.replace(' sausage',''))}</button>`).join('');
+    if(!/herb|garlic|flavour|flavored|flavoured|plain/.test(q))html+=`<button type="button" data-alpha-search-append="plain">Plain</button><button type="button" data-alpha-search-append="flavoured">Flavoured</button>`;
+    html+=`<button type="button" data-alpha-search-append="homemade">Homemade</button><button type="button" data-alpha-search-append="commercial">Commercial</button><button type="button" data-alpha-search-append="takeaway">Takeaway</button>`;
+    if(!/grilled|fried|barbecued|bbq|baked|air fried/.test(q))html+=`<button type="button" data-alpha-search-append="grilled">Grilled</button><button type="button" data-alpha-search-append="barbecued">Barbecued</button><button type="button" data-alpha-search-append="fried">Fried</button><button type="button" data-alpha-search-append="baked">Baked</button>`;
+    html+='</div></section>';
+  }
+  if(hasSausage&&hasRoll){
+    html+=`<section class="alpha0617-guide"><strong>Sausage Roll</strong><small>Choose the generic food, a familiar retailer/brand, or keep typing. HEC will skip questions already answered by your search.</small><div class="alpha0617-chips"><button type="button" data-alpha-search-set="sausage roll">Generic sausage roll</button>${ALPHA0617_BRANDS.map(b=>`<button type="button" data-alpha-search-set="${esc(b+' sausage roll')}">${esc(b)}</button>`).join('')}</div></section>`;
+  }
+  const brand=ALPHA0617_BRANDS.find(b=>q.includes(alpha0617SearchText(b)));
+  if(brand&&!hasSausage)html+=`<section class="alpha0617-guide"><strong>${esc(brand)} foods</strong><small>Keep typing a food name to narrow this retailer/brand search.</small></section>`;
+  return html;
+}
+function alpha0617SetSearch(value){ext.ui.foodSearch=value;by('food-search').value=value;saveExt();renderLibrary();by('food-search')?.focus();scheduleAllResourcesOnlineSearch();}
+document.addEventListener('click',e=>{const set=e.target.closest('[data-alpha-search-set]');if(set){alpha0617SetSearch(set.dataset.alphaSearchSet);return;}const app=e.target.closest('[data-alpha-search-append]');if(app){alpha0617SetSearch(`${by('food-search')?.value||''} ${app.dataset.alphaSearchAppend}`.trim());}});
+
+/* Insert intent guidance above ordinary results without fabricating nutrition
+   records for brands we have not yet package-verified. */
+const alpha0617RenderLibraryBase=renderLibrary;
+renderLibrary=function(){
+  // Any meal-context Food Library is automatically a continuous add session.
+  if(ext.ui.pendingMeal&&!alpha0616MealSessionActive())alpha0616SetMealSession(ext.ui.pendingMeal,ext.ui.diaryDate||isoToday());
+  alpha0617RenderLibraryBase();
+  const results=by('food-results'),q=by('food-search')?.value||'';if(results&&q){const guide=alpha0617SearchGuide(q);if(guide)results.insertAdjacentHTML('afterbegin',guide);}
+  alpha0616RenderMealSessionBanner();
+};
+
+/* Back means back: preserve query, tab, loaded results and approximate scroll
+   position while the user inspects a food. */
+ext.ui.foodSearchSnapshot ||= null;
+document.addEventListener('click',e=>{const pick=e.target.closest('[data-food-add],[data-food-details]');if(!pick||!q('#food-library.active'))return;ext.ui.foodSearchSnapshot={query:by('food-search')?.value||ext.ui.foodSearch||'',tab:ext.ui.libraryTab||'all',scrollY:window.scrollY,at:Date.now()};saveExt();},true);
+by('entry-editor-back')?.addEventListener('click',()=>{const s=ext.ui.foodSearchSnapshot;if(!s)return;ext.ui.foodSearch=s.query;ext.ui.libraryTab=s.tab;saveExt();setTimeout(()=>{openFeature('food-library');setTimeout(()=>window.scrollTo(0,s.scrollY||0),40);},0);});
+
+/* Continuous meal adding: never lose Dinner/Breakfast/etc after a successful
+   add merely because the base save handler briefly navigated away. */
+const alpha0617SaveEditorEntryBase=saveEditorEntry;
+saveEditorEntry=function(andSaveFood=false){
+  const meal=ext.ui?.mealEntrySession?.meal||ext.ui.pendingMeal||by('entry-meal')?.value||'';
+  const date=ext.ui?.mealEntrySession?.date||by('entry-date')?.value||ext.ui.diaryDate||isoToday();
+  if(meal&&!editorState?.entryId)alpha0616SetMealSession(meal,date);
+  alpha0617SaveEditorEntryBase(andSaveFood);
+  if(meal&&!editorState?.entryId){setTimeout(()=>{ext.ui.pendingMeal=meal;ext.ui.diaryDate=date;ext.ui.libraryTab='all';ext.ui.foodSearch='';saveExt();openFeature('food-library',{freshSearch:true});},60);}
+};
+
+/* Human-facing energy wording: once above target say how far above, never
+   imply there are simply zero Calories remaining. */
+const alpha0617RenderDiaryBase=renderDiary;
+renderDiary=function(){alpha0617RenderDiaryBase();const date=ext.ui.diaryDate||isoToday(),goal=currentGoals(date).calories,recorded=dayNutrition(date).calories,diff=goal-recorded;
+  if(by('diary-day-plan-summary')&&goal)by('diary-day-plan-summary').textContent=`${formatNumber(recorded)} Cal Recorded · ${diff>=0?formatNumber(diff)+' Cal Remaining':formatNumber(Math.abs(diff))+' Cal Over'}`;
+  const slide=by('diary-day-summary')?.querySelector('.summary-slide');if(slide&&goal){const boxes=slide.querySelectorAll('.diary-kpi-row>div');if(boxes[2])boxes[2].innerHTML=`<small>${diff>=0?'Remaining':'Over'}</small><strong>${formatNumber(Math.abs(diff))} Cal</strong>`;}
+};
+
+/* Progress page: remove the developer-like diary/check-in/activity box and
+   show the overall weight journey near the graph. */
+const alpha0617RenderHistoryBase=renderHistory;
+renderHistory=function(period){alpha0617RenderHistoryBase(period);by('history-summary')?.classList.add('hidden');const weights=[...(ext.weightHistory||ext.weights||[])].filter(w=>Number(w.weightKg??w.weight)>0).sort((a,b)=>String(a.date).localeCompare(String(b.date)));if(weights.length){const first=Number(weights[0].weightKg??weights[0].weight),last=Number(weights[weights.length-1].weightKg??weights[weights.length-1].weight),change=last-first,box=by('weight-chart')||q('.weight-line-chart')?.parentElement;if(box&&!box.querySelector('.alpha0617-overall-weight'))box.insertAdjacentHTML('afterbegin',`<div class="alpha0617-overall-weight"><strong>${last.toFixed(1)} kg</strong><span>${change<0?Math.abs(change).toFixed(1)+' kg lost':change>0?'+'+change.toFixed(1)+' kg since starting':'No change'} since ${esc(new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short',year:'numeric'}).format(new Date(weights[0].date+'T12:00:00')))}</span><small>Started at ${first.toFixed(1)} kg</small></div>`);}
+};
+
+/* Missing energy is unknown, not zero, for obviously caloric foods. */
+const alpha0617ResourceFoodRowBase=resourceFoodRow;
+resourceFoodRow=function(food){let html=alpha0617ResourceFoodRowBase(food);const cal=Number(food?.nutrients?.calories);const caloric=/cake|bavarian|pie|sausage|bread|biscuit|cracker|chocolate|bar|cereal|spread|margarine|cheese|meat|chicken|beef|pork/i.test(`${food?.name||''} ${food?.category||''}`);if(cal===0&&caloric)html=html.replace(/0\s*Cal/g,'Nutrition incomplete').replace('resource-row ','resource-row food-warning ');return html;};
+
+ext.version='0.6.17';saveExt();

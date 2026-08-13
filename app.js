@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.12",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.20",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;

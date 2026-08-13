@@ -1,49 +1,27 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.12
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.20
 
 PURPOSE
-Alpha 0.6.12 is the next founder-testing build after Alpha 0.6.11. It focuses on reliable everyday use: persistence guidance, a polished weight trend, natural serving units, editable voice quantities, better search ranking, profile-aware meal suggestions, package verification, sharing and duplicate-entry protection.
+Alpha 0.6.20 is a search-architecture correction build. It keeps the existing Alpha 0.6 founder-trial data model and makes guided food entry the protected first pathway for ordinary Food Library searches.
+
+IMPORTANT UPDATE METHOD
+1. Download a Backup from the current build.
+2. Replace the COMPLETE deployed folder with Alpha 0.6.20 at the same GitHub Pages address.
+3. Do not merge only selected JavaScript files with an older build.
+4. Open the site normally and confirm the visible build number is Alpha 0.6.20.
+
+WHY THIS BUILD IS DIFFERENT
+A structural fault was found in Alpha 0.6.19: several later founder patches had been appended after the main alpha06.js closure, so those patches could parse but could not access the app's internal functions/state when the browser executed them. This explains why the intended guided-search changes repeatedly appeared not to take effect. Alpha 0.6.20 moves those patches back into the active app scope and adds a final protected guided-search layer.
+
+EXPECTED PIE TEST
+Typing Pie should show:
+1. Pie, Curry
+2. Pie
+
+Choosing Pie, Curry should continue without asking Curry again, then refine filling/protein and source before reaching amount/unit review. Raw AFCD/database rows are secondary and are hidden until Browse database matches is deliberately selected.
 
 DATA CONTINUITY
-Alpha 0.6.12 keeps the existing Alpha 0.6 browser-storage keys:
+The browser-storage keys remain unchanged:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-Publishing the complete build at the same GitHub Pages address is intended to retain existing profile, Diary, recipes, favourites, weight history, Shopping List and other founder-test data in a normal browser storage context.
-
-IMPORTANT: SAFARI PRIVATE BROWSING
-Safari Private Browsing can delete website storage when private tabs are closed. A website cannot override that privacy behaviour. For persistence testing, use a normal Safari tab or install/open the Companion from the Home Screen. Alpha 0.6.12 also maintains a second local IndexedDB mirror when the browser permits it.
-
-HIGHLIGHTS
-- Weight Trend is now a responsive line graph with dots for each weigh-in.
-- Starting Weight migration is repaired and Change Since Start uses the earliest valid record.
-- Daily Progress removes Recorded/Open Meal badges.
-- Search ranking favours true food identity, Australian matches and saved/verified foods.
-- Cappucino/Capuccino searches are normalised to Cappuccino.
-- Context-aware units add natural measures such as Bar, Sachet, Tub, Bottle and whole-item measures where appropriate.
-- Voice/Text review includes editable Amount and Unit fields.
-- Stored allergies, intolerances, eating pattern and love/like/dislike/never-eat preferences are used more directly by suggestion filtering/ranking.
-- Barcode foods can be compared with a Nutrition Panel before choosing which values to retain.
-- Saved packaged foods can remember when they were last checked and occasionally invite the user to review older records.
-- Foods, saved meals and recipes can be shared as portable Companion files.
-- A full Companion device-copy file can be shared/restored manually.
-- Completed Add To Diary transactions cannot be accidentally submitted again by navigating Back.
-
-AUTOMATIC IPHONE/IPAD SYNC
-True live cross-device sync is not simulated in this static build. It requires a secure authenticated cloud service. Alpha 0.6.12 supplies manual full-device transfer and preserves the future connection architecture for that later service.
-
-HOW TO PUBLISH
-1. If existing data matters, use Download Backup first.
-2. Unzip this package.
-3. Replace the existing GitHub Pages repository files with the COMPLETE Alpha 0.6.12 contents.
-4. Commit/publish all changed files.
-5. Open the normal site address (not Private Browsing) and confirm Alpha 0.6.12 appears.
-6. Safari may refresh once when the new service worker takes control.
-
-FOUNDER-TRIAL LIMITATIONS
-- Secure accounts and true automatic cross-device sync still require a protected backend.
-- Camera/barcode, Web Share/AirDrop, speech and nutrition-panel OCR require real-device testing after deployment.
-- Online product records can be incomplete or outdated and should be checked against the package.
-- Allergy/dietary suggestion filtering remains a founder-trial aid and is not a clinical safety guarantee.
-- Nutrition calculations and suggestions remain product-development features, not medical advice.
-
-Alpha 0.6.19: universal guided food-search architecture, Australian menu localisation, Recent/copy workflow fixes, natural units and expanded Weight Trend periods. See RELEASE_NOTES_ALPHA_0_6_18.txt and TESTING_CHECKLIST_ALPHA_0_6_18.txt.
+The build retains the 14 Days and 6 Months Weight Trend ranges added in the previous build.

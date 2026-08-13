@@ -1,8 +1,8 @@
 window.HEC_APP = Object.freeze({
   name: "Healthy Eating Companion",
   shortName: "HEC",
-  version: "0.6.18",
-  buildLabel: "Founder Trial Alpha 0.6.18",
+  version: "0.6.20",
+  buildLabel: "Founder Trial Alpha 0.6.20",
   storageKey: "healthyEatingCompanionAlpha06",
   functionalStorageKey: "healthyEatingCompanionAlpha06Functional",
   locale: "en-AU"

@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.20</title>
-  <link rel="manifest" href="manifest.webmanifest?v=0.6.20">
-  <link rel="stylesheet" href="styles.css?v=0.6.20">
+  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.21</title>
+  <link rel="manifest" href="manifest.webmanifest?v=0.6.21">
+  <link rel="stylesheet" href="styles.css?v=0.6.21">
 </head>
 <body data-theme="garden">
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.20</div>
+      <div class="badge">Founder Trial · Alpha 0.6.21</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.20 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.21 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,7 +120,7 @@
           <div class="section-heading"><div><h3>Meet The Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview hidden" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.20 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
+          <p class="fine">The Alpha 0.6.21 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
           <div class="form-grid">
             <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
             <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
@@ -341,7 +341,7 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header compact-home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.20</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.21</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
     <main class="home-main home-main-centred">
       <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
@@ -349,17 +349,12 @@
         <button class="room r1" data-room="daily-progress"><span>📊</span><b>Daily Progress</b><small>Today at a glance</small></button>
         <button class="room r2" data-room="diary"><span>🍽️</span><b>Diary</b><small>Plan and log</small></button>
         <button class="room r3" data-room="database"><span>🥕</span><b>Food Library</b><small>Find, save and scan</small></button>
-        <button class="room r4" data-room="meal-planner"><span>🗓️</span><b>Meal Planner</b><small>Plan several meals or days</small></button>
+        <button class="room r4" data-room="quick-food"><span>🎙️</span><b>Quick Food Log</b><small>Speak or type</small></button>
         <button class="room r5" data-room="shopping-list"><span>🛒</span><b>Shopping List</b><small>Groceries and ingredients</small></button>
-        <button class="room r6" data-room="progress-weight"><span>📈</span><b>Progress &amp; Weight</b><small>Trends and check-ins</small></button>
-        <button class="room r7" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your choices</small></button>
-        <button id="home-companion" class="companion-centre"><img id="home-avatar-image" class="home-avatar-image hidden" alt=""><span id="home-avatar">🐦</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small></button>
-      </div>
-
-      <div id="inspiration-card" class="home-message daily-inspiration-card tappable-card" role="button" tabindex="0" aria-label="Tap for another food tip, quote, joke or fact">
-        <span id="message-avatar">🐵</span>
-        <div><strong id="message-name">Healthy Eating Companion</strong><span id="message-type" class="eyebrow">Today’s thought</span><p id="message-text">Small changes are easier to repeat than perfect days.</p></div>
-        <div class="inspiration-actions"><select id="inspiration-category" aria-label="Companion message category"><option value="mix">Mix Them Up</option><option value="tip">Healthy Eating Tips</option><option value="quote">Food Quotes</option><option value="joke">Food Jokes</option><option value="fact">Did You Know?</option><option value="encouragement">Encouragement</option></select><small>Tap the card for another</small></div><button id="speak-home" class="speak-note companion-only" aria-label="Speak today’s thought">🔊</button>
+        <button class="room r6" data-room="progress-weight"><span>📈</span><b>Nutrition, Balance &amp; Weight</b><small>Progress graphs</small></button>
+        <button class="room r7" data-room="quick-weight"><span>⚖️</span><b>Quick Weight Log</b><small>Record weight</small></button>
+        <button class="room r8" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your choices</small></button>
+        <button id="home-companion" class="companion-centre"><img id="home-avatar-image" class="home-avatar-image hidden" alt=""><span id="home-avatar">🐦</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small><span id="home-companion-message" class="home-companion-message">A useful thought will appear here.</span></button>
       </div>
     </main>
   </section>
@@ -395,7 +390,7 @@
 
       <div class="diary-primary-actions">
         <button id="diary-plan-multiple" data-open-feature="meal-planner" type="button" class="secondary">✨ Plan Multiple Meals</button>
-        <button data-open-feature="quick-log" type="button" class="secondary">🎙️ Quick Log</button>
+
       </div>
 
       <div id="diary-calculation-status" class="calculation-status compact-diary-status" role="status"></div>
@@ -619,6 +614,11 @@
       </div>
 
       <div id="daily-progress-explanation" class="card compact-summary-card"></div>
+      <button id="daily-balance-card" type="button" class="card daily-balance-card" aria-label="Open today’s nutrition balance details">
+        <div class="daily-balance-heading"><span><strong>Nutrition Balance</strong><small id="daily-balance-label">Building today’s picture</small></span><b id="daily-balance-score">—/10</b></div>
+        <div class="daily-balance-track" aria-hidden="true"><span id="daily-balance-fill"></span></div>
+        <small>Tap for what is going well, what may need attention and optional suggestions.</small>
+      </button>
       <section class="progress-section meal-progress-section"><div class="section-heading compact-heading"><div><h3 id="daily-meals-heading">Today’s Meals</h3><p id="daily-meals-copy">Tap any meal to view, add or change its entries.</p></div></div><div id="daily-meal-status" class="daily-meal-status"></div></section>
       <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Nutrition Progress</h3><p>Bars show the food and drinks currently recorded in your Diary for this day.</p></div></div><div id="daily-progress-grid" class="progress-grid"></div></section>
       <section class="progress-section"><div class="section-heading compact-heading"><div><h3>Five Food Groups</h3><p>Personalised Australian daily serve targets.</p></div></div><div id="daily-food-group-progress" class="food-group-progress-grid"></div><div id="weekly-food-group-progress" class="weekly-food-groups"></div></section>
@@ -642,7 +642,7 @@
   <section id="exercise-log" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Exercise & Extra Activity</h2><p>Anything Above Your Usual Day</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Activity<input id="exercise-name" placeholder="Mowing, gym, brisk walk, heavy work..."></label><label>Duration (minutes)<input id="exercise-minutes" type="number" min="1"></label><label>Intensity<select id="exercise-intensity"><option>Light</option><option selected>Moderate</option><option>Vigorous</option></select></label><label>Estimated Calories Burned<input id="exercise-calories" type="number" min="0"></label><label>Credit To Today’s Food Allowance<select id="exercise-credit-choice"><option value="0">None</option><option value="50">50%</option><option value="100">All</option><option value="custom">Custom</option></select></label><label>Custom Credit (Cal)<input id="exercise-custom-credit" type="number" min="0"></label><label class="full">Notes<textarea id="exercise-notes" rows="2"></textarea></label></div><button id="add-exercise" class="primary wide">Add Activity</button></div><div class="card"><h3>Activity History</h3><div id="exercise-history"></div></div></main></section>
 
   <section id="progress-weight-hub" class="screen content-screen">
-    <header class="topbar sticky"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Progress &amp; Weight</h2><p>Review trends, record weight and prepare reports.</p></div></header>
+    <header class="topbar sticky"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Nutrition, Balance &amp; Weight Progress</h2><p>Review nutrition balance, weight trends and progress over time.</p></div></header>
     <main class="page">
       <div class="subroom-grid">
         <button data-open-feature="progress-history"><span>📈</span><strong>Progress History</strong><small>Weight, food, hydration and activity trends</small></button>
@@ -723,7 +723,7 @@
 
   <section id="send-feedback" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Send Feedback</h2><p>Tell us what works and what needs improvement.</p></div></header><main class="page narrow"><div class="card"><div class="form-grid"><label>Feedback Type<select id="feedback-type"><option>Something I Like</option><option>Something I Dislike</option><option>Something Seems Inaccurate</option><option>I Found a Bug</option><option>Suggest a New Feature</option><option>Other Feedback</option></select></label><label>Screen or Feature<input id="feedback-screen" placeholder="Optional"></label><label class="full">Your Feedback<textarea id="feedback-message" rows="7" required></textarea></label><label class="toggle full"><input id="feedback-response-ok" type="checkbox"><span>You may contact me about this feedback.</span></label></div><button id="submit-feedback" class="primary wide">Prepare Feedback</button><p class="fine">App version and basic device information are included. Diary text, food entries, weight, photos and address details are not attached automatically.</p><div id="feedback-status" class="status-box hidden"></div></div></main></section>
 
-  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.20 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, foods, meals, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing And Leaving</h3><p><strong>Reset App for Testing</strong> can restart onboarding while keeping your My Foods and My Meals &amp; Recipes library. A separate full reset remains available when you deliberately want to delete everything.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
+  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.21 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, foods, meals, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing And Leaving</h3><p><strong>Reset App for Testing</strong> can restart onboarding while keeping your My Foods and My Meals &amp; Recipes library. A separate full reset remains available when you deliberately want to delete everything.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
 
   <section id="founder-tools" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Founder Trial Tools</h2><p>Local founder-only testing controls.</p></div></header><main class="page"><div id="founder-lock-card" class="card"><h3>Developer Access</h3><p>Set or enter a six-digit local PIN. This protects the tools on this device only.</p><label>Founder PIN<input id="founder-pin" type="password" inputmode="numeric" maxlength="6"></label><button id="founder-unlock" class="primary">Unlock</button><small id="founder-lock-status" class="field-error"></small></div><div id="founder-dashboard" class="hidden"><div class="card"><h3>Invite Trial Testers</h3><p>Create up to 10 invitation links for friends and family.</p><div class="form-grid"><label>Feedback Email<input id="founder-feedback-email" type="email" placeholder="Address that receives tester feedback"></label><label>Name<input id="invite-name"></label><label>Email or Note<input id="invite-contact"></label></div><button id="create-invite" class="primary">Create Invitation</button><div id="invite-list"></div><p class="fine">In this static trial, invitation records and the 10-person limit are stored on this device. Secure cross-device enforcement will require a protected server in a future build.</p></div><div class="card"><h3>Developer Insights</h3><div id="developer-insights"></div><button id="export-insights" class="secondary">Export Local Insights</button><p class="fine">These figures cover this browser only until a privacy-protected analytics service is connected.</p></div><div class="card"><h3>Feedback Received on This Device</h3><div id="founder-feedback-list"></div></div></div></main></section>
 
@@ -762,13 +762,13 @@
 
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
-<script src="config.js?v=0.6.20"></script>
-<script src="companions.js?v=0.6.20"></script>
-<script src="app.js?v=0.6.20"></script>
+<script src="config.js?v=0.6.21"></script>
+<script src="companions.js?v=0.6.21"></script>
+<script src="app.js?v=0.6.21"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/umd/zxing-browser.min.js" defer crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js" defer crossorigin="anonymous"></script>
-<script src="alpha06.js?v=0.6.20"></script>
-<script src="alpha064.js?v=0.6.20"></script>
+<script src="alpha06.js?v=0.6.21"></script>
+<script src="alpha064.js?v=0.6.21"></script>
 </body>
 </html>

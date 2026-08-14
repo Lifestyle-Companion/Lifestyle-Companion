@@ -429,7 +429,7 @@ fieldset>legend,.section-heading h3,.card>h3,.card>h4{font-size:clamp(1.18rem,3.
 .alpha0618-r2-guide-row{background:rgba(228,247,252,.72)!important}.alpha0618-r2-guide-row>span>small{color:var(--muted)}
 
 
-/* Alpha 0.6.20 — protected guided-search surface */
+/* Alpha 0.6.21 — protected guided-search surface */
 .alpha0620-guide-surface{margin:12px 0 16px;padding:18px;border:1px solid #b9dce8;border-radius:22px;background:#f4fbfe;display:grid;gap:10px}
 .alpha0620-guide-surface>strong{font-size:1.18rem;color:#173f53}
 .alpha0620-guide-surface>small{display:block;color:#5d7480;line-height:1.35}
@@ -441,3 +441,28 @@ fieldset>legend,.section-heading h3,.card>h3,.card>h4{font-size:clamp(1.18rem,3.
 #food-results.alpha0620-guide-active:not(.alpha0620-show-raw)>.search-guidance,
 #food-results.alpha0620-guide-active:not(.alpha0620-show-raw)>.resource-empty{display:none!important}
 .alpha0620-wizard-list{display:grid;gap:10px;margin-top:12px}
+
+
+/* Alpha 0.6.21 — Home simplification, eight-room circle and nutrition balance */
+#home-summary.hidden{display:none!important}
+#inspiration-card{display:none!important}
+.seven-room-circle .r1{left:50%!important;top:7%!important}
+.seven-room-circle .r2{left:80.4%!important;top:19.6%!important}
+.seven-room-circle .r3{left:93%!important;top:50%!important}
+.seven-room-circle .r4{left:80.4%!important;top:80.4%!important}
+.seven-room-circle .r5{left:50%!important;top:93%!important}
+.seven-room-circle .r6{left:19.6%!important;top:80.4%!important}
+.seven-room-circle .r7{left:7%!important;top:50%!important}
+.seven-room-circle .r8{left:19.6%!important;top:19.6%!important}
+.seven-room-circle .companion-centre{width:40%!important;left:50%!important;top:50%!important;padding:9px!important}
+.seven-room-circle .companion-centre .home-avatar-image{width:46%!important;height:46%!important}
+.home-companion-message{display:block;font-size:clamp(.52rem,1.65vw,.70rem)!important;line-height:1.15;color:var(--muted);max-width:92%;margin-top:4px;font-weight:650}
+.seven-room-circle .room b{max-width:92%;overflow-wrap:anywhere}
+.daily-balance-card{display:block;width:100%;text-align:left;color:var(--ink);cursor:pointer;border:1px solid var(--line);background:var(--surface,#fff)}
+.daily-balance-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.daily-balance-heading span{display:grid;gap:2px}.daily-balance-heading strong{font-size:1.1rem}.daily-balance-heading small{color:var(--muted)}
+.daily-balance-heading b{font-size:1.4rem;white-space:nowrap}
+.daily-balance-track{height:17px;border-radius:999px;overflow:hidden;background:#f5efcf;border:1px solid #ded4a4;margin-bottom:10px}
+.daily-balance-track span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#e9ce62 0%,#b9cf68 52%,#6dac78 100%);transition:width .3s ease}
+.daily-balance-detail h4{margin:14px 0 6px}.daily-balance-detail ul{margin:5px 0 12px;padding-left:20px}.daily-balance-detail li{margin:5px 0}
+@media(max-width:520px){.seven-room-circle .room{width:20%!important;height:20%!important;min-width:64px!important}.seven-room-circle .companion-centre{width:42%!important}.home-companion-message{font-size:.54rem!important}.seven-room-circle .room b{font-size:.58rem!important}}

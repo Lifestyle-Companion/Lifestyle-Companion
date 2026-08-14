@@ -1,7 +1,7 @@
 {
-  "name": "Healthy Eating Companion Founder Trial Alpha 0.6.20",
+  "name": "Healthy Eating Companion Founder Trial Alpha 0.6.21",
   "short_name": "HE Companion",
-  "description": "Australian founder trial with Daily Progress opening screen, a dedicated Companion Circle Home, optional food preferences, transparent energy goals and safe food planning.",
+  "description": "Australian founder trial with a Companion Circle Home opening screen, optional food preferences, transparent energy goals and safe food planning.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

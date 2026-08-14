@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.20",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.21",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -1093,7 +1093,8 @@ function renderHome(){
   const name = displayName();
   $("home-greeting").textContent = `${greeting()}${name ? ", " + name : ""}`;
   const lastWeight=[...(data.weightHistory||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
-  $("home-summary").innerHTML = `<span><strong>Current Weight:</strong> ${escapeHtml(formatWeight(data.health.currentWeightKg))} kg${lastWeight?.date?` <small>(recorded ${escapeHtml(new Intl.DateTimeFormat("en-AU",{day:"numeric",month:"short",year:"numeric"}).format(new Date(lastWeight.date+"T12:00:00")))})</small>`:""}</span><span><strong>Goal Weight:</strong> ${escapeHtml(formatWeight(data.health.selectedGoalWeight))} kg</span><span><strong>Daily Energy Target:</strong> ${escapeHtml(energyDisplay(data.recommendations.energyKj))}</span>`;
+  $("home-summary").innerHTML = "";
+  $("home-summary").classList.add("hidden");
 
   const enabled = data.companion.enabled;
   const avatar = enabled ? data.companion.character : "🥗";
@@ -1106,16 +1107,17 @@ function renderHome(){
   }
   $("home-avatar").classList.toggle("hidden", enabled && !!companionDefinition);
   $("home-avatar").textContent = avatar;
-  $("message-avatar").textContent = avatar;
+  if($("message-avatar")) $("message-avatar").textContent = avatar;
   $("home-companion-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
-  $("message-name").textContent = "Healthy Eating Companion";
+  if($("message-name")) $("message-name").textContent = "Healthy Eating Companion";
   $("home-companion-action").textContent = enabled ? "Tap for guidance" : "Tap for written guidance";
   $("home-companion").classList.toggle("no-companion", !enabled);
   const dayNumber = Math.floor(Date.now() / 86400000);
   const index = Math.abs(dayNumber) % INSPIRATION.length;
   const item = INSPIRATION[index];
-  $("message-type").textContent = item.type;
-  $("message-text").textContent = item.text;
+  if($("message-type")) $("message-type").textContent = item.type;
+  if($("message-text")) $("message-text").textContent = item.text;
+  if($("home-companion-message")) $("home-companion-message").textContent = item.text;
   updateCompanionUI();
 }
 function personalityGuidance(companion){
@@ -1129,11 +1131,13 @@ $("home-companion").addEventListener("click", () => {
   toast(full);
   if(data.companion.enabled) speakText(personaliseSpeech(full));
 });
-$("speak-home").addEventListener("click", () => speakText($("message-text").textContent, {force:true}));
+$("speak-home")?.addEventListener("click", () => speakText($("home-companion-message")?.textContent || "", {force:true}));
 
 document.querySelectorAll(".room").forEach(button => button.addEventListener("click", () => {
   const room = button.dataset.room;
   if(room === "settings"){ show("settings"); return; }
+  if(room === "quick-weight"){ show("weight-checkin", {speak:false}); return; }
+  if(room === "quick-food" && typeof window.openAlpha05Feature === "function"){ window.openAlpha05Feature("quick-log",{fromHome:true}); return; }
   if(room === "progress-weight"){ show("progress-weight-hub", {speak:false}); return; }
   if(typeof window.openAlpha05Feature === "function"){
     if(room === "daily-progress"){ window.openAlpha05Feature("daily-progress",{fromHome:true}); return; }

@@ -89,7 +89,7 @@ function contentLabel(category){return {tip:"Healthy Eating Tip",quote:"Food Quo
 function nextContent(){
   const select=$("inspiration-category"),chosen=select?.value||"mix",categories=Object.keys(CONTENT),category=chosen==="mix"?categories[Math.floor(Math.random()*categories.length)]:chosen,pool=CONTENT[category]||CONTENT.tip;
   let text=pool[Math.floor(Math.random()*pool.length)];if(pool.length>1&&text===lastContent)text=pool[(pool.indexOf(text)+1)%pool.length];lastContent=text;
-  if($("message-type"))$("message-type").textContent=contentLabel(category);if($("message-text"))$("message-text").textContent=text;
+  if($("message-type"))$("message-type").textContent=contentLabel(category);if($("message-text"))$("message-text").textContent=text;if($("home-companion-message"))$("home-companion-message").textContent=text;
   const main=read(MAIN_KEY,{});main.preferences||={};main.preferences.inspirationCategory=chosen;main.preferences.lastInspiration={category,text};write(MAIN_KEY,main);track(`inspiration:${category}`);
 }
 $("inspiration-card")?.addEventListener("click",event=>{if(event.target.closest("select,button"))return;nextContent();});
@@ -162,7 +162,7 @@ function polishCompanionHome(){
   centre.classList.add('companion-polished');centre.setAttribute('aria-label',`${name?.textContent||'Companion'} — tap for guidance`);
   if(img&&!img.classList.contains('hidden'))img.classList.add('companion-idle-animation');
   const main=read(MAIN_KEY,{}),cid=main.companion?.id||main.companion?.characterId||'';const c=(window.HEC_COMPANIONS||[]).find(x=>x.id===cid||x.name===main.companion?.name);
-  if(c){centre.dataset.personality=c.personality||'';const action=document.getElementById('home-companion-action');if(action)action.textContent=`${c.tagline} · Tap for guidance`;}
+  if(c){centre.dataset.personality=c.personality||'';const action=document.getElementById('home-companion-action');if(action)action.textContent=`Tap for guidance`;}
 }
 function installPermissionGuidance(){
   const shopping=document.getElementById('shopping-add-status');if(shopping&&!shopping.dataset.permissionCopy){shopping.dataset.permissionCopy='1';shopping.insertAdjacentHTML('afterend','<p class="fine permission-guidance">Speech permission is normally requested only the first time. If iPhone asks again, check Safari/HE Companion permissions in Settings.</p>');}

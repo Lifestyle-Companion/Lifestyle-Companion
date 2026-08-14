@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.21",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.22",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -1109,7 +1109,7 @@ function renderHome(){
   $("home-avatar").textContent = avatar;
   if($("message-avatar")) $("message-avatar").textContent = avatar;
   $("home-companion-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
-  if($("message-name")) $("message-name").textContent = "Healthy Eating Companion";
+  if($("message-name")) $("message-name").textContent = enabled ? `${companionDisplayName()} Says` : "Healthy Eating Companion";
   $("home-companion-action").textContent = enabled ? "Tap for guidance" : "Tap for written guidance";
   $("home-companion").classList.toggle("no-companion", !enabled);
   const dayNumber = Math.floor(Date.now() / 86400000);
@@ -1131,7 +1131,7 @@ $("home-companion").addEventListener("click", () => {
   toast(full);
   if(data.companion.enabled) speakText(personaliseSpeech(full));
 });
-$("speak-home")?.addEventListener("click", () => speakText($("home-companion-message")?.textContent || "", {force:true}));
+$("speak-home")?.addEventListener("click", () => speakText($("message-text")?.textContent || "", {force:true}));
 
 document.querySelectorAll(".room").forEach(button => button.addEventListener("click", () => {
   const room = button.dataset.room;
@@ -1476,3 +1476,26 @@ if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   navigator.serviceWorker.addEventListener("controllerchange",()=>{if(refreshingForNewWorker)return;refreshingForNewWorker=true;location.reload();});
   navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(VERSION)}`,{updateViaCache:"none"}).then(reg=>reg.update()).catch(() => {});
 }
+
+/* Alpha 0.6.22 — compact companion message card below the Home circle. */
+(function alpha0622CompanionMessageCard(){
+  let last=-1;
+  function categoryMatches(item,category){
+    const t=String(item?.type||'').toLowerCase();
+    if(!category||category==='mix')return true;
+    if(category==='tip')return /tip|thought|planning|hydration/.test(t);
+    if(category==='quote')return /quote/.test(t);
+    if(category==='joke')return /joke/.test(t);
+    if(category==='fact')return /fact/.test(t);
+    if(category==='encouragement')return /thought|quote/.test(t);
+    return true;
+  }
+  function nextMessage(){
+    const category=$('inspiration-category')?.value||'mix',pool=INSPIRATION.map((x,i)=>({x,i})).filter(v=>categoryMatches(v.x,category));
+    if(!pool.length)return;let pick=pool[Math.floor(Math.random()*pool.length)];if(pool.length>1&&pick.i===last)pick=pool[(pool.findIndex(v=>v.i===pick.i)+1)%pool.length];last=pick.i;
+    if($('message-type'))$('message-type').textContent=pick.x.type;if($('message-text'))$('message-text').textContent=pick.x.text;
+  }
+  $('inspiration-category')?.addEventListener('change',e=>{e.stopPropagation();nextMessage();});
+  $('inspiration-card')?.addEventListener('click',e=>{if(e.target.closest('select,button'))return;nextMessage();});
+  $('inspiration-card')?.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('select,button')){e.preventDefault();nextMessage();}});
+})();

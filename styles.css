@@ -466,3 +466,24 @@ fieldset>legend,.section-heading h3,.card>h3,.card>h4{font-size:clamp(1.18rem,3.
 .daily-balance-track span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#e9ce62 0%,#b9cf68 52%,#6dac78 100%);transition:width .3s ease}
 .daily-balance-detail h4{margin:14px 0 6px}.daily-balance-detail ul{margin:5px 0 12px;padding-left:20px}.daily-balance-detail li{margin:5px 0}
 @media(max-width:520px){.seven-room-circle .room{width:20%!important;height:20%!important;min-width:64px!important}.seven-room-circle .companion-centre{width:42%!important}.home-companion-message{font-size:.54rem!important}.seven-room-circle .room b{font-size:.58rem!important}}
+
+/* Alpha 0.6.22 — readable companion card, canonical search surfaces and wizard navigation */
+#inspiration-card.compact-companion-message-card{display:flex!important;width:min(92vw,680px);margin:18px auto 28px!important;padding:16px 18px!important;gap:14px;align-items:flex-start;border-radius:20px;background:var(--surface,#fff);border:1px solid var(--line);box-shadow:0 8px 22px rgba(18,71,91,.07)}
+.compact-companion-message-card #message-avatar{font-size:2rem;line-height:1}
+.compact-companion-message-card>div:nth-child(2){flex:1;min-width:0;display:grid;gap:4px}
+.compact-companion-message-card #message-name{font-size:1.02rem}.compact-companion-message-card #message-type{font-size:.72rem}.compact-companion-message-card #message-text{font-size:1rem;line-height:1.38;margin:2px 0 4px;color:var(--ink)}
+.compact-companion-message-card .inspiration-actions{display:flex;flex-direction:column;gap:5px;min-width:165px}.compact-companion-message-card .inspiration-actions select{font-size:.86rem;padding:9px 10px}.compact-companion-message-card .inspiration-actions small{font-size:.72rem;color:var(--muted)}
+.compact-companion-message-card #speak-home{flex:0 0 auto}
+.seven-room-circle .companion-centre{padding:12px!important}.seven-room-circle .companion-centre .home-avatar-image{width:55%!important;height:55%!important}.seven-room-circle .companion-centre>strong{font-size:clamp(.85rem,2.4vw,1.18rem)!important}.seven-room-circle .companion-centre>small{font-size:clamp(.64rem,1.8vw,.86rem)!important;line-height:1.2}
+
+.alpha0622-search-surface{margin:12px 0 16px;padding:16px;border:1px solid #b9dce8;border-radius:20px;background:#f4fbfe;display:grid;gap:10px}
+.alpha0622-search-surface>strong{font-size:1.15rem;color:#173f53}.alpha0622-search-surface>small{color:#5d7480;line-height:1.35}
+.alpha0622-guide-row,.alpha0622-database-toggle{width:100%;border:1px solid #b8d6e1;border-radius:15px;background:#fff;color:#173f53;padding:13px 15px;text-align:left;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.alpha0622-guide-row span{display:grid;gap:3px}.alpha0622-guide-row small{font-weight:500;color:#667b86}.alpha0622-database-toggle{justify-content:center;color:#197da4;background:#f8fcfe}
+.alpha0622-product-surface>.resource-row{margin:0;border:1px solid #d5e4e9;border-radius:14px;background:#fff}.alpha0622-search-status{padding:13px;border-radius:14px;background:#fff;border:1px dashed #bad4de;display:grid;gap:4px}.alpha0622-search-status small,.alpha0622-search-status p{margin:0;color:var(--muted)}
+#food-results.alpha0622-guide-active:not(.alpha0622-show-raw)>.resource-row,#food-results.alpha0622-guide-active:not(.alpha0622-show-raw)>.all-resources-online,#food-results.alpha0622-guide-active:not(.alpha0622-show-raw)>.online-source-banner,#food-results.alpha0622-guide-active:not(.alpha0622-show-raw)>.search-guidance,#food-results.alpha0622-guide-active:not(.alpha0622-show-raw)>.resource-empty{display:none!important}
+.alpha0622-wizard-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 12px}.alpha0622-wizard-nav small{color:var(--muted)}.alpha0622-wizard-list{display:grid;gap:10px}.alpha0622-wizard-list .wide{min-height:58px}
+.balance-not-ready .daily-balance-track{background:#eef3f4;border-color:#d6e3e7}.balance-not-ready .daily-balance-track span{background:#c8d8de!important}.balance-not-ready .daily-balance-heading b{color:var(--muted)}
+.simple-diary-entry .entry-open>b{max-width:42%;text-align:right;font-size:.86rem;line-height:1.18;white-space:normal}
+@media(max-width:600px){#inspiration-card.compact-companion-message-card{flex-wrap:wrap}.compact-companion-message-card .inspiration-actions{width:100%;min-width:0;flex-direction:row;align-items:center}.compact-companion-message-card .inspiration-actions select{flex:1}.simple-diary-entry .entry-open>b{font-size:.73rem;max-width:40%}}
+#food-results.alpha0622-product-active>.resource-row,#food-results.alpha0622-product-active>.all-resources-online,#food-results.alpha0622-product-active>.online-source-banner,#food-results.alpha0622-product-active>.search-guidance,#food-results.alpha0622-product-active>.resource-empty{display:none!important}

@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.25",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.26",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -831,7 +831,7 @@ function renderFoodLiveMatches(query){
   if(typeof alpha0618R2GuideLabels==="function" && typeof alpha0618R2Text==="function"){
     const qn=alpha0618R2Text(term);
     if(/\bburger king\b/.test(qn)){
-      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.25</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
+      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.26</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
       box.classList.remove("hidden");return;
     }
     const chain=typeof alpha0618ChainFor==="function"?alpha0618ChainFor(term):null;
@@ -839,12 +839,12 @@ function renderFoodLiveMatches(query){
       const alias=(chain.aliases||[]).find(a=>qn.includes(a))||"";
       const tail=qn.replace(alias,"").trim();
       const items=(chain.items||[]).filter(x=>!tail||alpha0618R2Text(x).includes(tail)).slice(0,3);
-      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.25</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
+      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.26</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
       box.classList.remove("hidden");return;
     }
     const guides=alpha0618R2GuideLabels(term);
     const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · choose type, preparation and amount</small></span><b>›</b></button>`).join("");
-    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.25</small></div>${guideHtml}`;
+    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.26</small></div>${guideHtml}`;
     box.classList.remove("hidden");return;
   }
 
@@ -2762,11 +2762,15 @@ function alpha0618StartSausageWizard(query){const s=alpha0618SausageDefaults(que
    so a future protected updater can refresh values without redesigning search. */
 const ALPHA0618_CHAIN_MENUS={
   kfc:{label:'KFC Australia',aliases:['kfc'],items:['Zinger® Burger','Original Crispy Burger','Original Crispy Bacon & Cheese Burger','Original Crispy BBQ Bacon Stacker® Burger','Double Tender™ Burger','Zinger® Bacon & Cheese Burger','Zinger Stacker® Burger','Zinger® Crunch Burger™','Original Recipe Chicken','Wicked Wings®','Original Tenders™','Nuggets','Chips','Potato & Gravy']},
-  mcd:{label:"McDonald’s Australia",aliases:['mcdonalds','mcdonald s','maccas','macca s'],items:['Big Mac®','Double Big Mac®','Quarter Pounder®','Double Quarter Pounder®','Cheeseburger','Double Cheeseburger','Hamburger','McSpicy®','McCrispy®','McChicken®','Filet-O-Fish®','Bacon & Egg McMuffin®','Sausage McMuffin®','Sausage & Egg McMuffin®','Mighty McMuffin®','Big Brekkie Burger','Brekkie McWrap®','Hotcakes with Butter & Syrup','Hash Brown','Chicken McNuggets®']},
+  mcd:{label:"McDonald’s Australia",aliases:['mcdonalds','mcdonald s','maccas','macca s'],items:['Big Mac®','Double Big Mac®','Quarter Pounder®','Double Quarter Pounder®','Cheeseburger','Double Cheeseburger','Hamburger','McSpicy®','McCrispy®','McChicken®','Filet-O-Fish®','Bacon & Egg McMuffin®','Sausage McMuffin®','Sausage & Egg McMuffin®','Mighty McMuffin®','Big Brekkie Burger','Brekkie McWrap®','Hotcakes with Butter & Syrup','Hash Brown','Chicken McNuggets®','Fries','Soft Drink','Coca-Cola®','Coca-Cola® No Sugar','Sprite®','Fanta®']},
   hj:{label:"Hungry Jack’s Australia",aliases:['hungry jacks','hungry jack s','hungryjack'],items:['Whopper®','Double Whopper®','Ultimate Double Whopper®','Whopper® Cheese','Angry Whopper®','Bacon Deluxe','Cowboy Whopper®','BBQ Brekky Wrap','Big BBQ Brekky Wrap','Mega BBQ Brekky Wrap',"Jack’s Brekky Roll",'Cheeseburger','Grilled Chicken Burger','Nuggets','Hash Browns']}
 };
 function alpha0618ChainFor(query){const q=alpha0617SearchText(query).replace(/'/g,' ');return Object.values(ALPHA0618_CHAIN_MENUS).find(c=>c.aliases.some(a=>q.includes(a)))||null;}
 function alpha0618ChainGuide(query){const c=alpha0618ChainFor(query);if(!c)return'';const q=alpha0617SearchText(query),tail=q.replace(c.aliases.find(a=>q.includes(a))||'','').trim();let items=c.items.filter(x=>!tail||normalise(x).split(' ').some(t=>normalise(tail).includes(t))||normalise(x).includes(tail));if(!items.length)items=c.items;return `<section class="alpha0618-chain-guide"><strong>${esc(c.label)}</strong><small>Australian menu guide · choose an item. HEC will never turn missing nutrition into 0 Cal.</small>${items.slice(0,20).map(x=>`<button type="button" data-alpha0618-chain-item="${esc(c.label)}|${esc(x)}">${esc(x)}</button>`).join('')}</section>`;}
+function alpha0626ChainByLabel(label){return Object.values(ALPHA0618_CHAIN_MENUS).find(c=>c.label===label)||null;}
+function alpha0626ChainGroup(name){const n=normalise(name);if(/mcmuffin|brekkie|breakfast|hotcake|hash brown/.test(n))return 'Breakfast';if(/nugget|tender|wing|original recipe chicken/.test(n))return 'Chicken & Nuggets';if(/chip|fries|potato|gravy/.test(n))return 'Sides';if(/coca|sprite|fanta|soft drink|pepsi|7up|mountain dew|drink/.test(n))return 'Drinks';return 'Burgers & Main Items';}
+function alpha0626OpenChainMenu(label){const c=alpha0626ChainByLabel(label);if(!c)return;const order=['Burgers & Main Items','Chicken & Nuggets','Breakfast','Sides','Drinks'];const groups={};c.items.forEach(name=>{const g=alpha0626ChainGroup(name);(groups[g]||=[]).push(name);});const html=order.filter(g=>groups[g]?.length).map(g=>`<section class="alpha0626-chain-group"><h4>${esc(g)}</h4>${groups[g].map(name=>`<button type="button" class="secondary wide" data-alpha0618-chain-item="${esc(c.label)}|${esc(name)}">${esc(name)}</button>`).join('')}</section>`).join('');openModal(c.label,'Choose the closest menu item. Items without verified nutrition will be clearly stopped before Diary entry.','Close',()=>{},html);by('a05-modal-confirm')?.classList.add('hidden');}
+
 function alpha0618ChainItem(chain,name){
   // A small set has current official data in this founder build; all other menu
   // names remain discoverable but must be verified before Diary entry.
@@ -2781,7 +2785,7 @@ function alpha0618ChainItem(chain,name){
 }
 function alpha0618ShowUnverifiedChainItem(chain,name){openModal(name,`${chain} currently lists this item, but Alpha 0.6.18 does not yet hold a complete current nutrition record for it. HEC will not add a false 0-Cal item.`,`Close`,()=>{},`<div class="status-box"><strong>Current Nutrition Verification Required</strong><p>Use Read Nutrition Panel / package data where applicable, or wait for the protected menu updater planned for the shared-data phase.</p></div>`);}
 
-document.addEventListener('click',e=>{const w=e.target.closest('[data-alpha0618-sausage-wizard]');if(w){alpha0618StartSausageWizard(by('food-search')?.value||'sausage');return;}const item=e.target.closest('[data-alpha0618-chain-item]');if(item){const [chain,name]=item.dataset.alpha0618ChainItem.split('|'),f=alpha0618ChainItem(chain,name);if(!f){alpha0618ShowUnverifiedChainItem(chain,name);return;}FOODS.push(f);FOOD_BY_ID.set(f.id,f);prepareEntry(f,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||''});}},true);
+document.addEventListener('click',e=>{const w=e.target.closest('[data-alpha0618-sausage-wizard]');if(w){alpha0618StartSausageWizard(by('food-search')?.value||'sausage');return;}const menu=e.target.closest('[data-alpha0626-chain-menu]');if(menu){e.preventDefault();e.stopPropagation();alpha0626OpenChainMenu(menu.dataset.alpha0626ChainMenu);return;}const item=e.target.closest('[data-alpha0618-chain-item]');if(item){e.preventDefault();e.stopPropagation();const [chain,name]=item.dataset.alpha0618ChainItem.split('|'),f=alpha0618ChainItem(chain,name);if(!f){alpha0618ShowUnverifiedChainItem(chain,name);return;}FOODS.push(f);FOOD_BY_ID.set(f.id,f);prepareEntry(f,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||''});}},true);
 
 /* H. Search presentation prioritises guided intent and Australia. “Burger King”
    is suppressed as an Australian chain query; Hungry Jack’s is the local brand. */
@@ -2805,7 +2809,7 @@ searchRank=function(food,query){const q=alpha0618SearchText(query);if(/\bburger 
 ext.version='0.6.18';saveExt();
 
 /* ================================================================
-   Alpha 0.6.25 — CONDITIONAL BRANCHING + MATCH VALIDATION
+   Alpha 0.6.26 — CONDITIONAL BRANCHING + MATCH VALIDATION
    ================================================================
    One active search controller. Search behaviour is data-driven:
    - Query parser separates quantity/unit from food identity.
@@ -2816,7 +2820,7 @@ ext.version='0.6.18';saveExt();
      database concept exists; otherwise HEC offers safe search/scan/create fallbacks.
    - Extra query words may only preserve or increase specificity.
 */
-const ALPHA0623_BUILD='0.6.25';
+const ALPHA0623_BUILD='0.6.26';
 const S23=window.HECSearchFoundation;
 const B25=window.HECGuidedBranching;
 let alpha0623ShowRaw=false;
@@ -2922,7 +2926,7 @@ function s23FacetOrder(concept){
 function s23Features(food,concept){return B25?.features?B25.features(food,concept):(S23?.descriptorFeatures?.(food.name,concept)||{});}
 function s23Unique(values){return [...new Set(values.filter(Boolean).map(v=>String(v).trim()).filter(Boolean))];}
 function s23ChoiceValues(facet,candidates,concept){
-  // Alpha 0.6.25: choices come only from nutrition records that remain
+  // Alpha 0.6.26: choices come only from nutrition records that remain
   // compatible with the path so far. Unbacked supplemental buttons are omitted.
   const values=B25?.choiceValues?B25.choiceValues(facet,candidates,concept):s23Unique(candidates.map(f=>s23Features(f,concept)[facet]));
   return values.filter(v=>!/^(Other|Not Sure|Typical)$/i.test(v));
@@ -3051,11 +3055,11 @@ function s23RenderLive(raw){
   const box=by('food-live-results'),term=String(raw||'').trim();if(!box)return;
   if(!term||document.activeElement!==by('food-search')){box.classList.add('hidden');box.innerHTML='';return;}
   const q=s23Norm(term);
-  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.25</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
-  const chain=alpha0618ChainFor(term);if(chain){const alias=(chain.aliases||[]).find(a=>q.includes(a))||'',tail=q.replace(s23Norm(alias),'').trim(),items=(chain.items||[]).filter(x=>!tail||s23Norm(x).includes(tail)).slice(0,5);box.innerHTML=`<div class="live-match-heading"><strong>${esc(chain.label)}</strong><small>Australian menu · progressively narrowed</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
+  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.26</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
+  const chain=alpha0618ChainFor(term);if(chain){const alias=(chain.aliases||[]).find(a=>q.includes(a))||'',tail=q.replace(s23Norm(alias),'').trim(),items=(chain.items||[]).filter(x=>!tail||s23Norm(x).includes(tail)).slice(0,6);box.innerHTML=`<button type="button" class="live-match-heading alpha0626-chain-heading" data-alpha0626-chain-menu="${esc(chain.label)}"><span><strong>${esc(chain.label)}</strong><small>Australian menu · tap here to browse the full menu</small></span><b>›</b></button>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
   const concept=s23Concept(term),product=s23LikelyProduct(term,concept);
   if(product){const matches=s23ProductMatches(term,7);box.innerHTML=`<div class="live-match-heading"><strong>Product Matches</strong><small>Every word narrows the result</small></div>${matches.length?matches.map(s23ProductRow).join(''):'<div class="alpha0623-search-status"><strong>Checking product sources…</strong><small>No loaded exact product yet. Keep typing, refresh online results, or scan the barcode.</small></div>'}`;box.classList.remove('hidden');return;}
-  if(concept){box.innerHTML=`<div class="live-match-heading"><strong>Top Match</strong><small>Universal guided search · Alpha 0.6.25</small></div>${s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
+  if(concept){box.innerHTML=`<div class="live-match-heading"><strong>Top Match</strong><small>Universal guided search · Alpha 0.6.26</small></div>${s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
   box.innerHTML='<div class="live-match-heading"><strong>Keep Typing</strong><small>HEC is looking for the exact food concept</small></div><div class="alpha0623-search-status"><strong>No confident concept yet.</strong><small>Add another identifying word, or use barcode/nutrition-panel capture.</small></div>';box.classList.remove('hidden');
 }
 
@@ -3113,17 +3117,17 @@ window.HEC_ALPHA0623_SEARCH_TEST={
   candidates:q=>{const c=s23Concept(q);return c?s23ConceptCandidates(q,c).slice(0,10).map(f=>f.name):[];},
   facets:q=>{const c=s23Concept(q);if(!c)return {};const cs=s23ConceptCandidates(q,c),out={};for(const f of s23FacetOrder(c))out[f]=s23ChoiceValues(f,cs,c);return out;}
 };
-ext.version='0.6.25';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v625-conditional';ext.ui.guidedMatchValidation='strict-compatible-source-v625';saveExt();
+ext.version='0.6.26';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v625-conditional';ext.ui.guidedMatchValidation='strict-compatible-source-v625';saveExt();
 
 /* ================================================================
-   Alpha 0.6.25 — UNIVERSAL SERVING & MEASURE FOUNDATION (retained from 0.6.24)
+   Alpha 0.6.26 — UNIVERSAL SERVING & MEASURE FOUNDATION (retained from 0.6.24)
    ================================================================
    Search identification now hands every resolved food to one serving resolver.
    The resolver prefers explicit package data, then trustworthy source measures,
    then Australian Dietary Guidelines standard serves, and otherwise retains
    grams/mL rather than inventing a household conversion.
 */
-const ALPHA0624_BUILD='0.6.25';
+const ALPHA0624_BUILD='0.6.26';
 const S24=window.HECServingFoundation;
 
 function s24ContextForFood(food,extra={}){
@@ -3208,6 +3212,19 @@ window.HEC_ALPHA0624_SERVING_TEST={
   byQuery:(q)=>{const c=s23Concept(q),source=c?s23BestSource({query:q,parsed:s23Parsed(q),concept:c,candidates:s23ConceptCandidates(q,c),state:s23QuerySeeds(q,c)}):null;if(!source)return null;return S24?.diagnostic?S24.diagnostic(clone(source),{conceptCategory:c.category,conceptKey:c.key,query:q}):null;},
   productFromOFF:(product)=>{const f=makeOpenFoodFactsFood(product);return {name:f.name,basis:f.servingBasis,serving:f.serving,defaultUnit:defaultUnit(f),units:clone(f.units),labels:clone(f.unitLabels),calories:f.nutrients?.calories};}
 };
-ext.version='0.6.25';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v625-conditional+serving-v624';ext.ui.guidedMatchValidation='strict-compatible-source-v625';ext.ui.servingMeasureFoundation='australian-standard-serves-v624';saveExt();
+ext.version='0.6.26';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v625-conditional+serving-v624';ext.ui.guidedMatchValidation='strict-compatible-source-v625';ext.ui.servingMeasureFoundation='australian-standard-serves-v624';saveExt();
 
 })();
+
+
+/* ================================================================
+   Alpha 0.6.26 — FOCUSED SEARCH POLISH
+   ================================================================
+   - Chain headings are actionable and open a complete grouped menu.
+   - McDonald's discovery includes fries, nuggets and common drink choices.
+   - Serving resolver sanitises category-incompatible and duplicate measures.
+*/
+ext.version='0.6.26';
+ext.ui.guidedSearchArchitecture='universal-taxonomy-v626-chain-navigation+serving-sanitise';
+ext.ui.servingMeasureFoundation='australian-standard-serves-v626-sanitised';
+saveExt();

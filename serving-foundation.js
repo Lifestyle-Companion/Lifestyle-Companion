@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.25
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.26
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.25';
+  const VERSION='0.6.26';
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
@@ -203,9 +203,27 @@
     return food.defaultUnit||Object.keys(units)[0]||'g';
   }
 
+  function sanitizeUnits(food,context={}){
+    if(!food)return food;
+    food.units ||= {}; food.unitLabels ||= {};
+    const category=inferCategory(food,context);
+    // Category-specific measures must never leak into another food (the 0.6.25
+    // cheese test exposed an Egg measure in a cheese unit list).
+    if(category!=='egg'){delete food.units.egg;delete food.unitLabels.egg;delete food.units.largeEgg;delete food.unitLabels.largeEgg;}
+    // Suppress exact duplicate labels when two source keys describe the same
+    // practical measure. Keep the food's own default key first.
+    const preferred=[food.defaultUnit,'slice','serve','item','piece','g','mL'].filter(Boolean),seen=new Map();
+    for(const key of [...preferred,...Object.keys(food.units)]){
+      if(food.units[key]===undefined)continue;const label=norm(food.unitLabels[key]||key);if(!label)continue;
+      if(seen.has(label)&&key!==food.defaultUnit){delete food.units[key];delete food.unitLabels[key];continue;}seen.set(label,key);
+    }
+    return food;
+  }
+
   function applyToFood(food,context={}){
     if(!food)return food;
     food.units ||= {}; food.unitLabels ||= {};
+    sanitizeUnits(food,context);
     // Always retain safe base units already present. Do not create an invented gram
     // conversion from a package serve whose mass is unknown.
     addPackageCountUnits(food);
@@ -220,5 +238,5 @@
     const f=applyToFood(clone(food),context);return {defaultUnit:f.servingDefaultUnit||f.defaultUnit,units:Object.entries(f.units||{}).map(([key,multiplier])=>({key,label:f.unitLabels?.[key]||key,multiplier})),source:f.servingFoundationSource||'',hint:f.servingRangeHint||'',category:inferCategory(f,context),packageExplicit:explicitPackageServing(f)};
   }
 
-  global.HECServingFoundation={version:VERSION,GUIDELINE_SOURCE,norm,basisInfo,isPackageFood,explicitPackageServing,inferCategory,stateInfo,applyToFood,diagnostic};
+  global.HECServingFoundation={version:VERSION,GUIDELINE_SOURCE,norm,basisInfo,isPackageFood,explicitPackageServing,inferCategory,stateInfo,sanitizeUnits,applyToFood,diagnostic};
 })(typeof window!=='undefined'?window:globalThis);

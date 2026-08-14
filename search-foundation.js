@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Universal Search Foundation 0.6.25
+/* Healthy Eating Companion — Universal Search Foundation 0.6.26
    Pure query/taxonomy utilities. UI and food-database access remain in alpha06.js.
 */
 (function(global){
@@ -178,5 +178,5 @@
     return out;
   }
 
-  global.HECSearchFoundation={version:'0.6.25',norm,singular,title,tokens,parseQuery,conceptFromQuery,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
+  global.HECSearchFoundation={version:'0.6.26',norm,singular,title,tokens,parseQuery,conceptFromQuery,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
 })(typeof window!=='undefined'?window:globalThis);

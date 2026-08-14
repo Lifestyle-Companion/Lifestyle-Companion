@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.22",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.23",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -1477,7 +1477,7 @@ if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(VERSION)}`,{updateViaCache:"none"}).then(reg=>reg.update()).catch(() => {});
 }
 
-/* Alpha 0.6.22 — compact companion message card below the Home circle. */
+/* Alpha 0.6.23 — compact companion message card below the Home circle. */
 (function alpha0622CompanionMessageCard(){
   let last=-1;
   function categoryMatches(item,category){

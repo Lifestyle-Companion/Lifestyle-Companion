@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.24
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.25
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.24';
+  const VERSION='0.6.25';
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}

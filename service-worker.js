@@ -1,5 +1,5 @@
-const CACHE_NAME = "healthy-eating-companion-alpha-0-6-24-v1";
-const VERSION = "0.6.24";
+const CACHE_NAME = "healthy-eating-companion-alpha-0-6-25-v2";
+const VERSION = "0.6.25";
 const CORE_FILES = [
   `./index.html`,
   `./styles.css?v=${VERSION}`,
@@ -7,6 +7,7 @@ const CORE_FILES = [
   `./companions.js?v=${VERSION}`,
   `./app.js?v=${VERSION}`,
   `./search-foundation.js?v=${VERSION}`,
+  `./guided-branching.js?v=${VERSION}`,
   `./serving-foundation.js?v=${VERSION}`,
   `./alpha06.js?v=${VERSION}`,
   `./alpha064.js?v=${VERSION}`,

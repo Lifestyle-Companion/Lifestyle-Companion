@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Universal Search Foundation 0.6.24
+/* Healthy Eating Companion — Universal Search Foundation 0.6.25
    Pure query/taxonomy utilities. UI and food-database access remain in alpha06.js.
 */
 (function(global){
@@ -142,8 +142,26 @@
       if(category==='fruit'||category==='vegetable')out.variety=title(extras[0]);
       else if(category==='dairy'||category==='seafood'||category==='grain'||category==='drink'||category==='snack')out.type=title(extras[0]);
       else if(category==='meat')out.cut=title(extras[0]);
-      else if(category==='pie'||category==='prepared')out.filling=title(extras[0]);
+      else if(category==='prepared')out.type=title(extras[0]);
+      else if(category==='pie')out.filling=title(extras[0]);
       else out.type=title(extras[0]);
+    }
+
+    // Pie is a useful example of why a universal guided engine must understand
+    // category semantics rather than merely remember button labels. These rules
+    // describe reusable pie facets from the nutrition record itself; the UI then
+    // branches only to values that remain possible in the filtered record set.
+    if(category==='pie'){
+      const n=norm(raw);
+      if(/\bsweet\b|\bapple\b|\bfruit\b|\bcustard\b|\blemon\b/.test(n))out.kind='Sweet';
+      else if(/\bsavou?ry\b|\bmeat\b|\bchicken\b|\bsteak\b|\bkidney\b|\bvegetable\b|\bseafood\b|\bfish\b/.test(n))out.kind='Savoury';
+
+      if(/\bchicken\b.*\bvegetable\b|\bvegetable\b.*\bchicken\b/.test(n))out.filling='Chicken & Vegetable';
+      else if(/\bsteak\b.*\bkidney\b|\bsteak and kidney\b/.test(n))out.filling='Steak & Kidney';
+      else if(/\bapple\b/.test(n))out.filling='Apple';
+      else if(/\bmeat\b/.test(n))out.filling='Meat';
+      else if(/\bseafood\b|\bfish\b|\bsalmon\b|\btuna\b|\bprawn\b/.test(n))out.filling='Seafood';
+      else if(/\bvegetable\b/.test(n))out.filling='Vegetable';
     }
     return out;
   }
@@ -160,5 +178,5 @@
     return out;
   }
 
-  global.HECSearchFoundation={version:'0.6.24',norm,singular,title,tokens,parseQuery,conceptFromQuery,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
+  global.HECSearchFoundation={version:'0.6.25',norm,singular,title,tokens,parseQuery,conceptFromQuery,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
 })(typeof window!=='undefined'?window:globalThis);

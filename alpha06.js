@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.24",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.25",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -831,7 +831,7 @@ function renderFoodLiveMatches(query){
   if(typeof alpha0618R2GuideLabels==="function" && typeof alpha0618R2Text==="function"){
     const qn=alpha0618R2Text(term);
     if(/\bburger king\b/.test(qn)){
-      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.24</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
+      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.25</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
       box.classList.remove("hidden");return;
     }
     const chain=typeof alpha0618ChainFor==="function"?alpha0618ChainFor(term):null;
@@ -839,12 +839,12 @@ function renderFoodLiveMatches(query){
       const alias=(chain.aliases||[]).find(a=>qn.includes(a))||"";
       const tail=qn.replace(alias,"").trim();
       const items=(chain.items||[]).filter(x=>!tail||alpha0618R2Text(x).includes(tail)).slice(0,3);
-      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.24</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
+      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.25</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
       box.classList.remove("hidden");return;
     }
     const guides=alpha0618R2GuideLabels(term);
     const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · choose type, preparation and amount</small></span><b>›</b></button>`).join("");
-    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.24</small></div>${guideHtml}`;
+    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.25</small></div>${guideHtml}`;
     box.classList.remove("hidden");return;
   }
 
@@ -2805,7 +2805,7 @@ searchRank=function(food,query){const q=alpha0618SearchText(query);if(/\bburger 
 ext.version='0.6.18';saveExt();
 
 /* ================================================================
-   Alpha 0.6.24 — UNIVERSAL SEARCH FOUNDATION
+   Alpha 0.6.25 — CONDITIONAL BRANCHING + MATCH VALIDATION
    ================================================================
    One active search controller. Search behaviour is data-driven:
    - Query parser separates quantity/unit from food identity.
@@ -2816,8 +2816,9 @@ ext.version='0.6.18';saveExt();
      database concept exists; otherwise HEC offers safe search/scan/create fallbacks.
    - Extra query words may only preserve or increase specificity.
 */
-const ALPHA0623_BUILD='0.6.24';
+const ALPHA0623_BUILD='0.6.25';
 const S23=window.HECSearchFoundation;
+const B25=window.HECGuidedBranching;
 let alpha0623ShowRaw=false;
 let alpha0623Wizard=null;
 
@@ -2918,14 +2919,13 @@ function s23FacetOrder(concept){
   const map={fruit:['variety','form','prep','source'],vegetable:['variety','form','prep','source'],dairy:['type','fat','form','flavour','source'],meat:['protein','cut','fat','flavour','prep','source'],seafood:['type','form','prep','source'],grain:['type','grain','form','prep','source'],drink:['type','milk','size','source'],pie:['kind','filling','protein','source','form','size'],prepared:['type','protein','source','size'],snack:['type','flavour','source'],egg:['type','prep','source'],generic:['type','form','prep','source']};
   return map[concept?.category]||map.generic;
 }
-function s23Features(food,concept){return S23?.descriptorFeatures?.(food.name,concept)||{};}
+function s23Features(food,concept){return B25?.features?B25.features(food,concept):(S23?.descriptorFeatures?.(food.name,concept)||{});}
 function s23Unique(values){return [...new Set(values.filter(Boolean).map(v=>String(v).trim()).filter(Boolean))];}
 function s23ChoiceValues(facet,candidates,concept){
-  let values=s23Unique(candidates.map(f=>s23Features(f,concept)[facet]));
-  const extra=concept?.supplemental?.[facet]||[];values=s23Unique([...values,...extra]);
-  const unhelpful=/^(Other|Not Sure|Typical)$/i;values=values.filter(v=>!unhelpful.test(v));
-  // Keep each question digestible. Most-specific Australian record-derived choices rank first.
-  return values.slice(0,7);
+  // Alpha 0.6.25: choices come only from nutrition records that remain
+  // compatible with the path so far. Unbacked supplemental buttons are omitted.
+  const values=B25?.choiceValues?B25.choiceValues(facet,candidates,concept):s23Unique(candidates.map(f=>s23Features(f,concept)[facet]));
+  return values.filter(v=>!/^(Other|Not Sure|Typical)$/i.test(v));
 }
 function s23QuerySeeds(raw,concept){
   const p=s23Parsed(raw),out=S23?.queryFacetSeeds?.(p,concept)||{},candidates=s23ConceptCandidates(raw,concept);
@@ -2944,34 +2944,50 @@ function s23QuerySeeds(raw,concept){
 }
 function s23FacetMatches(food,facet,value,concept){
   if(!value||/not sure|typical|other/i.test(value))return true;
+  if(B25?.evidence)return B25.evidence(food,facet,value,concept).status==='match';
   const f=s23Features(food,concept),actual=s23Norm(f[facet]||''),wanted=s23Norm(value);
-  if(actual&& (actual===wanted||actual.includes(wanted)||wanted.includes(actual)))return true;
-  const hay=s23Norm(food.name);return wanted.split(' ').every(t=>hay.includes(t));
+  return !!actual&&(actual===wanted||actual.includes(wanted)||wanted.includes(actual));
 }
 function s23FilterCandidates(candidates,state,concept){
-  let list=candidates;for(const [facet,value] of Object.entries(state)){if(!value||/not sure|typical|other/i.test(value))continue;const matched=list.filter(f=>s23FacetMatches(f,facet,value,concept));if(matched.length)list=matched;}
-  return list;
+  // Strict filtering is intentional. Earlier builds silently kept the old pool
+  // when an answer had no matches, allowing contradictory paths to finish on
+  // an unrelated nutrition record.
+  if(B25?.filter)return B25.filter(candidates,state,concept);
+  return (candidates||[]).filter(food=>Object.entries(state||{}).every(([facet,value])=>!value||/not sure|typical|other/i.test(value)||s23FacetMatches(food,facet,value,concept)));
 }
 function s23NextFacet(w){
+  if(B25?.nextFacet){
+    while(true){
+      const next=B25.nextFacet(w.candidates,w.state,w.concept,s23FacetOrder(w.concept));
+      if(next.error)return {error:next.error,choices:[],facet:''};
+      if(next.auto?.length){
+        let changed=false;
+        for(const a of next.auto)if(!w.state[a.facet]){w.state[a.facet]=a.value;changed=true;}
+        if(changed)continue;
+      }
+      return next.facet?{facet:next.facet,choices:next.choices}:null;
+    }
+  }
   const filtered=s23FilterCandidates(w.candidates,w.state,w.concept);
+  if(!filtered.length)return {error:'no-compatible-candidates',choices:[],facet:''};
   for(const facet of s23FacetOrder(w.concept)){
     if(w.state[facet])continue;
-    const choices=s23ChoiceValues(facet,filtered.length?filtered:w.candidates,w.concept);
-    if(choices.length>=2||w.concept?.supplemental?.[facet]?.length>=2)return {facet,choices};
-    if(choices.length===1){w.state[facet]=choices[0];continue;}
+    const choices=s23ChoiceValues(facet,filtered,w.concept);
+    if(choices.length>=2)return {facet,choices};
   }
   return null;
 }
 const S23_QUESTIONS={kind:'Is it savoury or sweet?',filling:'What is the main filling or style?',protein:'What is the main protein or meat?',variety:'Which variety is closest?',type:'Which type is closest?',cut:'Which cut or style is closest?',fat:'Which fat/style option is closest?',flavour:'Plain or flavoured?',form:'What form is it in?',prep:'How is it prepared or cooked?',source:'Where is it from?',grain:'Which grain/style is closest?',milk:'Which milk option is used?',skin:'Skinless or with skin?',size:'What size or serving form are you recording?',topping:'Which topping/style is closest?'};
 function s23BestSource(w){
-  const p=s23Parsed(w.query),filtered=s23FilterCandidates(w.candidates,w.state,w.concept),pool=filtered.length?filtered:w.candidates;
+  const p=s23Parsed(w.query),pool=s23FilterCandidates(w.candidates,w.state,w.concept);
   const safePool=(w.concept?.key==='curry'&&!/\b(powder|paste|sauce)\b/.test(p.food))?pool.filter(f=>!/\b(powder|paste|sauce)\b/i.test(f.name)):pool;
   if(!safePool.length)return null;
   return safePool.map(food=>{
-    let score=searchRank(food,p.food)+Number(food.country==='Australia')*80+Number(food.afcd)*60;
-    for(const [facet,value] of Object.entries(w.state))if(s23FacetMatches(food,facet,value,w.concept))score+=130;
+    const validation=B25?.validateWithQuery?B25.validateWithQuery(food,w.state,w.concept,w.query):(B25?.validate?B25.validate(food,w.state,w.concept):{valid:true,matched:0});
+    if(!validation.valid)return {food,score:-Infinity};
+    const score=searchRank(food,p.food)+Number(food.country==='Australia')*80+Number(food.afcd)*60+(validation.matched||0)*130;
     return {food,score};
-  }).sort((a,b)=>b.score-a.score)[0]?.food||null;
+  }).filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score)[0]?.food||null;
 }
 function s23GuidedName(w){
   const p=s23Parsed(w.query);let base=S23?.labelFor?.(p,w.concept)||s23Title(p.food||w.concept.label);
@@ -2984,7 +3000,7 @@ function s23GuidedName(w){
 function s23Naturalise(source,w){
   const f=clone(source),natural=w.concept?.natural||{unit:'g',label:'g',grams:1};f.id=`guided-${w.concept.key}-${uid('s23')}`;f.name=s23GuidedName(w);f.brand='HEC Guided Entry';f.guided=true;f.verified=false;
   const selected=Object.entries(w.state).filter(([,v])=>v&&!/not sure|typical|other/i.test(v)).map(([k,v])=>`${s23Title(k)}: ${v}`).join(' · ');
-  f.source=`HEC guided match · Underlying nutrition reference: ${source.name} (${source.source||source.brand||'Australian reference'}).${selected?' Choices: '+selected+'.':''} Review serving and source before adding.`;
+  f.source=`HEC guided match · Match validation passed for the selected path. Underlying nutrition reference: ${source.name} (${source.source||source.brand||'Australian reference'}).${selected?' Choices: '+selected+'.':''} Review serving and source before adding.`;
   const units={...(f.units||{})},labels={...(f.unitLabels||{})};
   if(natural.grams===1&&natural.unit==='g'){units.g=.01;labels.g='g';f.defaultUnit='g';f.defaultAmount=100;f.serving='Enter amount in grams';}
   else if(natural.grams===1&&natural.unit==='mL'){units.mL=.01;labels.mL='mL';f.defaultUnit='mL';f.defaultAmount=250;f.serving='Enter amount in mL';}
@@ -2992,19 +3008,36 @@ function s23Naturalise(source,w){
   f.units=units;f.unitLabels=labels;FOODS.push(f);FOOD_BY_ID.set(f.id,f);return f;
 }
 function s23FinishWizard(w){
-  const source=s23BestSource(w);if(!source){openModal(w.concept.label,'HEC could not find a safe nutrition reference for those choices. Nothing has been added.','Close',()=>{},'<p>Try a broader description, scan the barcode, read the Nutrition Panel, or create a food.</p>');return;}
+  const source=s23BestSource(w);
+  if(!source){
+    const selected=Object.entries(w.state||{}).filter(([,v])=>v&&!/not sure|typical|other/i.test(v)).map(([k,v])=>`${s23Title(k)}: ${v}`).join(' · ');
+    openModal(w.concept.label,'HEC could not find one nutrition record that matches all of those choices. Nothing has been added.','Close',()=>{},`<p>${selected?`Your path was <strong>${esc(selected)}</strong>.</p>`:''}<p>HEC will not substitute a contradictory food just to finish the entry. Try a broader description, scan the barcode, read the Nutrition Panel, or create a food.</p>`);return;
+  }
+  const validation=B25?.validateWithQuery?B25.validateWithQuery(source,w.state,w.concept,w.query):(B25?.validate?B25.validate(source,w.state,w.concept):{valid:true});
+  if(!validation.valid){
+    const issues=B25?.describeIssues?B25.describeIssues(validation.issues).join('; '):'The selected choices do not agree with the nutrition record.';
+    openModal(w.concept.label,'HEC stopped this match because the nutrition reference conflicts with your selections. Nothing has been added.','Close',()=>{},`<p>${esc(issues)}</p><p>Try a broader description, scan the barcode, read the Nutrition Panel, or create a food.</p>`);return;
+  }
   const guided=s23Naturalise(source,w),date=ext.ui?.mealEntrySession?.date||(ext.ui.pendingMeal?ext.ui.diaryDate:isoToday())||isoToday();
   prepareEntry(guided,{date,meal:ext.ui.pendingMeal||'',amount:w.parsed.quantity||null,unit:(w.parsed.unit&&unitOptions(guided)[w.parsed.unit]!==undefined)?w.parsed.unit:null});
 }
 function s23RenderWizard(){
   const w=alpha0623Wizard;if(!w)return;const next=s23NextFacet(w);if(!next){s23FinishWizard(w);return;}
+  if(next.error){s23FinishWizard(w);return;}
   const {facet,choices}=next,stepNumber=w.history.length+1,question=S23_QUESTIONS[facet]||`Choose ${s23Title(facet)}`;
   const breadcrumb=w.history.map(h=>`${s23Title(h.facet)}: ${h.value}`).join(' › ');
-  const buttons=[...choices,'Not Sure / Typical'].slice(0,8);
-  openModal(w.concept.label,question,'Close',()=>{},`<div class="alpha0623-wizard-nav"><button type="button" class="secondary" data-alpha0623-back>← ${w.history.length?'Back One Step':'Back To Search'}</button><small>Step ${stepNumber}${breadcrumb?` · ${esc(breadcrumb)}`:''}</small></div><div class="alpha0623-wizard-list">${buttons.map(v=>`<button type="button" class="secondary wide" data-alpha0623-choice="${esc(v)}">${esc(v)}</button>`).join('')}</div>`);
+  w.choicePages=w.choicePages||{};const pageSize=6,totalPages=Math.max(1,Math.ceil(choices.length/pageSize));let page=Math.max(0,Math.min(Number(w.choicePages[facet]||0),totalPages-1));w.choicePages[facet]=page;
+  const pageChoices=choices.slice(page*pageSize,(page+1)*pageSize),nav=[];
+  if(page>0)nav.push('<button type="button" class="secondary wide" data-alpha0623-earlier>← Earlier Choices</button>');
+  if(page<totalPages-1)nav.push('<button type="button" class="secondary wide" data-alpha0623-more>More Choices →</button>');
+  const buttons=[...pageChoices,'Not Sure / Typical'];
+  const pageText=totalPages>1?` · Choices ${page*pageSize+1}–${Math.min((page+1)*pageSize,choices.length)} of ${choices.length}`:'';
+  openModal(w.concept.label,question,'Close',()=>{},`<div class="alpha0623-wizard-nav"><button type="button" class="secondary" data-alpha0623-back>← ${w.history.length?'Back One Step':'Back To Search'}</button><small>Step ${stepNumber}${breadcrumb?` · ${esc(breadcrumb)}`:''}${pageText}</small></div><div class="alpha0623-wizard-list">${buttons.map(v=>`<button type="button" class="secondary wide" data-alpha0623-choice="${esc(v)}">${esc(v)}</button>`).join('')}${nav.join('')}</div>`);
   by('a05-modal-confirm')?.classList.add('hidden');
-  by('a05-modal')?.querySelector('[data-alpha0623-back]')?.addEventListener('click',()=>{closeModal();if(w.history.length){const last=w.history.pop();delete w.state[last.facet];setTimeout(s23RenderWizard,0);}else setTimeout(()=>openFeature('food-library'),0);},{once:true});
-  qa('[data-alpha0623-choice]').forEach(b=>b.addEventListener('click',()=>{const value=b.dataset.alpha0623Choice;w.state[facet]=value;w.history.push({facet,value});closeModal();setTimeout(s23RenderWizard,0);},{once:true}));
+  by('a05-modal')?.querySelector('[data-alpha0623-back]')?.addEventListener('click',()=>{closeModal();if(w.history.length){const last=w.history.pop();delete w.state[last.facet];w.choicePages={};setTimeout(s23RenderWizard,0);}else setTimeout(()=>openFeature('food-library'),0);},{once:true});
+  by('a05-modal')?.querySelector('[data-alpha0623-more]')?.addEventListener('click',()=>{w.choicePages[facet]=Math.min(totalPages-1,page+1);closeModal();setTimeout(s23RenderWizard,0);},{once:true});
+  by('a05-modal')?.querySelector('[data-alpha0623-earlier]')?.addEventListener('click',()=>{w.choicePages[facet]=Math.max(0,page-1);closeModal();setTimeout(s23RenderWizard,0);},{once:true});
+  qa('[data-alpha0623-choice]').forEach(b=>b.addEventListener('click',()=>{const value=b.dataset.alpha0623Choice;w.state[facet]=value;w.history.push({facet,value});w.choicePages={};closeModal();setTimeout(s23RenderWizard,0);},{once:true}));
 }
 function s23StartWizard(raw){
   const p=s23Parsed(raw),concept=s23Concept(raw);if(!concept){openModal('Food Search','HEC could not identify a reliable food concept from that search yet.','Close',()=>{},'<p>Try a little more detail, scan the barcode, read the Nutrition Panel, or create the food.</p>');return;}
@@ -3018,11 +3051,11 @@ function s23RenderLive(raw){
   const box=by('food-live-results'),term=String(raw||'').trim();if(!box)return;
   if(!term||document.activeElement!==by('food-search')){box.classList.add('hidden');box.innerHTML='';return;}
   const q=s23Norm(term);
-  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.24</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
+  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.25</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
   const chain=alpha0618ChainFor(term);if(chain){const alias=(chain.aliases||[]).find(a=>q.includes(a))||'',tail=q.replace(s23Norm(alias),'').trim(),items=(chain.items||[]).filter(x=>!tail||s23Norm(x).includes(tail)).slice(0,5);box.innerHTML=`<div class="live-match-heading"><strong>${esc(chain.label)}</strong><small>Australian menu · progressively narrowed</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
   const concept=s23Concept(term),product=s23LikelyProduct(term,concept);
   if(product){const matches=s23ProductMatches(term,7);box.innerHTML=`<div class="live-match-heading"><strong>Product Matches</strong><small>Every word narrows the result</small></div>${matches.length?matches.map(s23ProductRow).join(''):'<div class="alpha0623-search-status"><strong>Checking product sources…</strong><small>No loaded exact product yet. Keep typing, refresh online results, or scan the barcode.</small></div>'}`;box.classList.remove('hidden');return;}
-  if(concept){box.innerHTML=`<div class="live-match-heading"><strong>Top Match</strong><small>Universal guided search · Alpha 0.6.24</small></div>${s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
+  if(concept){box.innerHTML=`<div class="live-match-heading"><strong>Top Match</strong><small>Universal guided search · Alpha 0.6.25</small></div>${s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
   box.innerHTML='<div class="live-match-heading"><strong>Keep Typing</strong><small>HEC is looking for the exact food concept</small></div><div class="alpha0623-search-status"><strong>No confident concept yet.</strong><small>Add another identifying word, or use barcode/nutrition-panel capture.</small></div>';box.classList.remove('hidden');
 }
 
@@ -3080,17 +3113,17 @@ window.HEC_ALPHA0623_SEARCH_TEST={
   candidates:q=>{const c=s23Concept(q);return c?s23ConceptCandidates(q,c).slice(0,10).map(f=>f.name):[];},
   facets:q=>{const c=s23Concept(q);if(!c)return {};const cs=s23ConceptCandidates(q,c),out={};for(const f of s23FacetOrder(c))out[f]=s23ChoiceValues(f,cs,c);return out;}
 };
-ext.version='0.6.24';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v623';saveExt();
+ext.version='0.6.25';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v625-conditional';ext.ui.guidedMatchValidation='strict-compatible-source-v625';saveExt();
 
 /* ================================================================
-   Alpha 0.6.24 — UNIVERSAL SERVING & MEASURE FOUNDATION
+   Alpha 0.6.25 — UNIVERSAL SERVING & MEASURE FOUNDATION (retained from 0.6.24)
    ================================================================
    Search identification now hands every resolved food to one serving resolver.
    The resolver prefers explicit package data, then trustworthy source measures,
    then Australian Dietary Guidelines standard serves, and otherwise retains
    grams/mL rather than inventing a household conversion.
 */
-const ALPHA0624_BUILD='0.6.24';
+const ALPHA0624_BUILD='0.6.25';
 const S24=window.HECServingFoundation;
 
 function s24ContextForFood(food,extra={}){
@@ -3175,6 +3208,6 @@ window.HEC_ALPHA0624_SERVING_TEST={
   byQuery:(q)=>{const c=s23Concept(q),source=c?s23BestSource({query:q,parsed:s23Parsed(q),concept:c,candidates:s23ConceptCandidates(q,c),state:s23QuerySeeds(q,c)}):null;if(!source)return null;return S24?.diagnostic?S24.diagnostic(clone(source),{conceptCategory:c.category,conceptKey:c.key,query:q}):null;},
   productFromOFF:(product)=>{const f=makeOpenFoodFactsFood(product);return {name:f.name,basis:f.servingBasis,serving:f.serving,defaultUnit:defaultUnit(f),units:clone(f.units),labels:clone(f.unitLabels),calories:f.nutrients?.calories};}
 };
-ext.version='0.6.24';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v623+serving-v624';ext.ui.servingMeasureFoundation='australian-standard-serves-v624';saveExt();
+ext.version='0.6.25';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='universal-taxonomy-v625-conditional+serving-v624';ext.ui.guidedMatchValidation='strict-compatible-source-v625';ext.ui.servingMeasureFoundation='australian-standard-serves-v624';saveExt();
 
 })();

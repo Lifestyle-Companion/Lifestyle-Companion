@@ -1,11 +1,11 @@
-/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.26
+/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.27
    Pure candidate-compatibility logic used by the universal guided search.
    The engine never keeps an incompatible nutrition record merely to finish a flow.
 */
 (function(global){
   'use strict';
 
-  const VERSION='0.6.26';
+  const VERSION='0.6.27';
   const S=global.HECSearchFoundation;
   const IGNORE=/not sure|typical|other/i;
   const WORD_EQUIV={
@@ -44,6 +44,11 @@
     }
     const hay=norm(`${food?.name||''} ${food?.ingredients||food?.description||''}`);
     if(phrases(value).some(p=>phraseInHay(p,hay)))return {status:'match',facet,value,actual:'',reason:'record description'};
+    // Physical size is an entry/serving attribute and is often absent from a
+    // per-100-g nutrition reference. It can safely continue without pretending
+    // the source explicitly stated it. "No added fat/oil" is likewise a safe
+    // soft qualifier when the preparation itself does not add fat.
+    if(facet==='size'||(facet==='addedFat'&&/no added/i.test(String(value))))return {status:'soft',facet,value,actual:'',reason:'entry attribute not encoded in source'};
     return {status:'unknown',facet,value,actual:'',reason:'not supported by record'};
   }
 
@@ -68,6 +73,7 @@
       if(!meaningful(v))continue;
       if(!out.some(x=>norm(x)===norm(v)))out.push(v);
     }
+    for(const v of concept?.supplemental?.[facet]||[]){if(!meaningful(v))continue;if(!out.some(x=>norm(x)===norm(v)))out.push(v);}
     return out;
   }
 

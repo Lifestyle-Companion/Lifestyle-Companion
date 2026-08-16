@@ -1,30 +1,23 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.25
-CONDITIONAL BRANCHING + MATCH VALIDATION
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.27
 
-PRIMARY DOCUMENTS
-- RELEASE_NOTES_ALPHA_0_6_25.txt
-- TESTING_CHECKLIST_ALPHA_0_6_25.txt
-- HEC_ALPHA_0_6_25_BUILD_AND_TEST_REPORT.md
-- HEC_ALPHA_0_6_24_BUILD_AND_TEST_REPORT.md (previous serving-foundation report)
-- HEC_ALPHA_0_6_23_BUILD_AND_TEST_REPORT.md (previous universal-search report)
+SEARCH INTELLIGENCE + QUICK FOOD LOG FOUNDATION
 
-DEPLOYMENT
-1. Back up the current HEC data if desired.
-2. Replace the COMPLETE deployed folder with Alpha 0.6.25 at the same GitHub Pages address.
-3. Do not mix Alpha 0.6.25 runtime files with older builds.
-4. Open the site normally and confirm the visible build number is Alpha 0.6.25.
-5. If a device appears to show the older build, close/reopen the Home Screen app and refresh once so the new service-worker cache is installed.
+Deployment
+1. Back up the existing HEC site/data before a major founder-test change.
+2. Replace the complete deployed folder with Alpha 0.6.27 at the same GitHub Pages address.
+3. Do not mix runtime files from older builds.
+4. Wait for the GitHub Pages green tick, then reopen HEC and confirm Alpha 0.6.27 is visible.
+5. Existing browser storage keys remain unchanged so founder-test data can migrate in place.
 
-GITHUB BROWSER UPLOAD
-This project contains more than 100 files. If using GitHub's browser uploader, upload the root files first and the assets folder as a second commit, as done for Alpha 0.6.24. Wait for the final deployment green tick before device testing.
+Core Alpha 0.6.27 rules
+- Partial text is a search prefix, not automatically a food. HEC predicts likely complete food concepts as the user types.
+- A food concept and a branded/commercial product are separate search paths that cooperate rather than compete.
+- Source/origin (Home Made/Grown, Commercial/Packaged, Takeaway/Restaurant) is asked early only when it materially narrows the food search.
+- Words already typed by the user pre-fill guided attributes and should not be asked again.
+- Identical searches keep a stable result order; slower online results may append but must not reshuffle existing choices.
+- Guided choices must remain compatible with the final nutrition record. HEC stops rather than borrowing nutrition from an incompatible food.
+- Serving measures are food-appropriate and grams/mL remain available where meaningful.
+- Quick Food Log is a fast doorway: confirm date/meal, then choose Keyboard, Voice, Barcode or Nutrition Panel. Keyboard/Voice use the same canonical Food Search engine.
+- Calories and kilojoules remain paired at food level.
 
-DATA CONTINUITY
-This build retains the existing browser storage keys:
-- healthyEatingCompanionAlpha06
-- healthyEatingCompanionAlpha06Functional
-
-FOUNDER TESTING PRIORITY
-Do not spend time on cosmetic testing yet. First prove the complete search flow:
-query identity -> conditional refinement -> compatible nutrition reference -> defensible serving/measure -> Cal + kJ review -> Diary add.
-
-The key Alpha 0.6.25 rule is that every answer must narrow later choices and the final nutrition record. If the complete intent cannot be supported by one record, HEC must stop rather than silently substitute a contradictory food.
+This is still a founder-trial build. Packaged/takeaway coverage depends on the nutrition sources currently loaded. If a current verified nutrition record is unavailable, HEC should say so rather than create a false entry.

@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.26
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.27
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.26';
+  const VERSION='0.6.27';
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
@@ -69,7 +69,7 @@
       fish:/\b(fish|salmon|tuna|snapper|barramundi|cod|trout|sardine)\b/.test(n),
       legumes:/\b(bean|beans|lentil|lentils|chickpea|chickpeas|split pea|split peas|legume|legumes)\b/.test(n), tofu:/\btofu\b/.test(n),
       nuts:/\b(nut|nuts|almond|walnut|macadamia|hazelnut|cashew|peanut|seed|seeds|tahini)\b/.test(n),
-      bread:/\bbread\b/.test(n), roll:/\b(roll|flat bread|flatbread|pita|lavash|naan|focaccia)\b/.test(n),
+      bread:/\bbread\b/.test(n), sausage:/\bsausage\b/.test(n), roll:/\b(roll|flat bread|flatbread|pita|lavash|naan|focaccia)\b/.test(n),
       cookedGrain:/\b(rice|pasta|noodle|barley|buckwheat|semolina|polenta|bulgur|quinoa|couscous)\b/.test(n)&&/\b(cooked|boiled|prepared)\b/.test(n),
       porridge:/\b(porridge|cooked oats|oatmeal)\b/.test(n), flakes:/\b(cereal flakes|corn flakes|wheat flakes|flakes)\b/.test(n), muesli:/\bmuesli\b/.test(n),
       crispbread:/\b(crispbread|crispbreads)\b/.test(n), crumpet:/\bcrumpet\b/.test(n), englishMuffin:/\benglish muffin\b/.test(n), scone:/\bscone\b/.test(n)
@@ -100,7 +100,7 @@
     if(category==='fruit'){
       if(s.dried){if(addGramMeasure(food,'standardServe','Occasional dried-fruit serve (30 g)',30,meta))notes.push('30 g dried-fruit serve');}
       else if(/\b(apple|banana|orange|pear)\b/.test(name)){
-        if(addGramMeasure(food,'item',`1 Medium ${/apple/.test(name)?'Apple':/banana/.test(name)?'Banana':/orange/.test(name)?'Orange':'Pear'} (150 g Australian standard fruit serve)`,150,{...meta,replace:true}))notes.push('150 g medium-fruit standard serve');
+        if(addGramMeasure(food,'item',`Medium ${/apple/.test(name)?'Apple':/banana/.test(name)?'Banana':/orange/.test(name)?'Orange':'Pear'} (150 g Australian standard fruit serve)`,150,{...meta,replace:true}))notes.push('150 g medium-fruit standard serve');
       }else{
         if(addGramMeasure(food,'standardServe','Australian standard fruit serve (150 g)',150,meta))notes.push('150 g fruit standard serve');
         if(/\b(apricot|kiwi|plum)\b/.test(name))addGramMeasure(food,'twoSmall','2 Small Fruit (150 g standard serve)',150,meta);
@@ -118,7 +118,10 @@
       }
     }
     if(category==='grain'){
-      if(s.bread){if(addGramMeasure(food,'slice','1 Slice Bread (40 g Australian standard grain serve)',40,{...meta,replace:false}))notes.push('40 g bread slice standard serve');}
+      if(s.bread){
+        if(addGramMeasure(food,'regularSlice','Regular Slice Bread (40 g Australian standard grain serve)',40,{...meta,replace:false}))notes.push('40 g bread slice standard serve');
+        addGramMeasure(food,'thickSlice','Thick / Toast Slice (about 45 g — check loaf/package)',45,{origin:'HEC practical bread measure · verify loaf/package',confidence:'approximate'});
+      }
       else if(s.roll){if(addGramMeasure(food,'halfRoll','½ Medium Roll/Flat Bread (40 g standard serve)',40,meta))notes.push('40 g grain standard serve');}
       else if(s.porridge){if(addGramMeasure(food,'halfCup','½ Cup Cooked Porridge (120 g standard serve)',120,meta))notes.push('120 g cooked porridge serve');}
       else if(s.flakes){if(addGramMeasure(food,'twoThirdCup','⅔ Cup Cereal Flakes (30 g standard serve)',30,meta))notes.push('30 g cereal-flake serve');}
@@ -133,14 +136,30 @@
       }
     }
     if(category==='meat'){
-      if(s.redMeat&&s.cooked){if(addGramMeasure(food,'standardServe','Cooked Lean Red Meat — Australian standard serve (65 g)',65,meta))notes.push('65 g cooked red-meat serve');}
+      if(s.sausage){
+        const smeta={origin:'HEC practical sausage measures · approximate; verify butcher/package',confidence:'approximate'};
+        addGramMeasure(food,'sausage','Sausage (about 75 g)',75,smeta);
+        addGramMeasure(food,'thinSausage','Long Thin Sausage (about 73 g)',73,smeta);
+        addGramMeasure(food,'thickSausage','Long Thick Sausage (about 101 g)',101,smeta);
+        addGramMeasure(food,'cocktailSausage','Cocktail / Small Sausage (about 38 g)',38,smeta);
+        notes.push('practical sausage sizes are approximate; grams/package are more exact');
+      }
+      if(s.redMeat&&s.cooked&&!s.sausage){if(addGramMeasure(food,'standardServe','Cooked Lean Red Meat — Australian standard serve (65 g)',65,meta))notes.push('65 g cooked red-meat serve');}
       else if(s.redMeat&&s.raw){food.servingRangeHint='Australian standard lean red-meat serve is about 90–100 g raw (65 g cooked). Use grams for an exact raw amount.';}
       else if(s.poultry){const g=s.raw?100:80;if(addGramMeasure(food,'standardServe',`${s.raw?'Raw':'Cooked'} Lean Poultry — Australian standard serve (${g} g)`,g,meta))notes.push(`${g} g poultry serve`);}
     }
     if(category==='seafood'||s.fish){const g=s.raw?115:100;if(addGramMeasure(food,'standardServe',`${s.raw?'Raw':'Cooked'} Fish — Australian standard serve (${g} g)`,g,meta))notes.push(`${g} g fish serve`);}
     if(category==='egg'){
-      if(addGramMeasure(food,'standardServe','2 Large Eggs (120 g Australian standard protein serve)',120,meta))notes.push('2 large eggs / 120 g standard serve');
-      addGramMeasure(food,'largeEgg','1 Large Egg (60 g)',60,meta);
+      // Australian Eggs publishes conventional carton-size averages and edible
+      // portions. HEC uses edible portion for nutrition scaling because AFCD is
+      // an edible-food reference. The user still sees the familiar size name.
+      const emeta={origin:'Australian Eggs · conventional egg pack sizing / edible portion',confidence:'authoritative-industry-reference'};
+      addGramMeasure(food,'mediumEgg','Medium Egg (~37 g edible portion)',37,emeta);
+      addGramMeasure(food,'largeEgg','Large Egg (~45 g edible portion)',45,emeta);
+      addGramMeasure(food,'xLargeEgg','X-Large Egg (~52 g edible portion)',52,emeta);
+      addGramMeasure(food,'jumboEgg','Jumbo Egg (~59 g edible portion)',59,emeta);
+      addGramMeasure(food,'kingEgg','King-Size Egg (~64 g edible portion)',64,emeta);
+      if(addGramMeasure(food,'standardServe','2 X-Large Eggs (~104 g edible portion)',104,emeta))notes.push('egg size/count measures use Australian Eggs edible-portion references');
     }
     if(s.legumes&&category!=='vegetable'){if(addGramMeasure(food,'cup','1 Cup Cooked/Canned Legumes (150 g Australian standard protein serve)',150,meta))notes.push('150 g legumes protein serve');}
     if(s.tofu){if(addGramMeasure(food,'standardServe','Tofu — Australian standard protein serve (170 g)',170,meta))notes.push('170 g tofu serve');}
@@ -148,7 +167,7 @@
     if(category==='dairy'){
       if(s.evaporatedMilk){if(addMlMeasure(food,'halfCup','½ Cup Evaporated Milk (120 mL Australian standard dairy serve)',120,meta))notes.push('120 mL evaporated-milk serve');}
       else if(s.milk){if(addMlMeasure(food,'cup','1 Cup Milk (250 mL Australian standard dairy serve)',250,meta))notes.push('250 mL milk serve');}
-      else if(s.hardCheese){if(addGramMeasure(food,'standardServe','Hard Cheese — 2 Slices (40 g Australian standard dairy serve)',40,meta))notes.push('40 g hard-cheese serve');addGramMeasure(food,'slice','1 Slice Hard Cheese (20 g; half standard serve)',20,meta);}
+      else if(s.hardCheese){if(addGramMeasure(food,'standardServe','2 Slices Hard Cheese (40 g Australian standard dairy serve)',40,meta))notes.push('40 g hard-cheese serve');addGramMeasure(food,'slice','Slice Hard Cheese (20 g; half standard serve)',20,meta);}
       else if(s.ricotta){if(addGramMeasure(food,'halfCup','½ Cup Ricotta (120 g Australian standard dairy serve)',120,meta))notes.push('120 g ricotta serve');}
       else if(s.yoghurt){if(addGramMeasure(food,'threeQuarterCup','¾ Cup Yoghurt (200 g Australian standard dairy serve)',200,meta))notes.push('200 g yoghurt serve');}
     }
@@ -196,7 +215,17 @@
       if(s.yoghurt&&units.threeQuarterCup!==undefined)return 'threeQuarterCup';
     }
     if(category==='grain'){
-      for(const k of ['slice','halfRoll','halfCup','twoThirdCup','quarterCup','threeCrispbreads','item'])if(units[k]!==undefined)return k;
+      for(const k of ['regularSlice','slice','halfRoll','halfCup','twoThirdCup','quarterCup','threeCrispbreads','item'])if(units[k]!==undefined)return k;
+    }
+    if(category==='meat'&&s.sausage&&units.sausage!==undefined)return 'sausage';
+    if(category==='egg'){
+      const chosen=norm(context?.selected?.size||'');
+      if(/x large|extra large/.test(chosen)&&units.xLargeEgg!==undefined)return 'xLargeEgg';
+      if(/jumbo/.test(chosen)&&units.jumboEgg!==undefined)return 'jumboEgg';
+      if(/king/.test(chosen)&&units.kingEgg!==undefined)return 'kingEgg';
+      if(/medium/.test(chosen)&&units.mediumEgg!==undefined)return 'mediumEgg';
+      if(/large/.test(chosen)&&units.largeEgg!==undefined)return 'largeEgg';
+      if(units.xLargeEgg!==undefined)return 'xLargeEgg';
     }
     if(['meat','seafood','egg'].includes(category)&&units.standardServe!==undefined)return 'standardServe';
     if(units.cup!==undefined&&category==='drink')return 'cup';

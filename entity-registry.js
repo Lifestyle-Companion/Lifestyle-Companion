@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Australian Food Entity Registry 0.6.29
+/* Healthy Eating Companion — Australian Food Entity Registry 0.6.30
    Small, maintainable local vocabulary used BEFORE food matching.
    It recognises retailers, brands, restaurant/takeaway chains and aliases so
    HEC can preserve information the user already supplied without hard-coding
@@ -6,7 +6,7 @@
 */
 (function(global){
   'use strict';
-  const VERSION='0.6.29';
+  const VERSION='0.6.30';
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
   function words(v){return norm(v).split(' ').filter(Boolean);}
 
@@ -64,19 +64,25 @@
     return out.sort((a,b)=>b.n.length-a.n.length||b.tokenCount-a.tokenCount);
   }
   const ALIASES=aliasRecords();
-  function phrasePresent(text,phrase){const h=` ${norm(text)} `,p=` ${norm(phrase)} `;return !!norm(phrase)&&h.includes(p);}
+  // Alpha 0.6.30 stability: entity recognition is queried many times while a
+  // search is being ranked. Cache by normalised phrase so one keystroke does
+  // not repeatedly rescan every registry alias for every food candidate.
+  const IDENTIFY_CACHE=new Map(),PREDICT_CACHE=new Map();
+  function remember(map,key,value,limit=180){if(map.has(key))map.delete(key);map.set(key,value);while(map.size>limit)map.delete(map.keys().next().value);return value;}
+  function phrasePresentNormalised(hayNorm,phraseNorm){return !!phraseNorm&&` ${hayNorm} `.includes(` ${phraseNorm} `);}
   function identify(text){
-    const found=[],used=[];
-    for(const r of ALIASES){if(!phrasePresent(text,r.alias))continue;if(found.some(x=>x.entity.id===r.entity.id))continue;found.push({entity:r.entity,matchedAlias:r.alias,matchedNorm:r.n});used.push(r.n);}
-    found.sort((a,b)=>b.matchedNorm.length-a.matchedNorm.length);return found;
+    const key=norm(text);if(!key)return[];const hit=IDENTIFY_CACHE.get(key);if(hit)return hit;
+    const found=[];
+    for(const r of ALIASES){if(!phrasePresentNormalised(key,r.n))continue;if(found.some(x=>x.entity.id===r.entity.id))continue;found.push({entity:r.entity,matchedAlias:r.alias,matchedNorm:r.n});}
+    found.sort((a,b)=>b.matchedNorm.length-a.matchedNorm.length);return remember(IDENTIFY_CACHE,key,found);
   }
   function primary(text,types=[]){const matches=identify(text);return matches.find(x=>!types.length||types.includes(x.entity.type))||null;}
   function exactEntity(text,types=[]){const n=norm(text);return ALIASES.find(r=>r.n===n&&(!types.length||types.includes(r.entity.type)))?.entity||null;}
   function predict(text,limit=6){
-    const n=norm(text),ws=words(n),last=ws[ws.length-1]||'';if(last.length<3)return[];const hits=[];
+    const n=norm(text),ws=words(n),last=ws[ws.length-1]||'';if(last.length<3)return[];const cacheKey=`${n}|${limit}`,cached=PREDICT_CACHE.get(cacheKey);if(cached)return cached;const hits=[];
     for(const r of ALIASES){const aw=words(r.n),al=aw[aw.length-1]||'';let score=0;if(r.n===n)score=3000;else if(r.n.startsWith(n))score=2200-n.length;else if(al.startsWith(last))score=1500-last.length;if(score)hits.push({entity:r.entity,alias:r.alias,score});}
     const best=new Map();for(const h of hits){const old=best.get(h.entity.id);if(!old||h.score>old.score)best.set(h.entity.id,h);}
-    return [...best.values()].sort((a,b)=>b.score-a.score||a.entity.name.localeCompare(b.entity.name)).slice(0,limit);
+    return remember(PREDICT_CACHE,cacheKey,[...best.values()].sort((a,b)=>b.score-a.score||a.entity.name.localeCompare(b.entity.name)).slice(0,limit));
   }
   function sourceMode(text){return primary(text,['restaurant'])?.entity.sourceMode||primary(text,['retailer','brand'])?.entity.sourceMode||'';}
   function foodConcept(text){return primary(text,['brand'])?.entity.foodConcept||'';}

@@ -1,7 +1,7 @@
-/* Healthy Eating Companion — Food Intelligence Foundation 0.6.29
+/* Healthy Eating Companion — Food Intelligence Foundation 0.6.30
    Pure query/taxonomy utilities. UI and food-database access remain in alpha06.js.
 
-   Alpha 0.6.29 principles:
+   Alpha 0.6.30 principles:
    - Partial text is a search prefix, never automatically a food identity.
    - Known food concepts are predicted before raw product/database rows.
    - The user's words pre-fill attributes so HEC never asks the same question twice.
@@ -11,7 +11,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.29';
+  const VERSION='0.6.30';
   const REG=global.HECAustralianEntityRegistry;
   const WORD_NUMBERS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,half:.5,a:1,an:1};
   const IRREGULAR={bananas:'banana',oranges:'orange',apples:'apple',potatoes:'potato',tomatoes:'tomato',berries:'berry',cherries:'cherry',loaves:'loaf',leaves:'leaf',fries:'fries',fish:'fish',cheese:'cheese',rice:'rice',pasta:'pasta',couscous:'couscous',eggs:'egg',sausages:'sausage'};

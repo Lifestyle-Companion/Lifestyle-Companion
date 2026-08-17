@@ -1,11 +1,11 @@
-/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.29
+/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.30
    Pure candidate-compatibility logic used by the universal guided search.
    The engine never keeps an incompatible nutrition record merely to finish a flow.
 */
 (function(global){
   'use strict';
 
-  const VERSION='0.6.29';
+  const VERSION='0.6.30';
   const S=global.HECSearchFoundation;
   const IGNORE=/not sure|typical|other/i;
   const WORD_EQUIV={

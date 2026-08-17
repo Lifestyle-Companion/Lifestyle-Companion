@@ -513,3 +513,10 @@ fieldset>legend,.section-heading h3,.card>h3,.card>h4{font-size:clamp(1.18rem,3.
 .quick-log-method-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.quick-log-method{display:flex;min-height:116px;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;text-align:left;padding:14px;border-radius:16px;background:var(--surface2);color:var(--ink);border:1px solid var(--line);box-shadow:none}.quick-log-method span{font-size:1.45rem}.quick-log-method strong{font-size:.96rem}.quick-log-method small{color:var(--muted);line-height:1.25}.alpha0627-source-first{display:grid;gap:7px}.alpha0627-source-first>small{display:block;padding:3px 4px;color:var(--muted);font-weight:700}.alpha0627-secondary-heading{margin-top:8px;border-top:1px solid var(--line)}
 .redesigned-diary-list .simple-diary-entry{min-height:0}.redesigned-diary-list .entry-open{padding:7px 0;gap:8px}.redesigned-diary-list .entry-open small{margin-top:1px;font-size:.72rem;line-height:1.15}.redesigned-diary-list .entry-open strong{font-size:.9rem}.redesigned-meal-heading{padding-top:9px;padding-bottom:4px}.redesigned-meal-actions{padding-top:5px;padding-bottom:7px}
 @media(max-width:600px){.quick-log-method-grid{grid-template-columns:1fr 1fr}.quick-log-method{min-height:104px;padding:12px}.redesigned-diary-list .entry-open{padding:6px 0}.redesigned-diary-list .entry-open>b{font-size:.7rem}}
+
+
+/* Alpha 0.6.28 — natural quantity entry */
+.entry-fraction-choices{margin:.35rem 0 .65rem;padding:.55rem .65rem;border:1px solid rgba(46,109,77,.18);border-radius:12px;background:rgba(238,247,239,.7)}
+.entry-fraction-choices small{display:block;margin-bottom:.35rem;font-weight:700}
+.entry-fraction-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.4rem}
+.entry-fraction-buttons button{min-height:42px;border:1px solid rgba(46,109,77,.24);border-radius:10px;background:#fff;font-size:1.05rem;font-weight:700}

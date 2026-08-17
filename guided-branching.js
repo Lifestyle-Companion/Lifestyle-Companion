@@ -1,11 +1,11 @@
-/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.27
+/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.28
    Pure candidate-compatibility logic used by the universal guided search.
    The engine never keeps an incompatible nutrition record merely to finish a flow.
 */
 (function(global){
   'use strict';
 
-  const VERSION='0.6.27';
+  const VERSION='0.6.28';
   const S=global.HECSearchFoundation;
   const IGNORE=/not sure|typical|other/i;
   const WORD_EQUIV={
@@ -48,7 +48,7 @@
     // per-100-g nutrition reference. It can safely continue without pretending
     // the source explicitly stated it. "No added fat/oil" is likewise a safe
     // soft qualifier when the preparation itself does not add fat.
-    if(facet==='size'||(facet==='addedFat'&&/no added/i.test(String(value))))return {status:'soft',facet,value,actual:'',reason:'entry attribute not encoded in source'};
+    if(facet==='size'||facet==='species'||(facet==='addedFat'&&/no added/i.test(String(value))))return {status:'soft',facet,value,actual:'',reason:'entry attribute not encoded in source'};
     return {status:'unknown',facet,value,actual:'',reason:'not supported by record'};
   }
 
@@ -122,7 +122,7 @@
     const aliasTokens=new Set(alias.split(' ').filter(Boolean));
     const selectedHay=norm(Object.values(state||{}).filter(meaningful).join(' '));
     const sourceHay=norm(`${food?.name||''} ${food?.ingredients||food?.description||''}`);
-    const stop=new Set(['and','or','with','without','style','food']);
+    const stop=new Set(['and','or','with','without','on','style','food','bought','commercial','packaged','homemade','home']);
     const residual=foodText.split(' ').filter(Boolean).filter(t=>!aliasTokens.has(t)&&!stop.has(t));
     const issues=[];
     for(const token of residual){

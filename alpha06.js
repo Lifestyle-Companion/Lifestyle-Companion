@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.28",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.29",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
 const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
@@ -842,7 +842,7 @@ function renderFoodLiveMatches(query){
   if(typeof alpha0618R2GuideLabels==="function" && typeof alpha0618R2Text==="function"){
     const qn=alpha0618R2Text(term);
     if(/\bburger king\b/.test(qn)){
-      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.28</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
+      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.29</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
       box.classList.remove("hidden");return;
     }
     const chain=typeof alpha0618ChainFor==="function"?alpha0618ChainFor(term):null;
@@ -850,12 +850,12 @@ function renderFoodLiveMatches(query){
       const alias=(chain.aliases||[]).find(a=>qn.includes(a))||"";
       const tail=qn.replace(alias,"").trim();
       const items=(chain.items||[]).filter(x=>!tail||alpha0618R2Text(x).includes(tail)).slice(0,3);
-      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.28</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
+      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.29</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
       box.classList.remove("hidden");return;
     }
     const guides=alpha0618R2GuideLabels(term);
     const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · choose type, preparation and amount</small></span><b>›</b></button>`).join("");
-    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.28</small></div>${guideHtml}`;
+    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.29</small></div>${guideHtml}`;
     box.classList.remove("hidden");return;
   }
 
@@ -1012,10 +1012,10 @@ function renderOnlineLibrary(query=""){
 }
 let onlineSearchToken=0,allResourcesOnlineTimer=null,lastAutoOnlineQuery="";
 async function runOnlineFoodSearch({automatic=false}={}){
-  const query=by("food-search")?.value.trim()||"",requestedTab=activeLibraryTab(),token=++onlineSearchToken;if(!query||query.length<3){if(!automatic)showActionToast("Enter at least three letters before searching online.",null,5000);return [];}
+  const query=by("food-search")?.value.trim()||"",externalQuery=REG29?.canonicalSearchText?.(query)||query,requestedTab=activeLibraryTab(),token=++onlineSearchToken;if(!query||query.length<3){if(!automatic)showActionToast("Enter at least three letters before searching online.",null,5000);return [];}
   const status=by("online-food-status"),button=by("search-online-foods");if(button)button.disabled=true;if(status)status.textContent="Checking Open Food Facts and FoodData Central…";const inline=by("all-online-inline-status");if(inline)inline.textContent="Checking online sources…";
   try{
-    const results=await Promise.allSettled([searchOpenFoodFacts(query),searchUsda(query)]);if(token!==onlineSearchToken)return [];const foods=results.flatMap(r=>r.status==="fulfilled"?r.value:[]);upsertOnlineFoods(foods);
+    const results=await Promise.allSettled([searchOpenFoodFacts(externalQuery),searchUsda(externalQuery)]);if(token!==onlineSearchToken)return [];const foods=results.flatMap(r=>r.status==="fulfilled"?r.value:[]);upsertOnlineFoods(foods);
     const currentQuery=by("food-search")?.value.trim()||"";if(currentQuery!==query)return foods;
     if(status)status.textContent=`Loaded ${foods.length} reviewable online result${foods.length===1?"":"s"}. All Resources includes relevant matches automatically.`;
     if(activeLibraryTab()==="online")renderOnlineLibrary(query);else if(activeLibraryTab()==="all")renderLibrary();
@@ -2842,7 +2842,7 @@ searchRank=function(food,query){const q=alpha0618SearchText(query);if(/\bburger 
 ext.version='0.6.18';saveExt();
 
 /* ================================================================
-   Alpha 0.6.28 — FOOD INTELLIGENCE + SOURCE ROUTING
+   Alpha 0.6.29 — AUSTRALIAN ENTITY REGISTRY + FOOD INTELLIGENCE
    ================================================================
    One active search controller. Search behaviour is data-driven:
    - Query parser separates quantity/unit from food identity.
@@ -2853,7 +2853,8 @@ ext.version='0.6.18';saveExt();
      database concept exists; otherwise HEC offers safe search/scan/create fallbacks.
    - Extra query words may only preserve or increase specificity.
 */
-const ALPHA0623_BUILD='0.6.28';
+const ALPHA0623_BUILD='0.6.29';
+const REG29=window.HECAustralianEntityRegistry;
 const S23=window.HECSearchFoundation;
 const B25=window.HECGuidedBranching;
 let alpha0623ShowRaw=false;
@@ -2866,17 +2867,26 @@ function s23Parsed(v){return S23?.parseQuery?S23.parseQuery(v):{raw:String(v||''
 // Replace the permissive legacy substring ranker with token-aware matching.
 // This makes `banana` outrank banana bread and prevents `pie` matching `piece`.
 const alpha0623LegacyRank=searchRank;
+function alpha0629EntityInfo(raw){return REG29?.identify?REG29.identify(raw):[];}
+function alpha0629ResidualTokens(raw){const residual=REG29?.stripRecognisedEntities?REG29.stripRecognisedEntities(raw):s23Singular(raw);return s23Singular(residual).split(' ').filter(Boolean);}
+function alpha0629EntityMatch(entity,food){return REG29?.entityMatchesHay?REG29.entityMatchesHay(entity,`${food?.brand||''} ${food?.name||''} ${(food?.aliases||[]).join(' ')}`):false;}
 searchRank=function(food,query){
-  const nq=s23Singular(query);if(!nq)return 100;
-  const name=s23Singular(food?.name||''),brand=s23Singular(food?.brand||''),aliases=(food?.aliases||[]).map(s23Singular);
-  const combined=s23Singular(`${food?.brand||''} ${food?.name||''}`),qt=nq.split(' ').filter(Boolean);
+  const p=s23Parsed(query),nq=p.food;if(!nq)return 100;
+  const name=s23Singular(food?.name||''),brand=s23Singular(food?.brand||''),aliases=(food?.aliases||[]).map(s23Singular),combined=s23Singular(`${food?.brand||''} ${food?.name||''}`);
   const fields=[name,brand,combined,...aliases].filter(Boolean),fieldTokens=[...new Set(fields.flatMap(x=>x.split(' ').filter(Boolean)))];
-  if(name===nq||combined===nq)return 1300;if(aliases.includes(nq))return 1250;
-  if(name.startsWith(nq+' ')||combined.startsWith(nq+' '))return 1050;
-  if(qt.every(t=>fieldTokens.includes(t)))return 900+qt.length*10;
-  if(qt.every(t=>fieldTokens.some(f=>f.startsWith(t)&&t.length>=4)))return 790+qt.length*8;
-  if(qt.every(t=>t.length>=4&&fieldTokens.some(f=>fuzzyTokenMatch(t,f))))return 680+qt.length*5;
-  return 0;
+  const entities=alpha0629EntityInfo(query),identityEntities=entities.filter(x=>['brand','retailer','restaurant'].includes(x.entity.type));
+  let entityBonus=0;
+  for(const m of identityEntities){if(alpha0629EntityMatch(m.entity,food))entityBonus+=950;else if(m.entity.type==='brand'||m.entity.type==='retailer')return 0;}
+  const qt=alpha0629ResidualTokens(query);
+  let base=0;
+  if(!qt.length)base=identityEntities.length?900:0;
+  else if(name===nq||combined===nq)base=1300;
+  else if(aliases.includes(nq))base=1250;
+  else if(name.startsWith(nq+' ')||combined.startsWith(nq+' '))base=1050;
+  else if(qt.every(t=>fieldTokens.includes(t)))base=900+qt.length*10;
+  else if(qt.every(t=>fieldTokens.some(f=>f.startsWith(t)&&t.length>=3)))base=790+qt.length*8;
+  else if(qt.every(t=>t.length>=4&&fieldTokens.some(f=>fuzzyTokenMatch(t,f))))base=680+qt.length*5;
+  return base?base+entityBonus:0;
 };
 function s23Head(food){return s23Singular(String(food?.name||'').split(',')[0]);}
 function s23ProductLike(food){
@@ -2886,9 +2896,11 @@ function s23ProductLike(food){
 }
 function s23BrandIndex(){
   const vals=[];for(const f of allFoods()){if(!s23ProductLike(f))continue;const b=String(f.brand||'').trim();if(b&&b.length>1&&b.length<60)vals.push(b);}
+  for(const e of REG29?.entries||[])if(['brand','retailer'].includes(e.type))vals.push(e.name,...(e.aliases||[]));
   return [...new Set(vals)].sort((a,b)=>b.length-a.length);
 }
 function s23BrandMatch(raw){
+  const registered=REG29?.primary?REG29.primary(raw,['brand','retailer']):null;if(registered)return registered.entity.name;
   const q=s23Norm(raw);return s23BrandIndex().find(b=>{const n=s23Norm(b);return q===n||q.startsWith(n+' ');})||'';
 }
 function s23InferCategory(food){
@@ -2915,6 +2927,7 @@ function s23Concept(raw){return S23?.conceptFromQuery?.(raw)||s23DynamicConcept(
 function s23LikelyProduct(raw,concept=null){
   const p=s23Parsed(raw),q=p.food;if(!q)return false;
   if(alpha0618ChainFor(raw))return true;
+  if(REG29?.primary?.(raw,['brand','retailer']))return true;
   if(s23BrandMatch(raw))return true;
   const c=concept||s23Concept(raw);
   const strongGeneric=allFoods().filter(f=>f.category!=='Recipe'&&!s23ProductLike(f)).some(f=>searchRank(f,p.food)>=900);
@@ -2925,25 +2938,24 @@ function s23LikelyProduct(raw,concept=null){
   return false;
 }
 function s23ProductMatches(raw,limit=16){
-  const p=s23Parsed(raw),q=p.food,toks=p.tokens,brand=s23Norm(s23BrandMatch(raw));
+  const p=s23Parsed(raw),q=p.food,residual=alpha0629ResidualTokens(raw),entities=alpha0629EntityInfo(raw).filter(x=>['brand','retailer'].includes(x.entity.type));
   if(!q)return [];
   return allFoods().filter(s23ProductLike).map(food=>{
     const hay=s23Norm(`${food.brand||''} ${food.name||''} ${(food.aliases||[]).join(' ')}`);
-    let score=searchRank(food,q);
-    if(brand&&hay.startsWith(brand))score+=800;
-    if(hay===q)score+=1200;
-    if(hay.startsWith(q))score+=700;
-    if(toks.every(t=>hay.includes(t)))score+=500+toks.length*35;
-    // Product searches must not reward a result that drops already typed words.
-    const missing=toks.filter(t=>!hay.includes(t)).length;score-=missing*350;
-    return {food,score,missing};
-  }).filter(x=>x.score>0&&x.missing<=Math.max(0,Math.floor(toks.length/3))).sort((a,b)=>b.score-a.score||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name)).map(x=>x.food).filter((f,i,a)=>a.findIndex(x=>s23Norm(`${x.brand}|${x.name}`)===s23Norm(`${f.brand}|${f.name}`))===i).slice(0,limit);
+    let score=searchRank(food,raw),entityMatched=true;
+    for(const m of entities){if(alpha0629EntityMatch(m.entity,food))score+=850;else entityMatched=false;}
+    const missing=residual.filter(t=>!hay.split(' ').some(f=>f===t||f.startsWith(t)||(t.length>=4&&fuzzyTokenMatch(t,f)))).length;
+    if(!residual.length&&entities.length&&entityMatched)score+=600;
+    else if(residual.length&&missing===0)score+=500+residual.length*35;
+    score-=missing*350;
+    return {food,score,missing,entityMatched};
+  }).filter(x=>x.score>0&&x.entityMatched&&x.missing<=Math.max(0,Math.floor(residual.length/3))).sort((a,b)=>b.score-a.score||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name)).map(x=>x.food).filter((f,i,a)=>a.findIndex(x=>s23Norm(`${x.brand}|${x.name}`)===s23Norm(`${f.brand}|${f.name}`))===i).slice(0,limit);
 }
 function s23EnergyMeta(food){return [food.brand,cleanMeasureText(food.serving),energyText(food.nutrients?.calories)].filter(Boolean).join(' · ');}
 function s23ProductRow(food){return `<button type="button" class="live-match-row" data-food-add="${esc(food.id)}"><span><strong>${esc(food.name)}</strong><small>${esc(s23EnergyMeta(food))}</small></span><b>＋</b></button>`;}
 
 
-/* Alpha 0.6.28 — deterministic live-search intelligence.
+/* Alpha 0.6.29 — deterministic live-search intelligence.
    Product results may arrive asynchronously, but results already shown for an
    unchanged query keep their order. Newly discovered rows append instead of
    jumping above what the user was about to tap. */
@@ -2968,6 +2980,9 @@ function alpha0627GenericHeadSuggestions(raw,limit=8){
 }
 function alpha0627ConceptSuggestions(raw,limit=7){
   const q=s23Parsed(raw).food;if(q.length<2)return[];const out=[],seen=new Set();
+  for(const hit of (REG29?.predict?.(raw,limit)||[])){
+    const e=hit.entity,key=`entity:${e.id}`;if(seen.has(key))continue;seen.add(key);out.push({label:e.name,query:e.name,kind:'entity',meta:e.type==='retailer'?'Australian supermarket / retailer':e.type==='restaurant'?'Australian restaurant / takeaway':'Recognised food brand'});
+  }
   for(const c of (S23?.predictConcepts?.(raw,limit)||[])){const label=c.label,key=s23Norm(label);if(!seen.has(key)){seen.add(key);out.push({label,query:c.aliases?.[0]||label,kind:'concept'});}}
   for(const x of alpha0627GenericHeadSuggestions(raw,limit)){const key=s23Norm(x.head);if(!seen.has(key)){seen.add(key);out.push({label:s23Title(x.head),query:x.head,kind:'dynamic'});}}
   return out.slice(0,limit);
@@ -3020,7 +3035,7 @@ function s23ConceptCandidates(raw,concept){
 }
 function s23FacetOrder(concept){
   if(concept?.facetOrder?.length)return concept.facetOrder;
-  const map={fruit:['form','variety'],vegetable:['variety','form','prep','source'],dairy:['type','fat','style','form','source'],meat:['protein','cut','flavour','prep','addedFat','source','size'],seafood:['type','form','prep','addedFat','source'],grain:['type','grain','source','prep','size'],drink:['type','milk','size','source'],pie:['kind','filling','protein','source','form','size'],prepared:['type','protein','source','size'],snack:['type','flavour','source','size'],egg:['species','size','part','prep','addedFat'],generic:['type','form','prep','source','size']};
+  const map={fruit:['form','variety'],vegetable:['variety','form','prep','source'],dairy:['type','fat','style','form','source'],meat:['protein','cut','flavour','prep','addedFat','source','size'],seafood:['type','form','prep','addedFat','source'],grain:['type','grain','source','prep','size'],drink:['type','milk','size','source'],pie:['kind','filling','protein','source','form','size'],prepared:['type','protein','source','size'],snack:['type','flavour','source','size'],egg:['species','part','size','prep','addedFat'],generic:['type','form','prep','source','size']};
   return map[concept?.category]||map.generic;
 }
 function s23Features(food,concept){return B25?.features?B25.features(food,concept):(S23?.descriptorFeatures?.(food.name,concept)||{});}
@@ -3065,8 +3080,11 @@ function alpha0627WizardFacetOrder(w){
   let order=[...s23FacetOrder(w?.concept)];
   if(w?.concept?.key==='egg'){
     const part=s23Norm(w?.state?.part||''),prep=s23Norm(w?.state?.prep||'');
-    if(/yolk|white/.test(part))order=['part'];
-    else {order=['part','prep','size'];if(/fried/.test(prep))order.push('addedFat');}
+    // Species identifies the egg before any size-based calculation. Whole eggs
+    // then establish size before cooking. Separated yolk/white branches retain
+    // their direct practical measures without irrelevant cooking questions.
+    if(/yolk|white/.test(part))order=['species','part'];
+    else {order=['species','part','size','prep'];if(/fried/.test(prep))order.push('addedFat');}
   }
   return w?.sourceMode?order.filter(f=>f!=='source'):order;
 }
@@ -3092,7 +3110,7 @@ function s23NextFacet(w){
   }
   return null;
 }
-const S23_QUESTIONS={kind:'Is it savoury or sweet?',filling:'What is the main filling or style?',protein:'What is the main protein or meat?',species:'What kind is it?',variety:'Which variety is closest?',type:'Which type is closest?',cut:'Which cut or style is closest?',fat:'Which fat/style option is closest?',flavour:'Is it plain or flavoured?',style:'Which style is closest?',part:'Which part of the egg are you using?',addedFat:'Was any fat or oil added?',form:'What form is it in?',prep:'How is it prepared or cooked?',source:'Where is it from?',grain:'Which grain/style is closest?',milk:'Which milk option is used?',skin:'Skinless or with skin?',size:'What size is closest?',topping:'Which topping/style is closest?'};
+const S23_QUESTIONS={kind:'Is it savoury or sweet?',filling:'What is the main filling or style?',protein:'What is the main protein or meat?',species:'What kind of egg is it?',variety:'Which variety is closest?',type:'Which type is closest?',cut:'Which cut or style is closest?',fat:'Which fat/style option is closest?',flavour:'Is it plain or flavoured?',style:'Which style is closest?',part:'Which part of the egg are you using?',addedFat:'Was any fat or oil added?',form:'What form is it in?',prep:'How is it prepared or cooked?',source:'Where is it from?',grain:'Which grain/style is closest?',milk:'Which milk option is used?',skin:'Skinless or with skin?',size:'What size is closest?',topping:'Which topping/style is closest?'};
 function s23BestSource(w){
   const p=s23Parsed(w.query),pool=s23FilterCandidates(w.candidates,w.state,w.concept);
   const safePool=(w.concept?.key==='curry'&&!/\b(powder|paste|sauce)\b/.test(p.food))?pool.filter(f=>!/\b(powder|paste|sauce)\b/i.test(f.name)):pool;
@@ -3107,9 +3125,11 @@ function s23BestSource(w){
 function s23GuidedName(w){
   const p=s23Parsed(w.query);let base=S23?.labelFor?.(p,w.concept)||s23Title(p.food||w.concept.label);
   if(w.concept?.key==='egg'){
-    const part=w.state.part||'Whole',prep=w.state.prep||'',size=w.state.size||'';
-    if(/yolk/i.test(part))return 'Egg Yolk';if(/white/i.test(part))return 'Egg White';
-    return [size,prep,'Egg'].filter(Boolean).join(' ').replace(/Microwave Poached/i,'Microwave-Poached');
+    const part=w.state.part||'Whole',prep=w.state.prep||'',size=w.state.size||'',species=w.state.species||'';
+    if(/yolk/i.test(part))return species&&!/chicken/i.test(species)?`${species} Egg Yolk`:'Egg Yolk';
+    if(/white/i.test(part))return species&&!/chicken/i.test(species)?`${species} Egg White`:'Egg White';
+    const speciesWord=species&&!/chicken/i.test(species)?species:'';
+    return [size,prep,speciesWord,'Egg'].filter(Boolean).join(' ').replace(/Microwave Poached/i,'Microwave-Poached');
   }
   if(w.concept?.key==='sausage')return [w.state.prep,w.state.protein,w.state.flavour&&!/plain/i.test(w.state.flavour)?w.state.flavour:'','Sausage'].filter(Boolean).join(' ');
   if(w.concept?.key==='corn-chip')return [w.state.flavour&&!/plain/i.test(w.state.flavour)?w.state.flavour:'','Corn Chips'].filter(Boolean).join(' ');
@@ -3138,7 +3158,11 @@ function s23FinishWizard(w){
     openModal(w.concept.label,'HEC stopped this match because the nutrition reference conflicts with your selections. Nothing has been added.','Close',()=>{},`<p>${esc(issues)}</p><p>Try a broader description, scan the barcode, read the Nutrition Panel, or create a food.</p>`);return;
   }
   const guided=s23Naturalise(source,w),date=ext.ui?.mealEntrySession?.date||(ext.ui.pendingMeal?ext.ui.diaryDate:isoToday())||isoToday();
-  prepareEntry(guided,{date,meal:ext.ui.pendingMeal||'',amount:w.parsed.quantity||null,unit:(w.parsed.unit&&unitOptions(guided)[w.parsed.unit]!==undefined)?w.parsed.unit:null});
+  let requestedUnit=(w.parsed.unit&&unitOptions(guided)[w.parsed.unit]!==undefined)?w.parsed.unit:null;
+  // "egg" in a phrase such as "2 eggs" is the food/count word, not permission
+  // to throw away the Large/Medium size already selected in the wizard.
+  if(w.concept?.key==='egg'&&requestedUnit==='egg')requestedUnit=null;
+  prepareEntry(guided,{date,meal:ext.ui.pendingMeal||'',amount:w.parsed.quantity||null,unit:requestedUnit||defaultUnit(guided)});
 }
 function s23RenderWizard(){
   const w=alpha0623Wizard;if(!w)return;const next=s23NextFacet(w);if(!next){s23FinishWizard(w);return;}
@@ -3175,7 +3199,7 @@ function s23RenderLive(raw){
   const box=by('food-live-results'),term=String(raw||'').trim();if(!box)return;
   if(!term||document.activeElement!==by('food-search')){box.classList.add('hidden');box.innerHTML='';return;}
   const q=s23Norm(term);
-  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.28</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
+  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.29</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
   const chain=alpha0618ChainFor(term);if(chain){const alias=(chain.aliases||[]).find(a=>q.includes(s23Norm(a)))||'',tail=q.replace(s23Norm(alias),'').trim(),items=(chain.items||[]).filter(x=>!tail||s23Norm(x).includes(tail)).slice(0,6);box.innerHTML=`<button type="button" class="live-match-heading alpha0626-chain-heading" data-alpha0626-chain-menu="${esc(chain.label)}"><span><strong>${esc(chain.label)}</strong><small>Australian menu · tap here to browse the full menu</small></span><b>›</b></button>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
   const concept=s23Concept(term),product=s23LikelyProduct(term,concept);
   // A recognised menu item can find its Australian chain without requiring the
@@ -3183,11 +3207,11 @@ function s23RenderLive(raw){
   // Zinger → KFC. An exact generic food concept still wins (e.g. Sausage must
   // remain Sausage rather than becoming Sausage McMuffin).
   const menuItems=!concept?alpha0627ChainItemSuggestions(term,8):[];if(menuItems.length){box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Recognised Australian menu items</small></div>${menuItems.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(x.chain.label)}|${esc(x.name)}"><span><strong>${esc(x.name)}</strong><small>${esc(x.chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
-  if(concept&&!product){const source=alpha0627SourceRows(term,concept);box.innerHTML=`<div class="live-match-heading"><strong>${esc(s23GuideLabel(term,concept))}</strong><small>HEC Food Intelligence · Alpha 0.6.28</small></div>${source||s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
+  if(concept&&!product){const source=alpha0627SourceRows(term,concept);box.innerHTML=`<div class="live-match-heading"><strong>${esc(s23GuideLabel(term,concept))}</strong><small>HEC Food Intelligence · Alpha 0.6.29</small></div>${source||s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
   // Predict likely complete foods from partial text before creating a generic
   // "App", "Banan" or "Che" food. Product matches remain secondary.
-  const predictions=alpha0627ConceptSuggestions(term,7);if(predictions.length){const products=alpha0627StableProductMatches(term,4);box.innerHTML=`<div class="live-match-heading"><strong>HEC Thinks You May Mean</strong><small>Suggestions narrow as you type</small></div>${predictions.map(x=>`<button type="button" class="live-match-row" data-alpha0627-prediction="${esc(x.query)}"><span><strong>${esc(x.label)}</strong><small>Food suggestion</small></span><b>›</b></button>`).join('')}${products.length?`<div class="live-match-heading alpha0627-secondary-heading"><strong>Product Matches</strong><small>Secondary while HEC is predicting the food</small></div>${products.map(s23ProductRow).join('')}`:''}`;box.classList.remove('hidden');return;}
-  if(product){const matches=alpha0627StableProductMatches(term,7);box.innerHTML=`<div class="live-match-heading"><strong>Product Matches</strong><small>Stable ranking · every word narrows the result</small></div>${matches.length?matches.map(s23ProductRow).join(''):'<div class="alpha0623-search-status"><strong>Checking product sources…</strong><small>No loaded exact product yet. Keep typing, refresh online results, or scan the barcode.</small></div>'}`;box.classList.remove('hidden');return;}
+  const predictions=alpha0627ConceptSuggestions(term,7);if(predictions.length&&!REG29?.primary?.(term,['brand','retailer'])){const products=alpha0627StableProductMatches(term,4);box.innerHTML=`<div class="live-match-heading"><strong>HEC Thinks You May Mean</strong><small>Suggestions narrow as you type</small></div>${predictions.map(x=>`<button type="button" class="live-match-row" data-alpha0627-prediction="${esc(x.query)}"><span><strong>${esc(x.label)}</strong><small>${esc(x.meta||'Food suggestion')}</small></span><b>›</b></button>`).join('')}${products.length?`<div class="live-match-heading alpha0627-secondary-heading"><strong>Product Matches</strong><small>Secondary while HEC is predicting the food</small></div>${products.map(s23ProductRow).join('')}`:''}`;box.classList.remove('hidden');return;}
+  if(product){const matches=alpha0627StableProductMatches(term,7),entity=REG29?.primary?.(term,['brand','retailer']);const heading=entity?.entity?.name||'Product Matches',meta=entity?(entity.entity.type==='retailer'?'Recognised Australian supermarket / retailer':'Recognised food brand · source already known'):'Stable ranking · every word narrows the result';box.innerHTML=`<div class="live-match-heading"><strong>${esc(heading)}</strong><small>${esc(meta)}</small></div>${matches.length?matches.map(s23ProductRow).join(''):'<div class="alpha0623-search-status"><strong>Brand/source recognised.</strong><small>Keep typing the product or flavour, refresh online results, scan the barcode, or read the Nutrition Panel. HEC will not ask whether a recognised brand is homemade.</small></div>'}`;box.classList.remove('hidden');return;}
   box.innerHTML='<div class="live-match-heading"><strong>Keep Typing</strong><small>HEC is predicting the food, not treating the unfinished letters as a food</small></div><div class="alpha0623-search-status"><strong>No confident food yet.</strong><small>Add another letter or identifying word, or use barcode/nutrition-panel capture.</small></div>';box.classList.remove('hidden');
 }
 
@@ -3198,11 +3222,11 @@ function s23ApplyFullSurface(){
   if(!raw||['recent','saved','combined','recipes','meals'].includes(tab))return;
   if(alpha0618ChainFor(raw)||/\bburger king\b/.test(s23Norm(raw)))return;
   const concept=s23Concept(raw),product=s23LikelyProduct(raw,concept);
-  if(concept){const rawCount=results.querySelectorAll('.resource-row').length,source=alpha0627SourceRows(raw,concept);results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface"><strong>${esc(s23GuideLabel(raw,concept))}</strong><small>${source?'Choose the source that best describes the food, then HEC will narrow only the relevant attributes.':'HEC will ask only distinctions that can help select the closest nutrition record, then move to quantity and serving.'}</small>${source||s23GuideButton(raw,false)}${rawCount?`<button type="button" class="alpha0623-database-toggle" data-alpha0623-toggle-raw>Browse ${rawCount} database match${rawCount===1?'':'es'}</button>`:''}</section>`);results.classList.add('alpha0623-guide-active');if(alpha0623ShowRaw)results.classList.add('alpha0623-show-raw');return;}
-  const predictions=alpha0627ConceptSuggestions(raw,6);if(predictions.length){results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface"><strong>HEC Thinks You May Mean</strong><small>Choose a prediction or keep typing. Unfinished letters are never treated as a food.</small>${predictions.map(x=>`<button type="button" class="alpha0623-guide-row" data-alpha0627-prediction="${esc(x.query)}"><span><strong>${esc(x.label)}</strong><small>Food suggestion</small></span><b>›</b></button>`).join('')}</section>`);results.classList.add('alpha0623-guide-active','alpha0623-show-raw');return;}
+  if(concept&&!product){const rawCount=results.querySelectorAll('.resource-row').length,source=alpha0627SourceRows(raw,concept);results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface"><strong>${esc(s23GuideLabel(raw,concept))}</strong><small>${source?'Choose the source that best describes the food, then HEC will narrow only the relevant attributes.':'HEC will ask only distinctions that can help select the closest nutrition record, then move to quantity and serving.'}</small>${source||s23GuideButton(raw,false)}${rawCount?`<button type="button" class="alpha0623-database-toggle" data-alpha0623-toggle-raw>Browse ${rawCount} database match${rawCount===1?'':'es'}</button>`:''}</section>`);results.classList.add('alpha0623-guide-active');if(alpha0623ShowRaw)results.classList.add('alpha0623-show-raw');return;}
+  const predictions=alpha0627ConceptSuggestions(raw,6);if(predictions.length&&!REG29?.primary?.(raw,['brand','retailer'])){results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface"><strong>HEC Thinks You May Mean</strong><small>Choose a prediction or keep typing. Unfinished letters are never treated as a food.</small>${predictions.map(x=>`<button type="button" class="alpha0623-guide-row" data-alpha0627-prediction="${esc(x.query)}"><span><strong>${esc(x.label)}</strong><small>${esc(x.meta||'Food suggestion')}</small></span><b>›</b></button>`).join('')}</section>`);results.classList.add('alpha0623-guide-active','alpha0623-show-raw');return;}
   if(product){
-    const matches=alpha0627StableProductMatches(raw,20),html=matches.length?matches.map(resourceFoodRow).join(''):`<div class="alpha0623-search-status"><strong>No loaded exact product yet.</strong><p>HEC is checking online packaged-food sources. Keep typing to narrow the name, use Refresh Online Results, scan the barcode, or read the Nutrition Panel.</p></div>`;
-    results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface alpha0623-product-surface"><strong>Product Search</strong><small>Your brand and product words are preserved. Each extra word narrows real product records instead of reverting to a broad food category.</small>${html}</section>`);results.classList.add('alpha0623-product-active');return;
+    const matches=alpha0627StableProductMatches(raw,20),entity=REG29?.primary?.(raw,['brand','retailer']),html=matches.length?matches.map(resourceFoodRow).join(''):`<div class="alpha0623-search-status"><strong>${entity?'Recognised '+esc(entity.entity.name):'No loaded exact product yet'}.</strong><p>${entity?'HEC already knows this is a commercial brand/store context. Keep typing the product or flavour, refresh online products, scan the barcode, or read the Nutrition Panel.':'HEC is checking online packaged-food sources. Keep typing to narrow the name, use Refresh Online Results, scan the barcode, or read the Nutrition Panel.'}</p></div>`;
+    results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface alpha0623-product-surface"><strong>${esc(entity?.entity?.name||'Product Search')}</strong><small>${entity?'Recognised entity · source questions already answered by the search phrase':'Your brand and product words are preserved. Each extra word narrows real product records instead of reverting to a broad food category.'}</small>${html}</section>`);results.classList.add('alpha0623-product-active');return;
   }
   results.insertAdjacentHTML('afterbegin',`<section class="alpha0623-search-surface"><strong>Exact Food Not Identified Yet</strong><small>Keep typing, refresh online products, scan a barcode, read the Nutrition Panel, or create a food. HEC will not invent a food from unfinished letters.</small></section>`);results.classList.add('alpha0623-guide-active','alpha0623-show-raw');
 }
@@ -3253,17 +3277,17 @@ window.HEC_ALPHA0623_SEARCH_TEST={
   candidates:q=>{const c=s23Concept(q);return c?s23ConceptCandidates(q,c).slice(0,10).map(f=>f.name):[];},
   facets:q=>{const c=s23Concept(q);if(!c)return {};const cs=s23ConceptCandidates(q,c),out={};for(const f of s23FacetOrder(c))out[f]=s23ChoiceValues(f,cs,c);return out;}
 };
-ext.version='0.6.28';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='food-intelligence-v628';ext.ui.guidedMatchValidation='strict-compatible-source-v628';saveExt();
+ext.version='0.6.29';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='food-intelligence-v629';ext.ui.guidedMatchValidation='strict-compatible-source-v629';saveExt();
 
 /* ================================================================
-   Alpha 0.6.28 — UNIVERSAL SERVING & MEASURE FOUNDATION
+   Alpha 0.6.29 — UNIVERSAL SERVING & MEASURE FOUNDATION
    ================================================================
    Search identification now hands every resolved food to one serving resolver.
    The resolver prefers explicit package data, then trustworthy source measures,
    then Australian Dietary Guidelines standard serves, and otherwise retains
    grams/mL rather than inventing a household conversion.
 */
-const ALPHA0624_BUILD='0.6.28';
+const ALPHA0624_BUILD='0.6.29';
 const S24=window.HECServingFoundation;
 
 function s24ContextForFood(food,extra={}){
@@ -3348,19 +3372,21 @@ window.HEC_ALPHA0624_SERVING_TEST={
   byQuery:(q)=>{const c=s23Concept(q),source=c?s23BestSource({query:q,parsed:s23Parsed(q),concept:c,candidates:s23ConceptCandidates(q,c),state:s23QuerySeeds(q,c)}):null;if(!source)return null;return S24?.diagnostic?S24.diagnostic(clone(source),{conceptCategory:c.category,conceptKey:c.key,query:q}):null;},
   productFromOFF:(product)=>{const f=makeOpenFoodFactsFood(product);return {name:f.name,basis:f.servingBasis,serving:f.serving,defaultUnit:defaultUnit(f),units:clone(f.units),labels:clone(f.unitLabels),calories:f.nutrients?.calories};}
 };
-ext.version='0.6.28';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='food-intelligence-v628-predictive-source-routing';ext.ui.guidedMatchValidation='strict-compatible-source-v628';ext.ui.servingMeasureFoundation='contextual-measures-v628';saveExt();
+ext.version='0.6.29';
+ext.ui.universalGuidedSearch=true;
+ext.ui.guidedSearchArchitecture='food-intelligence-v629-entity-registry+predictive-source-routing+stable-ranking';
+ext.ui.guidedMatchValidation='strict-compatible-source-v629';
+ext.ui.servingMeasureFoundation='contextual-measures-v629-identity-sanitised';
+ext.ui.entityRegistryVersion=REG29?.version||'0.6.29';
+
+window.HEC_ALPHA0629_ENTITY_TEST={
+  build:'0.6.29',
+  identify:q=>(REG29?.identify?.(q)||[]).map(x=>({id:x.entity.id,type:x.entity.type,name:x.entity.name,concept:x.entity.foodConcept||'',source:x.entity.sourceMode||''})),
+  residual:q=>REG29?.stripRecognisedEntities?.(q)||'',
+  concept:q=>s23Concept(q)?.key||'',
+  productIntent:q=>s23LikelyProduct(q,s23Concept(q)),
+  productNames:q=>s23ProductMatches(q,12).map(f=>`${f.brand||''} ${f.name}`.trim())
+};
+saveExt();
 
 })();
-
-
-/* ================================================================
-   Alpha 0.6.28 — SEARCH INTELLIGENCE POLISH
-   ================================================================
-   - Chain headings are actionable and open a complete grouped menu.
-   - McDonald's discovery includes fries, nuggets and common drink choices.
-   - Serving resolver sanitises category-incompatible and duplicate measures.
-*/
-ext.version='0.6.28';
-ext.ui.guidedSearchArchitecture='food-intelligence-v628-predictive-source-routing+stable-ranking';
-ext.ui.servingMeasureFoundation='contextual-measures-v628-sanitised';
-saveExt();

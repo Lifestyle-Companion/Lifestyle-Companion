@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.28
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.29
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,8 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.28';
+  const VERSION='0.6.29';
+  const REG=global.HECAustralianEntityRegistry;
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
@@ -44,7 +45,16 @@
 
   function inferCategory(food,context={}){
     if(context.conceptCategory)return context.conceptCategory;
+    if(context.concept?.category)return context.concept.category;
+    const identityText=`${context.query||''} ${food?.brand||''} ${food?.name||''}`;
+    const regConcept=REG?.foodConcept?REG.foodConcept(identityText):'';
+    if(regConcept==='corn-chip')return 'snack';
+    if(['cereal','bread','pasta'].includes(regConcept))return 'grain';
+    if(regConcept==='coffee')return 'drink';
     const name=norm(`${food?.name||''} ${food?.category||''} ${food?.ingredients||''}`);
+    // Resolve the food family before descriptors such as "cheese" flavour.
+    // A Cheese Supreme Corn Chip is still a corn chip, not a cheese slice.
+    if(/\b(corn chip|corn chips|tortilla chip|tortilla chips|potato chip|potato chips|rice cracker|rice crackers|cracker|crackers|snack)\b/.test(name))return 'snack';
     if(/\b(apple|banana|orange|pear|mandarin|tangerine|mango|grape|berry|berries|kiwi|plum|apricot|peach|nectarine|melon|watermelon|pineapple|fruit)\b/.test(name))return 'fruit';
     if(/\b(lettuce|spinach|rocket|cabbage|kale|broccoli|cauliflower|carrot|pumpkin|tomato|potato|capsicum|onion|vegetable|vegetables|salad|beans|peas|lentil|chickpea)\b/.test(name))return 'vegetable';
     if(/\b(milk|cheese|yoghurt|yogurt|ricotta|dairy|buttermilk)\b/.test(name))return 'dairy';
@@ -262,15 +272,24 @@
     }
     if(['meat','seafood','egg'].includes(category)&&units.standardServe!==undefined)return 'standardServe';
     if(units.cup!==undefined&&category==='drink')return 'cup';
-    return food.defaultUnit||Object.keys(units)[0]||'g';
+    return (food.defaultUnit&&units[food.defaultUnit]!==undefined)?food.defaultUnit:(Object.keys(units)[0]||'g');
   }
 
   function sanitizeUnits(food,context={}){
     if(!food)return food;
     food.units ||= {}; food.unitLabels ||= {};
     const category=inferCategory(food,context);
-    const selectedPart=norm(context?.selected?.part||'');
+    const selectedPart=norm(context?.selected?.part||food?.guidedSelections?.part||'');
     if(category==='egg'&&/yolk|white/.test(selectedPart)){for(const k of ['egg','smallEgg','mediumEgg','largeEgg','xLargeEgg','jumboEgg','kingEgg','standardServe']){delete food.units[k];delete food.unitLabels[k];}}
+    // Remove stale guideline measures that were attached because a flavour word
+    // looked like another food family (e.g. Cheese Supreme Corn Chips -> Slice).
+    if(category==='snack'){
+      const snackState=stateInfo(food,context);
+      for(const k of ['slice','regularSlice','thickSlice','standardServe']){
+        const label=norm(food.unitLabels?.[k]||''),origin=norm(food.unitOrigins?.[k]?.origin||'');
+        if((snackState.cornChip&&/slice/i.test(k))||/cheese|bread|grain serve|dairy/.test(label+' '+origin)){delete food.units[k];delete food.unitLabels[k];if(food.unitOrigins)delete food.unitOrigins[k];}
+      }
+    }
     // Category-specific measures must never leak into another food (the 0.6.25
     // cheese test exposed an Egg measure in a cheese unit list).
     if(category!=='egg'){for(const k of ['egg','smallEgg','mediumEgg','largeEgg','xLargeEgg','jumboEgg','kingEgg','eggWhite','yolk']){delete food.units[k];delete food.unitLabels[k];}}
@@ -292,11 +311,15 @@
     // Always retain safe base units already present. Do not create an invented gram
     // conversion from a package serve whose mass is unknown.
     addPackageCountUnits(food);
-    if(!explicitPackageServing(food))addGuidelineMeasures(food,context);
-    else food.servingFoundationSource='Explicit package serving data';
+    if(isPackageFood(food)){
+      // Package/product foods must not borrow a household measure merely from a
+      // descriptive word in the product name. Use package metadata or safe metric
+      // units only; never invent a cheese slice for cheese-flavoured corn chips.
+      food.servingFoundationSource=explicitPackageServing(food)?'Explicit package serving data':'Package/product data · no invented household conversion';
+    }else addGuidelineMeasures(food,context);
     addMetricVolumeMeasures(food,context);
-    const chosen=chooseDefault(food,context);if(chosen&&food.units[chosen]!==undefined){food.servingDefaultUnit=chosen;if(!food.defaultUnit||!explicitPackageServing(food))food.defaultUnit=chosen;food.defaultAmount=1;}
-    const fractionCandidates=['bar','bottle','can','tub','pie','slice','regularSlice','thickSlice','serve','item'];food.fractionUnits=fractionCandidates.filter(k=>food.units?.[k]!==undefined);
+    const chosen=chooseDefault(food,context);if(chosen&&food.units[chosen]!==undefined){food.servingDefaultUnit=chosen;food.defaultUnit=chosen;food.defaultAmount=1;}
+    const fractionCandidates=['bar','bottle','can','tub','pie','slice','regularSlice','thickSlice','serve','portion','chip','cracker','crispbread','item'];food.fractionUnits=fractionCandidates.filter(k=>food.units?.[k]!==undefined);
     food.servingMeasureVersion=VERSION;
     return food;
   }

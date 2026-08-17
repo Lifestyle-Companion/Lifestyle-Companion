@@ -1,7 +1,7 @@
-/* Healthy Eating Companion — Food Intelligence Foundation 0.6.28
+/* Healthy Eating Companion — Food Intelligence Foundation 0.6.29
    Pure query/taxonomy utilities. UI and food-database access remain in alpha06.js.
 
-   Alpha 0.6.28 principles:
+   Alpha 0.6.29 principles:
    - Partial text is a search prefix, never automatically a food identity.
    - Known food concepts are predicted before raw product/database rows.
    - The user's words pre-fill attributes so HEC never asks the same question twice.
@@ -11,7 +11,8 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.28';
+  const VERSION='0.6.29';
+  const REG=global.HECAustralianEntityRegistry;
   const WORD_NUMBERS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,half:.5,a:1,an:1};
   const IRREGULAR={bananas:'banana',oranges:'orange',apples:'apple',potatoes:'potato',tomatoes:'tomato',berries:'berry',cherries:'cherry',loaves:'loaf',leaves:'leaf',fries:'fries',fish:'fish',cheese:'cheese',rice:'rice',pasta:'pasta',couscous:'couscous',eggs:'egg',sausages:'sausage'};
   const UNIT_WORDS={
@@ -53,7 +54,7 @@
     {key:'cheese',label:'Cheese',aliases:['cheese'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','style','form','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'milk',label:'Milk',aliases:['milk'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','source'],natural:{unit:'mL',label:'mL',grams:1}},
     {key:'yoghurt',label:'Yoghurt',aliases:['yoghurt','yogurt'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','flavour','source'],natural:{unit:'g',label:'g',grams:1}},
-    {key:'egg',label:'Egg',aliases:['egg'],category:'egg',sourcePolicy:'skip',facetOrder:['part','prep','size','addedFat'],natural:{unit:'egg',label:'Egg',grams:52},supplemental:{part:['Whole','Yolk','White'],prep:['Raw','Boiled','Poached','Microwave Poached','Fried'],size:['Small','Medium','Large','X-Large','Jumbo'],addedFat:['No added fat/oil']}},
+    {key:'egg',label:'Egg',aliases:['egg'],category:'egg',sourcePolicy:'skip',facetOrder:['species','part','size','prep','addedFat'],natural:{unit:'egg',label:'Egg',grams:52},supplemental:{species:['Chicken','Duck','Quail'],part:['Whole','Yolk','White'],prep:['Raw','Boiled','Poached','Microwave Poached','Fried'],size:['Small','Medium','Large','X-Large','Jumbo','King-Size'],addedFat:['No added fat/oil']}},
     {key:'bread',label:'Bread',aliases:['bread'],category:'grain',sourcePolicy:'early',facetOrder:['type','grain','source','prep','size'],natural:{unit:'slice',label:'Slice',grams:40}},
     {key:'rice',label:'Rice',aliases:['rice'],category:'grain',sourcePolicy:'contextual',facetOrder:['type','grain','prep','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'pasta',label:'Pasta',aliases:['pasta','spaghetti','macaroni','penne','fettuccine'],category:'grain',sourcePolicy:'contextual',facetOrder:['type','prep','source'],natural:{unit:'g',label:'g',grams:1}},
@@ -93,7 +94,7 @@
     prep:[['Raw',/\braw\b/],['Boiled',/\bboiled\b|\bhard boiled\b/],['Microwave Poached',/\bmicrowave\s*poached\b/],['Poached',/\bpoached\b/],['Toasted',/\btoast(?:ed)?\b/],['Air Fried',/\bair\s*fried\b|\bair\s*fryer\b/],['Fried',/\bfried\b|\bpan\s*fried\b/],['Grilled',/\bgrilled\b/],['Baked / Oven',/\bbaked\b|\boven\s*baked\b|\boven\b/],['Roasted',/\broasted\b/],['Steamed',/\bsteamed\b/],['Microwaved',/\bmicrowav/],['Barbecued / BBQ',/\bbbq\b|\bbarbecu/],['Cooked',/\bcooked\b/]],
     protein:[['Beef',/\bbeef\b|\bsteak\b/],['Lamb',/\blamb\b|\bmutton\b/],['Pork',/\bpork\b/],['Chicken',/\bchicken\b/],['Turkey',/\bturkey\b/],['Kangaroo',/\bkangaroo\b/],['Fish / Seafood',/\bfish\b|\bseafood\b|\bsalmon\b|\btuna\b|\bprawn\b/],['Vegetarian',/\bvegetarian\b|\bveggie\b|\bplant based\b|\bmeat alternative\b/]],
     species:[['Chicken',/\bchicken\b/],['Duck',/\bduck\b/],['Quail',/\bquail\b/]],
-    size:[['Jumbo',/\bjumbo\b/],['X-Large',/\bx\s*large\b|\bextra\s*large\b/],['Large',/\blarge\b/],['Medium',/\bmedium\b/],['Small',/\bsmall\b/],['Long Thin',/\blong\s*thin\b/],['Long Thick',/\blong\s*thick\b/],['Thin',/\bthin\b/],['Thick',/\bthick\b/],['Cocktail / Small',/\bcocktail\b/]],
+    size:[['King-Size',/\bking[ -]?size\b/],['Jumbo',/\bjumbo\b/],['X-Large',/\bx\s*large\b|\bextra\s*large\b/],['Large',/\blarge\b/],['Medium',/\bmedium\b/],['Small',/\bsmall\b/],['Long Thin',/\blong\s*thin\b/],['Long Thick',/\blong\s*thick\b/],['Thin',/\bthin\b/],['Thick',/\bthick\b/],['Cocktail / Small',/\bcocktail\b/]],
     part:[['Whole',/\bwhole\b/],['White',/\bwhite\b|\balbumen\b/],['Yolk',/\byolk\b/]],
     addedFat:[['No added fat/oil',/\bno\s+(?:added\s+)?(?:fat|oil)\b|\bwithout\s+(?:fat|oil)\b/],['Added fat/oil',/\badded\s+(?:fat|oil)\b|\bwith\s+(?:fat|oil)\b/]],
     fat:[['Regular Fat',/\bregular fat\b/],['Reduced / Light',/\breduced fat\b|\blow fat\b|\blight\b/],['Lean',/\blean\b/],['Untrimmed',/\buntrimmed\b/]],
@@ -116,13 +117,13 @@
       if(!unit&&UNIT_LOOKUP[w]){unit=UNIT_LOOKUP[w];if(['item','slice','serve','pie','sausage','egg','biscuit','bar','sachet','packet'].includes(unit))keep.push(singularWord(w));continue;}
       keep.push(w);
     }
-    const food=singular(keep.join(' '));return {raw:String(raw||''),normalised:n,food,quantity:quantity===null?1:quantity,unit,tokens:tokens(food)};
+    const food=singular(keep.join(' ')),entities=REG?.identify?REG.identify(raw):[];return {raw:String(raw||''),normalised:n,food,quantity:quantity===null?1:quantity,unit,tokens:tokens(food),entities,entityResidual:REG?.stripRecognisedEntities?REG.stripRecognisedEntities(food):food};
   }
 
   function conceptFromQuery(raw){
     const p=typeof raw==='object'&&raw.food!==undefined?raw:parseQuery(raw),q=` ${p.food} `;let hits=[];
     CONCEPTS.forEach(c=>(c.aliases||[]).forEach(a=>{const an=singular(a);if(q.includes(` ${an} `))hits.push({c,a:an,len:an.split(' ').length,pos:p.food.lastIndexOf(an)});}));
-    if(!hits.length)return null;hits.sort((a,b)=>b.len-a.len||b.pos-a.pos);return hits[0].c;
+    if(!hits.length){const registryConcept=REG?.foodConcept?REG.foodConcept(p.raw||p.food):'';if(registryConcept)return CONCEPTS.find(c=>c.key===registryConcept)||null;return null;}hits.sort((a,b)=>b.len-a.len||b.pos-a.pos);return hits[0].c;
   }
 
   // Predict concepts before a complete word is typed. Predictions do not become
@@ -151,12 +152,13 @@
 
   function knownFacetToken(t){if(MODIFIER_WORDS.has(t))return true;for(const list of Object.values(PATTERNS))for(const [,re] of list)if(re.test(t))return true;return false;}
   function likelyBrandPrefix(parsed,concept){
+    const regBrand=REG?.primary?REG.primary(parsed.raw||parsed.food,['brand']):null;if(regBrand)return norm(regBrand.entity.name);
     if(!concept)return '';
     const q=parsed.food,aliases=(concept.aliases||[]).map(singular).sort((a,b)=>b.length-a.length),a=aliases.find(x=>q.includes(x));if(!a)return '';
     const before=q.slice(0,q.indexOf(a)).trim();if(!before)return '';
     const b=before.split(' ').filter(Boolean),unknown=b.filter(x=>!knownFacetToken(x));return unknown.join(' ');
   }
-  function labelFor(parsed,concept){if(!concept)return title(parsed.food);const brandPrefix=likelyBrandPrefix(parsed,concept);if(brandPrefix)return title(parsed.food);return title(parsed.food||singular(concept.label));}
+  function labelFor(parsed,concept){const exact=REG?.exactEntity?REG.exactEntity(parsed.raw||parsed.food,['brand','retailer','restaurant']):null;if(exact)return exact.name;if(!concept)return title(parsed.food);const brandPrefix=likelyBrandPrefix(parsed,concept);if(brandPrefix)return title(parsed.food);return title(parsed.food||singular(concept.label));}
 
   function classifyText(text){const n=norm(text),out={};Object.entries(PATTERNS).forEach(([facet,list])=>{for(const [label,re] of list){if(re.test(n)){out[facet]=label;break;}}});return out;}
 
@@ -196,13 +198,13 @@
       if(concept.key==='sausage'&&/\bherb\b|\bgarlic\b|\bhoney\b|\bchilli\b|\bpepper\b/.test(q))out.flavour='Flavoured';
       if(concept.key==='bread'&&/\bsourdough\b|\bsour dough\b/.test(q))out.type='Sourdough';
       if(concept.key==='cheese'&&/\bcheddar\b/.test(q))out.type='Cheddar';
-      if(concept.key==='egg'){if(!out.species)out.species='Chicken';if(!out.part&&out.prep)out.part='Whole';}
+      if(concept.key==='egg'){if(!out.part&&out.prep)out.part='Whole';}
       if(concept.key==='corn-chip'&&/\bplain\b|\bsalted\b/.test(q))out.flavour='Plain / Salted';
     }
     return out;
   }
 
-  function sourceModeFromQuery(raw){const x=classifyText(typeof raw==='object'?raw.food:parseQuery(raw).food).source||'';if(/home made|grown/i.test(x))return 'home';if(/takeaway|restaurant/i.test(x))return 'restaurant';if(/bakery|fresh/i.test(x))return 'bakery';if(/commercial|packaged|frozen|canned|bought|store|supermarket/i.test(x))return 'commercial';return '';}
+  function sourceModeFromQuery(raw){const text=typeof raw==='object'?(raw.raw||raw.food):raw;const registered=REG?.sourceMode?REG.sourceMode(text):'';if(registered)return registered;const x=classifyText(typeof raw==='object'?raw.food:parseQuery(raw).food).source||'';if(/home made|grown/i.test(x))return 'home';if(/takeaway|restaurant/i.test(x))return 'restaurant';if(/bakery|fresh/i.test(x))return 'bakery';if(/commercial|packaged|frozen|canned|bought|store|supermarket/i.test(x))return 'commercial';return '';}
   function shouldOfferSourceFirst(concept,parsedOrRaw){if(!concept||concept.sourcePolicy!=='early')return false;const parsed=typeof parsedOrRaw==='object'?parsedOrRaw:parseQuery(parsedOrRaw);if(sourceModeFromQuery(parsed))return false;if(likelyBrandPrefix(parsed,concept))return false;return true;}
   function sourceChoices(concept){
     if(!concept||concept.sourcePolicy==='skip')return[];
@@ -221,5 +223,5 @@
     return [];
   }
 
-  global.HECSearchFoundation={version:VERSION,norm,singular,title,tokens,parseQuery,conceptFromQuery,predictConcepts,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,sourceModeFromQuery,shouldOfferSourceFirst,sourceChoices,splitCompoundQuery,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
+  global.HECSearchFoundation={version:VERSION,norm,singular,title,tokens,parseQuery,conceptFromQuery,predictConcepts,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,sourceModeFromQuery,shouldOfferSourceFirst,sourceChoices,splitCompoundQuery,registry:REG,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
 })(typeof window!=='undefined'?window:globalThis);

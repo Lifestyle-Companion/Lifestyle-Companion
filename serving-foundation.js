@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.27
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.28
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.27';
+  const VERSION='0.6.28';
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
@@ -72,7 +72,7 @@
       bread:/\bbread\b/.test(n), sausage:/\bsausage\b/.test(n), roll:/\b(roll|flat bread|flatbread|pita|lavash|naan|focaccia)\b/.test(n),
       cookedGrain:/\b(rice|pasta|noodle|barley|buckwheat|semolina|polenta|bulgur|quinoa|couscous)\b/.test(n)&&/\b(cooked|boiled|prepared)\b/.test(n),
       porridge:/\b(porridge|cooked oats|oatmeal)\b/.test(n), flakes:/\b(cereal flakes|corn flakes|wheat flakes|flakes)\b/.test(n), muesli:/\bmuesli\b/.test(n),
-      crispbread:/\b(crispbread|crispbreads)\b/.test(n), crumpet:/\bcrumpet\b/.test(n), englishMuffin:/\benglish muffin\b/.test(n), scone:/\bscone\b/.test(n)
+      crispbread:/\b(crispbread|crispbreads|cruskit|cruskits)\b/.test(n), cornChip:/\bcorn chips?\b/.test(n), eggWhite:/\b(egg )?white|albumen\b/.test(n), eggYolk:/\b(egg )?yolk\b/.test(n), crumpet:/\bcrumpet\b/.test(n), englishMuffin:/\benglish muffin\b/.test(n), scone:/\bscone\b/.test(n)
     };
   }
 
@@ -91,6 +91,21 @@
   function addMlMeasure(food,key,label,ml,meta={}){
     const b=basisInfo(food);if(!b.mlScale||finite(ml)<=0)return false;
     return setUnit(food,key,label,finite(ml)*b.mlScale,meta);
+  }
+
+  function addMetricVolumeMeasures(food,context={}){
+    const b=basisInfo(food);if(!b.mlScale)return food;
+    const category=inferCategory(food,context),s=stateInfo(food,context),name=norm(`${food?.name||''} ${food?.category||''}`);
+    const metric={origin:'Metric household volume measure',confidence:'high'};
+    if(category==='drink'||s.milk)addMlMeasure(food,'cup','Cup (250 mL)',250,metric);
+    if(category==='egg'&&s.eggWhite){addMlMeasure(food,'tsp','Teaspoon Egg White (5 mL)',5,metric);addMlMeasure(food,'tbsp','Tablespoon Egg White (15 mL)',15,{...metric,replace:false});return food;}
+    if(/\b(oil|dressing|sauce|gravy|syrup|vinegar|pouring cream|liquid seasoning)\b/.test(name)){
+      addMlMeasure(food,'tsp','Teaspoon (5 mL)',5,metric);
+      addMlMeasure(food,'tbsp','Tablespoon (15 mL)',15,metric);
+      addMlMeasure(food,'cup','Cup (250 mL)',250,metric);
+      addMlMeasure(food,'drizzle','Small Drizzle (about 5 mL)',5,{origin:'HEC practical pourable-food measure; drizzle size varies',confidence:'approximate'});
+    }
+    return food;
   }
 
   function addGuidelineMeasures(food,context={}){
@@ -126,7 +141,7 @@
       else if(s.porridge){if(addGramMeasure(food,'halfCup','½ Cup Cooked Porridge (120 g standard serve)',120,meta))notes.push('120 g cooked porridge serve');}
       else if(s.flakes){if(addGramMeasure(food,'twoThirdCup','⅔ Cup Cereal Flakes (30 g standard serve)',30,meta))notes.push('30 g cereal-flake serve');}
       else if(s.muesli){if(addGramMeasure(food,'quarterCup','¼ Cup Muesli (30 g standard serve)',30,meta))notes.push('30 g muesli serve');}
-      else if(s.crispbread){if(addGramMeasure(food,'threeCrispbreads','3 Crispbreads (35 g standard serve)',35,meta))notes.push('35 g crispbread serve');}
+      else if(s.crispbread){if(addGramMeasure(food,'crispbread','Crispbread (about 11.7 g; 3 = 35 g standard serve)',35/3,{...meta,confidence:'guideline-derived'}))notes.push('crispbread count derived from 35 g / 3 crispbreads standard serve');addGramMeasure(food,'threeCrispbreads','3 Crispbreads (35 g standard serve)',35,meta);}
       else if(s.crumpet){if(addGramMeasure(food,'item','1 Crumpet (60 g standard serve)',60,meta))notes.push('60 g crumpet serve');}
       else if(s.englishMuffin||s.scone){if(addGramMeasure(food,'item',`1 Small ${s.englishMuffin?'English Muffin':'Scone'} (35 g standard serve)`,35,meta))notes.push('35 g grain serve');}
       else if(s.cookedGrain){
@@ -134,6 +149,11 @@
         // cannot safely drive one exact nutrient multiplier, so grams stay primary.
         food.servingRangeHint='½ cup cooked grain is an Australian standard serve; the guideline range is 75–120 g. Use grams for an exact calculation.';
       }
+    }
+    if(s.cornChip){
+      const cmeta={origin:'HEC practical snack measure · verify package where available',confidence:'approximate'};
+      addGramMeasure(food,'smallHandful','Small Handful Corn Chips (about 25 g)',25,cmeta);
+      notes.push('corn-chip handful is approximate; package serve or grams is more exact');
     }
     if(category==='meat'){
       if(s.sausage){
@@ -150,16 +170,24 @@
     }
     if(category==='seafood'||s.fish){const g=s.raw?115:100;if(addGramMeasure(food,'standardServe',`${s.raw?'Raw':'Cooked'} Fish — Australian standard serve (${g} g)`,g,meta))notes.push(`${g} g fish serve`);}
     if(category==='egg'){
-      // Australian Eggs publishes conventional carton-size averages and edible
-      // portions. HEC uses edible portion for nutrition scaling because AFCD is
-      // an edible-food reference. The user still sees the familiar size name.
-      const emeta={origin:'Australian Eggs · conventional egg pack sizing / edible portion',confidence:'authoritative-industry-reference'};
-      addGramMeasure(food,'mediumEgg','Medium Egg (~37 g edible portion)',37,emeta);
-      addGramMeasure(food,'largeEgg','Large Egg (~45 g edible portion)',45,emeta);
-      addGramMeasure(food,'xLargeEgg','X-Large Egg (~52 g edible portion)',52,emeta);
-      addGramMeasure(food,'jumboEgg','Jumbo Egg (~59 g edible portion)',59,emeta);
-      addGramMeasure(food,'kingEgg','King-Size Egg (~64 g edible portion)',64,emeta);
-      if(addGramMeasure(food,'standardServe','2 X-Large Eggs (~104 g edible portion)',104,emeta))notes.push('egg size/count measures use Australian Eggs edible-portion references');
+      const emeta={origin:'HEC practical egg-size / separated-egg measures · verify package where applicable',confidence:'approximate'};
+      const part=norm(context?.selected?.part||'');
+      if(/yolk/.test(part)||s.eggYolk){
+        addGramMeasure(food,'yolk','Egg Yolk (about 17 g)',17,emeta);notes.push('yolk count uses a practical large-egg yolk estimate');
+      }else if(/white/.test(part)||s.eggWhite){
+        addGramMeasure(food,'eggWhite','Egg White (about 33 g)',33,emeta);
+        addGramMeasure(food,'tbsp','Tablespoon Egg White (15 mL / about 15 g)',15,{...emeta,confidence:'practical'});
+        addGramMeasure(food,'mL','mL Egg White',1,{...emeta,confidence:'practical'});
+        notes.push('egg white can be entered by white, tablespoon, mL or grams');
+      }else{
+        addGramMeasure(food,'smallEgg','Small Egg (~31 g edible portion)',31,emeta);
+        addGramMeasure(food,'mediumEgg','Medium Egg (~37 g edible portion)',37,emeta);
+        addGramMeasure(food,'largeEgg','Large Egg (~45 g edible portion)',45,emeta);
+        addGramMeasure(food,'xLargeEgg','X-Large Egg (~52 g edible portion)',52,emeta);
+        addGramMeasure(food,'jumboEgg','Jumbo Egg (~59 g edible portion)',59,emeta);
+        addGramMeasure(food,'kingEgg','King-Size Egg (~64 g edible portion)',64,emeta);
+        notes.push('whole-egg size/count measures use edible-portion references');
+      }
     }
     if(s.legumes&&category!=='vegetable'){if(addGramMeasure(food,'cup','1 Cup Cooked/Canned Legumes (150 g Australian standard protein serve)',150,meta))notes.push('150 g legumes protein serve');}
     if(s.tofu){if(addGramMeasure(food,'standardServe','Tofu — Australian standard protein serve (170 g)',170,meta))notes.push('170 g tofu serve');}
@@ -174,7 +202,7 @@
     if(category==='drink'&&!isPackageFood(food)){
       const b=basisInfo(food);if(b.mlScale)addMlMeasure(food,'cup','1 Cup (250 mL)',250,{origin:'Metric household measure',confidence:'high'});
     }
-    if(notes.length){food.servingFoundationSource=GUIDELINE_SOURCE;food.servingFoundationNotes=notes;}
+    if(notes.length){food.servingFoundationSource=category==='egg'?'HEC practical egg-size / separated-egg measures · verify package where applicable':GUIDELINE_SOURCE;food.servingFoundationNotes=notes;}
     return food;
   }
 
@@ -197,7 +225,7 @@
   function chooseDefault(food,context={}){
     const units=food?.units||{},category=inferCategory(food,context),s=stateInfo(food,context);
     if(explicitPackageServing(food)){
-      const preferred=['bar','sachet','biscuit','cracker','slice','chip','piece','nugget','stick','wafer','roll','cake','serve'].find(k=>units[k]!==undefined);
+      const preferred=['bar','sachet','biscuit','cracker','crispbread','slice','chip','piece','nugget','stick','wafer','roll','cake','serve'].find(k=>units[k]!==undefined);
       return preferred||food.defaultUnit||Object.keys(units)[0]||'g';
     }
     if(category==='fruit'){if(units.item!==undefined)return 'item';if(units.standardServe!==undefined)return 'standardServe';}
@@ -215,17 +243,22 @@
       if(s.yoghurt&&units.threeQuarterCup!==undefined)return 'threeQuarterCup';
     }
     if(category==='grain'){
-      for(const k of ['regularSlice','slice','halfRoll','halfCup','twoThirdCup','quarterCup','threeCrispbreads','item'])if(units[k]!==undefined)return k;
+      for(const k of ['regularSlice','slice','crispbread','halfRoll','halfCup','twoThirdCup','quarterCup','threeCrispbreads','item'])if(units[k]!==undefined)return k;
     }
     if(category==='meat'&&s.sausage&&units.sausage!==undefined)return 'sausage';
+    if(s.cornChip&&units.smallHandful!==undefined)return 'smallHandful';
     if(category==='egg'){
+      const part=norm(context?.selected?.part||'');
+      if(/yolk/.test(part)&&units.yolk!==undefined)return 'yolk';
+      if(/white/.test(part)&&units.tbsp!==undefined)return 'tbsp';
       const chosen=norm(context?.selected?.size||'');
       if(/x large|extra large/.test(chosen)&&units.xLargeEgg!==undefined)return 'xLargeEgg';
       if(/jumbo/.test(chosen)&&units.jumboEgg!==undefined)return 'jumboEgg';
       if(/king/.test(chosen)&&units.kingEgg!==undefined)return 'kingEgg';
       if(/medium/.test(chosen)&&units.mediumEgg!==undefined)return 'mediumEgg';
       if(/large/.test(chosen)&&units.largeEgg!==undefined)return 'largeEgg';
-      if(units.xLargeEgg!==undefined)return 'xLargeEgg';
+      if(/small/.test(chosen)&&units.smallEgg!==undefined)return 'smallEgg';
+      if(units.largeEgg!==undefined)return 'largeEgg';
     }
     if(['meat','seafood','egg'].includes(category)&&units.standardServe!==undefined)return 'standardServe';
     if(units.cup!==undefined&&category==='drink')return 'cup';
@@ -236,13 +269,16 @@
     if(!food)return food;
     food.units ||= {}; food.unitLabels ||= {};
     const category=inferCategory(food,context);
+    const selectedPart=norm(context?.selected?.part||'');
+    if(category==='egg'&&/yolk|white/.test(selectedPart)){for(const k of ['egg','smallEgg','mediumEgg','largeEgg','xLargeEgg','jumboEgg','kingEgg','standardServe']){delete food.units[k];delete food.unitLabels[k];}}
     // Category-specific measures must never leak into another food (the 0.6.25
     // cheese test exposed an Egg measure in a cheese unit list).
-    if(category!=='egg'){delete food.units.egg;delete food.unitLabels.egg;delete food.units.largeEgg;delete food.unitLabels.largeEgg;}
+    if(category!=='egg'){for(const k of ['egg','smallEgg','mediumEgg','largeEgg','xLargeEgg','jumboEgg','kingEgg','eggWhite','yolk']){delete food.units[k];delete food.unitLabels[k];}}
+    for(const [k,label] of Object.entries({...food.unitLabels})){if(/^(?:1\s*)?100\s*g\s*(?:serving|serve)$/i.test(String(label||'').trim())&&food.units.g!==undefined){delete food.units[k];delete food.unitLabels[k];}}
     // Suppress exact duplicate labels when two source keys describe the same
     // practical measure. Keep the food's own default key first.
     const preferred=[food.defaultUnit,'slice','serve','item','piece','g','mL'].filter(Boolean),seen=new Map();
-    for(const key of [...preferred,...Object.keys(food.units)]){
+    for(const key of [...new Set([...preferred,...Object.keys(food.units)])]){
       if(food.units[key]===undefined)continue;const label=norm(food.unitLabels[key]||key);if(!label)continue;
       if(seen.has(label)&&key!==food.defaultUnit){delete food.units[key];delete food.unitLabels[key];continue;}seen.set(label,key);
     }
@@ -258,7 +294,9 @@
     addPackageCountUnits(food);
     if(!explicitPackageServing(food))addGuidelineMeasures(food,context);
     else food.servingFoundationSource='Explicit package serving data';
+    addMetricVolumeMeasures(food,context);
     const chosen=chooseDefault(food,context);if(chosen&&food.units[chosen]!==undefined){food.servingDefaultUnit=chosen;if(!food.defaultUnit||!explicitPackageServing(food))food.defaultUnit=chosen;food.defaultAmount=1;}
+    const fractionCandidates=['bar','bottle','can','tub','pie','slice','regularSlice','thickSlice','serve','item'];food.fractionUnits=fractionCandidates.filter(k=>food.units?.[k]!==undefined);
     food.servingMeasureVersion=VERSION;
     return food;
   }

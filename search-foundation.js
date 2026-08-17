@@ -1,7 +1,7 @@
-/* Healthy Eating Companion — Food Intelligence Foundation 0.6.27
+/* Healthy Eating Companion — Food Intelligence Foundation 0.6.28
    Pure query/taxonomy utilities. UI and food-database access remain in alpha06.js.
 
-   Alpha 0.6.27 principles:
+   Alpha 0.6.28 principles:
    - Partial text is a search prefix, never automatically a food identity.
    - Known food concepts are predicted before raw product/database rows.
    - The user's words pre-fill attributes so HEC never asks the same question twice.
@@ -11,8 +11,8 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.27';
-  const WORD_NUMBERS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,half:.5,a:.5,an:1};
+  const VERSION='0.6.28';
+  const WORD_NUMBERS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,half:.5,a:1,an:1};
   const IRREGULAR={bananas:'banana',oranges:'orange',apples:'apple',potatoes:'potato',tomatoes:'tomato',berries:'berry',cherries:'cherry',loaves:'loaf',leaves:'leaf',fries:'fries',fish:'fish',cheese:'cheese',rice:'rice',pasta:'pasta',couscous:'couscous',eggs:'egg',sausages:'sausage'};
   const UNIT_WORDS={
     g:['g','gram','grams'],ml:['ml','millilitre','millilitres','milliliter','milliliters'],kg:['kg','kilogram','kilograms'],
@@ -53,8 +53,8 @@
     {key:'cheese',label:'Cheese',aliases:['cheese'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','style','form','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'milk',label:'Milk',aliases:['milk'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','source'],natural:{unit:'mL',label:'mL',grams:1}},
     {key:'yoghurt',label:'Yoghurt',aliases:['yoghurt','yogurt'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','flavour','source'],natural:{unit:'g',label:'g',grams:1}},
-    {key:'egg',label:'Egg',aliases:['egg'],category:'egg',sourcePolicy:'skip',facetOrder:['species','size','part','prep','addedFat'],natural:{unit:'egg',label:'Egg',grams:60},supplemental:{species:['Chicken','Duck','Quail','Other / Not sure'],size:['Small','Medium','Large','X-Large','Jumbo','Not sure'],part:['Whole','White','Yolk'],prep:['Raw','Boiled','Poached','Microwave Poached','Fried','Other / Not sure'],addedFat:['No added fat/oil','Added fat/oil','Not sure']}},
-    {key:'bread',label:'Bread',aliases:['bread'],category:'grain',sourcePolicy:'early',facetOrder:['type','grain','source','prep','size'],natural:{unit:'slice',label:'Regular Slice (check loaf size)',grams:38}},
+    {key:'egg',label:'Egg',aliases:['egg'],category:'egg',sourcePolicy:'skip',facetOrder:['part','prep','size','addedFat'],natural:{unit:'egg',label:'Egg',grams:52},supplemental:{part:['Whole','Yolk','White'],prep:['Raw','Boiled','Poached','Microwave Poached','Fried'],size:['Small','Medium','Large','X-Large','Jumbo'],addedFat:['No added fat/oil']}},
+    {key:'bread',label:'Bread',aliases:['bread'],category:'grain',sourcePolicy:'early',facetOrder:['type','grain','source','prep','size'],natural:{unit:'slice',label:'Slice',grams:40}},
     {key:'rice',label:'Rice',aliases:['rice'],category:'grain',sourcePolicy:'contextual',facetOrder:['type','grain','prep','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'pasta',label:'Pasta',aliases:['pasta','spaghetti','macaroni','penne','fettuccine'],category:'grain',sourcePolicy:'contextual',facetOrder:['type','prep','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'cereal',label:'Breakfast Cereal',aliases:['cereal'],category:'grain',sourcePolicy:'early',facetOrder:['type','source'],natural:{unit:'g',label:'g',grams:1}},
@@ -78,25 +78,26 @@
     {key:'soup',label:'Soup',aliases:['soup'],category:'prepared',sourcePolicy:'early',facetOrder:['type','source','size'],natural:{unit:'g',label:'g',grams:1}},
     {key:'sausage-roll',label:'Sausage Roll',aliases:['sausage roll'],category:'prepared',sourcePolicy:'early',facetOrder:['source','size'],natural:{unit:'serve',label:'Sausage Roll',grams:1}},
     {key:'cake',label:'Cake',aliases:['cake'],category:'prepared',sourcePolicy:'early',facetOrder:['type','source','size'],natural:{unit:'slice',label:'Slice (check serving size)',grams:1}},
+    {key:'corn-chip',label:'Corn Chips',aliases:['corn chip'],category:'snack',sourcePolicy:'early',facetOrder:['flavour','source','size'],natural:{unit:'g',label:'g',grams:1},supplemental:{flavour:['Plain / Salted','Flavoured']}},
     {key:'cracker',label:'Crackers',aliases:['cracker','sao'],category:'snack',sourcePolicy:'early',facetOrder:['type','flavour','source','size'],natural:{unit:'biscuit',label:'Cracker / Biscuit',grams:1}},
     {key:'biscuit',label:'Biscuit',aliases:['biscuit','cookie'],category:'snack',sourcePolicy:'early',facetOrder:['type','flavour','source','size'],natural:{unit:'biscuit',label:'Biscuit',grams:1}},
     {key:'chocolate',label:'Chocolate',aliases:['chocolate'],category:'snack',sourcePolicy:'early',facetOrder:['type','source','size'],natural:{unit:'g',label:'g',grams:1}},
     {key:'icecream',label:'Ice Cream',aliases:['ice cream','gelato'],category:'dairy',sourcePolicy:'early',facetOrder:['type','flavour','source','size'],natural:{unit:'g',label:'g',grams:1}}
   ];
 
-  const MODIFIER_WORDS=new Set(norm(`homemade home grown homegrown home made commercial packaged ready eat bakery fresh frozen purchased takeaway restaurant raw cooked boiled poached fried grilled baked roasted oven steamed microwaved microwave air fryer air fried bbq barbecued plain flavoured flavored regular reduced low light full fat lean skin skinless peeled unpeeled sliced slice diced chopped whole white yolk albumen canned tinned dry dried prepared individual family jumbo xlarge extra large large medium small beef lamb pork chicken duck quail turkey kangaroo fish seafood vegetable veggie fruit sweet savoury savory curry garlic herb honey natural tasty cheddar processed cottage blue vein brie camembert sourdough white brown wholemeal wholegrain multigrain basmati jasmine long grain short grain red green yellow navel valencia cavendish lady finger granny smith pink royal gala fuji no added fat oil with oil`).split(' '));
+  const MODIFIER_WORDS=new Set(norm(`homemade home grown homegrown home made commercial packaged ready eat bakery fresh frozen purchased takeaway restaurant raw cooked boiled poached fried grilled baked roasted oven steamed microwaved microwave toasted toast air fryer air fried bbq barbecued plain salted flavoured flavored regular reduced low light full fat lean skin skinless peeled unpeeled sliced slice diced chopped whole white yolk albumen canned tinned dry dried prepared individual family jumbo xlarge extra large large medium small beef lamb pork chicken duck quail turkey kangaroo fish seafood vegetable veggie fruit sweet savoury savory curry garlic herb honey natural tasty cheddar processed cottage blue vein brie camembert sourdough white brown wholemeal wholegrain multigrain basmati jasmine long grain short grain red green yellow navel valencia cavendish lady finger granny smith pink royal gala fuji no added fat oil with oil`).split(' '));
 
   const PATTERNS={
     kind:[['Savoury',/\bsavou?ry\b/],['Sweet',/\bsweet\b/]],
-    source:[['Home Made / Grown',/\bhome\s*made\b|\bhomemade\b|\bhome\s*grown\b|\bhomegrown\b/],['Bakery / Fresh',/\bbakery\b/],['Purchased Frozen',/\bpurchased frozen\b|\bfrozen\b/],['Takeaway / Restaurant',/\btakeaway\b|\brestaurant\b|\bfast food\b|\bfood outlet\b/],['Commercial / Packaged',/\bcommercial\b|\bpackaged\b|\bready to eat\b/],['Canned / Tinned',/\bcanned\b|\btinned\b/]],
-    prep:[['Raw',/\braw\b/],['Boiled',/\bboiled\b|\bhard boiled\b/],['Microwave Poached',/\bmicrowave\s*poached\b/],['Poached',/\bpoached\b/],['Air Fried',/\bair\s*fried\b|\bair\s*fryer\b/],['Fried',/\bfried\b|\bpan\s*fried\b/],['Grilled',/\bgrilled\b/],['Baked / Oven',/\bbaked\b|\boven\s*baked\b|\boven\b/],['Roasted',/\broasted\b/],['Steamed',/\bsteamed\b/],['Microwaved',/\bmicrowav/],['Barbecued / BBQ',/\bbbq\b|\bbarbecu/],['Cooked',/\bcooked\b/]],
+    source:[['Home Made / Grown',/\bhome\s*made\b|\bhomemade\b|\bhome\s*grown\b|\bhomegrown\b/],['Bakery / Fresh',/\bbakery\b|\bcafe\b/],['Purchased Frozen',/\bpurchased frozen\b|\bfrozen\b/],['Takeaway / Restaurant',/\btakeaway\b|\brestaurant\b|\bfast food\b|\bfood outlet\b/],['Commercial / Packaged',/\bcommercial\b|\bpackaged\b|\bready to eat\b|\bbought\b|\bstore brand\b|\bsupermarket\b/],['Canned / Tinned',/\bcanned\b|\btinned\b/]],
+    prep:[['Raw',/\braw\b/],['Boiled',/\bboiled\b|\bhard boiled\b/],['Microwave Poached',/\bmicrowave\s*poached\b/],['Poached',/\bpoached\b/],['Toasted',/\btoast(?:ed)?\b/],['Air Fried',/\bair\s*fried\b|\bair\s*fryer\b/],['Fried',/\bfried\b|\bpan\s*fried\b/],['Grilled',/\bgrilled\b/],['Baked / Oven',/\bbaked\b|\boven\s*baked\b|\boven\b/],['Roasted',/\broasted\b/],['Steamed',/\bsteamed\b/],['Microwaved',/\bmicrowav/],['Barbecued / BBQ',/\bbbq\b|\bbarbecu/],['Cooked',/\bcooked\b/]],
     protein:[['Beef',/\bbeef\b|\bsteak\b/],['Lamb',/\blamb\b|\bmutton\b/],['Pork',/\bpork\b/],['Chicken',/\bchicken\b/],['Turkey',/\bturkey\b/],['Kangaroo',/\bkangaroo\b/],['Fish / Seafood',/\bfish\b|\bseafood\b|\bsalmon\b|\btuna\b|\bprawn\b/],['Vegetarian',/\bvegetarian\b|\bveggie\b|\bplant based\b|\bmeat alternative\b/]],
     species:[['Chicken',/\bchicken\b/],['Duck',/\bduck\b/],['Quail',/\bquail\b/]],
     size:[['Jumbo',/\bjumbo\b/],['X-Large',/\bx\s*large\b|\bextra\s*large\b/],['Large',/\blarge\b/],['Medium',/\bmedium\b/],['Small',/\bsmall\b/],['Long Thin',/\blong\s*thin\b/],['Long Thick',/\blong\s*thick\b/],['Thin',/\bthin\b/],['Thick',/\bthick\b/],['Cocktail / Small',/\bcocktail\b/]],
     part:[['Whole',/\bwhole\b/],['White',/\bwhite\b|\balbumen\b/],['Yolk',/\byolk\b/]],
     addedFat:[['No added fat/oil',/\bno\s+(?:added\s+)?(?:fat|oil)\b|\bwithout\s+(?:fat|oil)\b/],['Added fat/oil',/\badded\s+(?:fat|oil)\b|\bwith\s+(?:fat|oil)\b/]],
     fat:[['Regular Fat',/\bregular fat\b/],['Reduced / Light',/\breduced fat\b|\blow fat\b|\blight\b/],['Lean',/\blean\b/],['Untrimmed',/\buntrimmed\b/]],
-    flavour:[['Plain',/\bplain\b/],['Flavoured',/\bflavou?red\b|\bherb\b|\bgarlic\b|\bhoney\b|\bchilli\b|\bpepper\b/]],
+    flavour:[['Plain / Salted',/\bplain\b|\bsalted\b/],['Flavoured',/\bflavou?red\b|\bherb\b|\bgarlic\b|\bhoney\b|\bchilli\b|\bpepper\b|\bcheese\b|\bnacho\b|\bbarbecue\b|\bbbq\b/]],
     style:[['Natural',/\bnatural\b/],['Processed',/\bprocessed\b/]],
     form:[['Peeled',/\bpeeled\b/],['Unpeeled',/\bunpeeled\b/],['Sliced',/\bsliced\b/],['Diced / Chopped',/\bdiced\b|\bchopped\b/],['Dried',/\bdried\b/],['Frozen',/\bfrozen\b/],['Juice',/\bjuice\b/],['Whole',/\bwhole\b/],['Grated',/\bgrated\b|\bshredded\b/],['Block / Piece',/\bblock\b|\bpiece\b/]],
     skin:[['Skinless',/\bskinless\b|\bwithout skin\b/],['With Skin',/\bwith skin\b|\bskin and fat\b/]],
@@ -105,7 +106,10 @@
   };
 
   function parseQuery(raw){
-    const n=norm(raw),ws=n.split(' ').filter(Boolean);let quantity=null,unit='',keep=[];
+    let rawText=String(raw||''),explicitFraction=null;
+    const fm=rawText.match(/^\s*(\d+)\s*\/\s*(\d+)(?=\s|$)/);
+    if(fm&&Number(fm[2])){explicitFraction=Number(fm[1])/Number(fm[2]);rawText=rawText.slice(fm[0].length).trim();}
+    const n=norm(rawText),ws=n.split(' ').filter(Boolean);let quantity=explicitFraction,unit='',keep=[];
     for(let i=0;i<ws.length;i++){
       const w=ws[i];
       if(quantity===null&&(Number.isFinite(Number(w))||WORD_NUMBERS[w]!==undefined)){quantity=Number.isFinite(Number(w))?Number(w):WORD_NUMBERS[w];continue;}
@@ -192,13 +196,30 @@
       if(concept.key==='sausage'&&/\bherb\b|\bgarlic\b|\bhoney\b|\bchilli\b|\bpepper\b/.test(q))out.flavour='Flavoured';
       if(concept.key==='bread'&&/\bsourdough\b|\bsour dough\b/.test(q))out.type='Sourdough';
       if(concept.key==='cheese'&&/\bcheddar\b/.test(q))out.type='Cheddar';
+      if(concept.key==='egg'){if(!out.species)out.species='Chicken';if(!out.part&&out.prep)out.part='Whole';}
+      if(concept.key==='corn-chip'&&/\bplain\b|\bsalted\b/.test(q))out.flavour='Plain / Salted';
     }
     return out;
   }
 
-  function sourceModeFromQuery(raw){const x=classifyText(typeof raw==='object'?raw.food:parseQuery(raw).food).source||'';if(/home made|grown/i.test(x))return 'home';if(/takeaway|restaurant/i.test(x))return 'restaurant';if(/commercial|packaged|frozen|bakery|canned/i.test(x))return 'commercial';return '';}
+  function sourceModeFromQuery(raw){const x=classifyText(typeof raw==='object'?raw.food:parseQuery(raw).food).source||'';if(/home made|grown/i.test(x))return 'home';if(/takeaway|restaurant/i.test(x))return 'restaurant';if(/bakery|fresh/i.test(x))return 'bakery';if(/commercial|packaged|frozen|canned|bought|store|supermarket/i.test(x))return 'commercial';return '';}
   function shouldOfferSourceFirst(concept,parsedOrRaw){if(!concept||concept.sourcePolicy!=='early')return false;const parsed=typeof parsedOrRaw==='object'?parsedOrRaw:parseQuery(parsedOrRaw);if(sourceModeFromQuery(parsed))return false;if(likelyBrandPrefix(parsed,concept))return false;return true;}
-  function sourceChoices(concept){if(!concept||concept.sourcePolicy==='skip')return[];const choices=['Home Made / Grown','Commercial / Packaged'];if(['prepared','pie','meat','drink'].includes(concept.category))choices.push('Takeaway / Restaurant');choices.push('Not Sure / Typical');return choices;}
+  function sourceChoices(concept){
+    if(!concept||concept.sourcePolicy==='skip')return[];
+    if(concept.key==='bread')return ['Homemade','Commercial / Bought','Not Sure / Typical'];
+    if(concept.key==='corn-chip')return ['Homemade','Commercial / Packaged','Takeaway / Restaurant','Not Sure / Typical'];
+    if(['fruit','vegetable'].includes(concept.category))return ['Home Grown','Commercial / Bought','Not Sure / Typical'];
+    const choices=['Homemade','Commercial / Bought'];
+    if(['prepared','pie','meat','drink','snack'].includes(concept.category))choices.push('Takeaway / Restaurant');
+    choices.push('Not Sure / Typical');return choices;
+  }
 
-  global.HECSearchFoundation={version:VERSION,norm,singular,title,tokens,parseQuery,conceptFromQuery,predictConcepts,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,sourceModeFromQuery,shouldOfferSourceFirst,sourceChoices,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
+  function splitCompoundQuery(raw){
+    const text=String(raw||'').trim();if(!text)return[];
+    const eggToast=text.match(/^\s*(?:(\d+|one|two|three|four|five|six)\s+)?eggs?\s+on\s+(?:toast|toasted bread)\s*$/i);
+    if(eggToast){const q=eggToast[1]?`${eggToast[1]} eggs`:'egg';return [q,'toasted bread'];}
+    return [];
+  }
+
+  global.HECSearchFoundation={version:VERSION,norm,singular,title,tokens,parseQuery,conceptFromQuery,predictConcepts,labelFor,likelyBrandPrefix,knownFacetToken,classifyText,descriptorFeatures,queryFacetSeeds,sourceModeFromQuery,shouldOfferSourceFirst,sourceChoices,splitCompoundQuery,concepts:CONCEPTS,patterns:PATTERNS,modifierWords:MODIFIER_WORDS};
 })(typeof window!=='undefined'?window:globalThis);

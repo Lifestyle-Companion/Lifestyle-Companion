@@ -1,7 +1,7 @@
-/* Healthy Eating Companion — Food Intelligence Foundation 0.6.30
+/* Healthy Eating Companion — Food Intelligence Foundation 0.6.31
    Pure query/taxonomy utilities. UI and food-database access remain in alpha06.js.
 
-   Alpha 0.6.30 principles:
+   Alpha 0.6.31 principles:
    - Partial text is a search prefix, never automatically a food identity.
    - Known food concepts are predicted before raw product/database rows.
    - The user's words pre-fill attributes so HEC never asks the same question twice.
@@ -11,7 +11,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.30';
+  const VERSION='0.6.31';
   const REG=global.HECAustralianEntityRegistry;
   const WORD_NUMBERS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,half:.5,a:1,an:1};
   const IRREGULAR={bananas:'banana',oranges:'orange',apples:'apple',potatoes:'potato',tomatoes:'tomato',berries:'berry',cherries:'cherry',loaves:'loaf',leaves:'leaf',fries:'fries',fish:'fish',cheese:'cheese',rice:'rice',pasta:'pasta',couscous:'couscous',eggs:'egg',sausages:'sausage'};
@@ -92,7 +92,7 @@
     kind:[['Savoury',/\bsavou?ry\b/],['Sweet',/\bsweet\b/]],
     source:[['Home Made / Grown',/\bhome\s*made\b|\bhomemade\b|\bhome\s*grown\b|\bhomegrown\b/],['Bakery / Fresh',/\bbakery\b|\bcafe\b/],['Purchased Frozen',/\bpurchased frozen\b|\bfrozen\b/],['Takeaway / Restaurant',/\btakeaway\b|\brestaurant\b|\bfast food\b|\bfood outlet\b/],['Commercial / Packaged',/\bcommercial\b|\bpackaged\b|\bready to eat\b|\bbought\b|\bstore brand\b|\bsupermarket\b/],['Canned / Tinned',/\bcanned\b|\btinned\b/]],
     prep:[['Raw',/\braw\b/],['Boiled',/\bboiled\b|\bhard boiled\b/],['Microwave Poached',/\bmicrowave\s*poached\b/],['Poached',/\bpoached\b/],['Toasted',/\btoast(?:ed)?\b/],['Air Fried',/\bair\s*fried\b|\bair\s*fryer\b/],['Fried',/\bfried\b|\bpan\s*fried\b/],['Grilled',/\bgrilled\b/],['Baked / Oven',/\bbaked\b|\boven\s*baked\b|\boven\b/],['Roasted',/\broasted\b/],['Steamed',/\bsteamed\b/],['Microwaved',/\bmicrowav/],['Barbecued / BBQ',/\bbbq\b|\bbarbecu/],['Cooked',/\bcooked\b/]],
-    protein:[['Beef',/\bbeef\b|\bsteak\b/],['Lamb',/\blamb\b|\bmutton\b/],['Pork',/\bpork\b/],['Chicken',/\bchicken\b/],['Turkey',/\bturkey\b/],['Kangaroo',/\bkangaroo\b/],['Fish / Seafood',/\bfish\b|\bseafood\b|\bsalmon\b|\btuna\b|\bprawn\b/],['Vegetarian',/\bvegetarian\b|\bveggie\b|\bplant based\b|\bmeat alternative\b/]],
+    protein:[['Beef',/\bbeef\b/],['Lamb',/\blamb\b|\bmutton\b/],['Pork',/\bpork\b/],['Chicken',/\bchicken\b/],['Turkey',/\bturkey\b/],['Kangaroo',/\bkangaroo\b/],['Fish / Seafood',/\bfish\b|\bseafood\b|\bsalmon\b|\btuna\b|\bprawn\b/],['Vegetarian',/\bvegetarian\b|\bveggie\b|\bplant based\b|\bmeat alternative\b/]],
     species:[['Chicken',/\bchicken\b/],['Duck',/\bduck\b/],['Quail',/\bquail\b/]],
     size:[['King-Size',/\bking[ -]?size\b/],['Jumbo',/\bjumbo\b/],['X-Large',/\bx\s*large\b|\bextra\s*large\b/],['Large',/\blarge\b/],['Medium',/\bmedium\b/],['Small',/\bsmall\b/],['Long Thin',/\blong\s*thin\b/],['Long Thick',/\blong\s*thick\b/],['Thin',/\bthin\b/],['Thick',/\bthick\b/],['Cocktail / Small',/\bcocktail\b/]],
     part:[['Whole',/\bwhole\b/],['White',/\bwhite\b|\balbumen\b/],['Yolk',/\byolk\b/]],
@@ -196,6 +196,7 @@
       const aliases=(concept.aliases||[]).map(singular),conceptWords=new Set(aliases.flatMap(a=>a.split(' '))),remaining=q.split(' ').filter(w=>!conceptWords.has(w));
       if((concept.category==='fruit'||concept.category==='vegetable')&&remaining.length){const known=remaining.filter(w=>!knownFacetToken(w));if(known.length)out.variety=title(known.join(' '));}
       if(concept.key==='sausage'&&/\bherb\b|\bgarlic\b|\bhoney\b|\bchilli\b|\bpepper\b/.test(q))out.flavour='Flavoured';
+      if(concept.key==='steak'&&/\bsteak\b/.test(q))out.cut='Steak';
       if(concept.key==='bread'&&/\bsourdough\b|\bsour dough\b/.test(q))out.type='Sourdough';
       if(concept.key==='cheese'&&/\bcheddar\b/.test(q))out.type='Cheddar';
       if(concept.key==='egg'){if(!out.part&&out.prep)out.part='Whole';}

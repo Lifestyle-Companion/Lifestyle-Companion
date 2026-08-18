@@ -1,11 +1,11 @@
-/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.30
+/* Healthy Eating Companion — Conditional Branching & Match Validation 0.6.31
    Pure candidate-compatibility logic used by the universal guided search.
    The engine never keeps an incompatible nutrition record merely to finish a flow.
 */
 (function(global){
   'use strict';
 
-  const VERSION='0.6.30';
+  const VERSION='0.6.31';
   const S=global.HECSearchFoundation;
   const IGNORE=/not sure|typical|other/i;
   const WORD_EQUIV={
@@ -38,9 +38,14 @@
     if(!meaningful(value))return {status:'ignored',facet,value,actual:''};
     const f=features(food,concept),actual=f[facet]||'';
     if(actual){
-      return compatibleText(actual,value)
-        ? {status:'match',facet,value,actual,reason:'record facet'}
-        : {status:'conflict',facet,value,actual,reason:'record facet differs'};
+      if(compatibleText(actual,value))return {status:'match',facet,value,actual,reason:'record facet'};
+      // A generic "Cooked" nutrition reference can safely support a more specific
+      // dry-heat/water cooking description when the method does not itself imply a
+      // different ingredient or added fat. Exact method records still score higher.
+      if(facet==='prep'&&((/\bcooked\b/i.test(String(actual))&&/grilled|baked|oven|roasted|air fried|barbecued|bbq|steamed|boiled|microwaved|poached/i.test(String(value)))||(/air fried/i.test(String(value))&&/baked|oven|roasted|grilled|barbecued|bbq/i.test(String(actual))))){
+        return {status:'soft',facet,value,actual,reason:'closest compatible cooked reference'};
+      }
+      return {status:'conflict',facet,value,actual,reason:'record facet differs'};
     }
     const hay=norm(`${food?.name||''} ${food?.ingredients||food?.description||''}`);
     if(phrases(value).some(p=>phraseInHay(p,hay)))return {status:'match',facet,value,actual:'',reason:'record description'};
@@ -122,7 +127,7 @@
     const aliasTokens=new Set(alias.split(' ').filter(Boolean));
     const selectedHay=norm(Object.values(state||{}).filter(meaningful).join(' '));
     const sourceHay=norm(`${food?.name||''} ${food?.ingredients||food?.description||''}`);
-    const stop=new Set(['and','or','with','without','on','style','food','bought','commercial','packaged','homemade','home']);
+    const stop=new Set(['and','or','with','without','on','style','food','bought','commercial','packaged','homemade','home','strip','strips','piece','pieces','chunk','chunks','diced','sliced','fillet','fillets']);
     const residual=foodText.split(' ').filter(Boolean).filter(t=>!aliasTokens.has(t)&&!stop.has(t));
     const issues=[];
     for(const token of residual){

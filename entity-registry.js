@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Australian Food Entity Registry 0.6.30
+/* Healthy Eating Companion — Australian Food Entity Registry 0.6.31
    Small, maintainable local vocabulary used BEFORE food matching.
    It recognises retailers, brands, restaurant/takeaway chains and aliases so
    HEC can preserve information the user already supplied without hard-coding
@@ -6,7 +6,7 @@
 */
 (function(global){
   'use strict';
-  const VERSION='0.6.30';
+  const VERSION='0.6.31';
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
   function words(v){return norm(v).split(' ').filter(Boolean);}
 
@@ -64,7 +64,7 @@
     return out.sort((a,b)=>b.n.length-a.n.length||b.tokenCount-a.tokenCount);
   }
   const ALIASES=aliasRecords();
-  // Alpha 0.6.30 stability: entity recognition is queried many times while a
+  // Alpha 0.6.31 stability: entity recognition is queried many times while a
   // search is being ranked. Cache by normalised phrase so one keystroke does
   // not repeatedly rescan every registry alias for every food candidate.
   const IDENTIFY_CACHE=new Map(),PREDICT_CACHE=new Map();

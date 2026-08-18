@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.30
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.31
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.30';
+  const VERSION='0.6.31';
   const REG=global.HECAustralianEntityRegistry;
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
@@ -281,6 +281,14 @@
     const category=inferCategory(food,context);
     const selectedPart=norm(context?.selected?.part||food?.guidedSelections?.part||'');
     if(category==='egg'&&/yolk|white/.test(selectedPart)){for(const k of ['egg','smallEgg','mediumEgg','largeEgg','xLargeEgg','jumboEgg','kingEgg','standardServe']){delete food.units[k];delete food.unitLabels[k];}}
+    if(category==='egg'&&!/yolk|white/.test(selectedPart)){
+      const chosen=norm(context?.selected?.size||food?.guidedSelections?.size||'');
+      const sizeKey=/x large|extra large/.test(chosen)?'xLargeEgg':/jumbo/.test(chosen)?'jumboEgg':/king/.test(chosen)?'kingEgg':/medium/.test(chosen)?'mediumEgg':/large/.test(chosen)?'largeEgg':/small/.test(chosen)?'smallEgg':'';
+      if(sizeKey){
+        for(const k of ['egg','smallEgg','mediumEgg','largeEgg','xLargeEgg','jumboEgg','kingEgg','standardServe'])if(k!==sizeKey){delete food.units[k];delete food.unitLabels[k];}
+        food.lockedServingUnit=sizeKey;
+      }
+    }
     // Remove stale guideline measures that were attached because a flavour word
     // looked like another food family (e.g. Cheese Supreme Corn Chips -> Slice).
     if(category==='snack'){
@@ -318,6 +326,10 @@
       food.servingFoundationSource=explicitPackageServing(food)?'Explicit package serving data':'Package/product data · no invented household conversion';
     }else addGuidelineMeasures(food,context);
     addMetricVolumeMeasures(food,context);
+    // A second sanitation pass is deliberate: category measures are added above,
+    // then any alternatives made redundant by a guided choice (for example egg
+    // sizes other than the selected Large) are removed before the dropdown/default.
+    sanitizeUnits(food,context);
     const chosen=chooseDefault(food,context);if(chosen&&food.units[chosen]!==undefined){food.servingDefaultUnit=chosen;food.defaultUnit=chosen;food.defaultAmount=1;}
     const fractionCandidates=['bar','bottle','can','tub','pie','slice','regularSlice','thickSlice','serve','portion','chip','cracker','crispbread','item'];food.fractionUnits=fractionCandidates.filter(k=>food.units?.[k]!==undefined);
     food.servingMeasureVersion=VERSION;

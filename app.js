@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.31",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.32",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
 const KEY = APP.storageKey;
 const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
 const VERSION = APP.version;
@@ -227,7 +227,7 @@ function updateCompanionUI(){
   if($("setup-avatar")) $("setup-avatar").textContent = enabled ? data.companion.character : "🧭";
 }
 function show(id, {speak=true} = {}){
-  // Alpha 0.6.31: allow the functional layer to cancel stale search/overlay
+  // Alpha 0.6.32: allow the functional layer to cancel stale search/overlay
   // work before ANY screen switch, including data-go Home buttons that bypass
   // openAlpha05Feature.
   window.HECBeforeScreenShow?.(id);

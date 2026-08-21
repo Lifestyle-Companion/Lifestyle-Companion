@@ -1,4 +1,4 @@
-/* Healthy Eating Companion — Serving & Measure Foundation 0.6.31
+/* Healthy Eating Companion — Serving & Measure Foundation 0.6.32
    Data-driven serving/measure resolver shared by generic foods and products.
    Priorities:
    1) explicit package serving/count data;
@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.31';
+  const VERSION='0.6.32';
   const REG=global.HECAustralianEntityRegistry;
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 

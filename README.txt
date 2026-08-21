@@ -1,44 +1,35 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.31
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.32
 
 DEPLOYMENT
-1. Keep your existing JSON backup safe. The recent backup you checked before this build remains your recovery point.
-2. Extract this complete Alpha 0.6.31 folder, or upload the supplied changed-files-only package over the current Alpha 0.6.30 files.
-3. Keep the same GitHub Pages website address; do not mix runtime files from different Alpha versions.
+1. Keep your latest JSON backup safe before replacing the current build.
+2. Extract/upload the COMPLETE Alpha 0.6.32 folder, or upload the supplied changed-files-only package over Alpha 0.6.31.
+3. Keep the same GitHub Pages website address and do not mix runtime files from different Alpha versions.
 4. Wait for GitHub Pages to finish publishing.
-5. Fully close HEC on the iPhone, reopen it, and confirm the Home badge says Alpha 0.6.31.
-6. Check that profile, Diary, weight/history, saved foods/recipes and settings remain present before further testing.
+5. Fully close HEC on the iPhone and reopen it. Confirm the Home badge says Alpha 0.6.32.
+6. Confirm profile, Diary, weight/history, saved foods/recipes and settings are still present before further testing.
 
-WHAT IS NEW IN ALPHA 0.6.31
-Alpha 0.6.31 is a Search, Serving & Review Polish build. It keeps the stability work from Alpha 0.6.30 while addressing the remaining food-entry friction seen beside Easy Diet Diary.
+WHAT IS NEW IN ALPHA 0.6.32
+Alpha 0.6.32 is a search/catalogue, diary planning, scanner-basis and startup-reliability consolidation build.
 
-Key changes:
-- faster immediate/predictive search response and earlier online lookup;
-- incremental online product results instead of waiting for every source;
-- Australian retailer/brand word-order normalisation (for example Woolworths/Woolies lamb steak searches);
-- all meaningful typed product words must match, so an unknown brand such as Ascend is not silently replaced by a different brand's protein bar;
-- Lamb/Beef steak AFCD records can be found even when Steak is not the first database word;
-- chicken strips/pieces can safely use compatible chicken-breast nutrition instead of dead-ending on physical shape;
-- conditional Air Fried preparation for applicable foods;
-- selected whole-egg size is locked through Review, removing the redundant second size selection;
-- useful brand + product identity is retained in Diary and meal overview;
-- suspicious package records with unknown nutrition are no longer shown as genuine 0 Cal foods;
-- Nutrition Panel amount changes dynamically rescale calories and nutrients from the recognised basis;
-- optional front-of-pack OCR can suggest an editable brand/product name;
-- iPhone input/viewport and guided-tap state handling are hardened.
+Main changes:
+- faster local search settling and earlier online lookup, with clearer progress wording;
+- much broader Australian KFC, McDonald’s/Maccas and Hungry Jack’s menu snapshots, grouped by menu category;
+- missing chain nutrition still stops safely rather than creating a false 0-Cal entry;
+- Recent Meal copying now respects the meal the user deliberately selected instead of a stale Breakfast/Lunch/Dinner add context;
+- whole-meal Copy and Move controls, including copy to multiple future dates and Same Weekday x4;
+- individual diary foods can be moved to another date and meal;
+- Open Food Facts serving-basis coherence checks prevent a per-serving energy value being combined with per-100-g macros;
+- improved Nutrition Panel preprocessing for dark/coloured labels and low-contrast panels;
+- barcode/OCR libraries now load only when scanning is actually used, reducing normal app-start dependency on external libraries;
+- service-worker startup is cache-first where appropriate, with a short navigation timeout and parallel cache refresh to reduce blank/slow launches;
+- existing brand/product identity, serving and guided-search improvements from Alpha 0.6.31 are retained.
 
-FIRST TESTS
-Please focus on:
-- lamb steak / Woolworths lamb steak / lamb steak Woolworths / Woolies lamb steaks;
-- chicken strips -> breast -> baked/oven or grilled -> no added fat;
-- Egg -> Whole -> Large -> Poached, then confirm Review does not ask the egg size again;
-- Nutrition Panel 135 g lamb-steak test, then change 135 g to 100 g and back;
-- a clear front-of-pack photo plus Nutrition Panel photo;
-- Ascend protein bar: if the exact brand/product is unavailable, HEC should say so rather than substituting Fulfil or another brand;
-- repeated iPhone keyboard/review navigation for the intermittent narrow-screen issue.
+IMPORTANT ABOUT LARGE RETAILER / CHAIN CATALOGUES
+Alpha 0.6.32 adds a stronger catalogue architecture and broad current menu snapshots for KFC, McDonald’s and Hungry Jack’s. A static founder build cannot honestly guarantee that every chain or supermarket product remains complete every day as menus and supermarket ranges change. HEC therefore keeps source verification separate from discovery and refuses to invent nutrition for catalogue items that do not yet have verified values. The same architecture is intended for continuing expansion to other Australian chains and retailers.
 
 DATA STORAGE
-Alpha 0.6.31 deliberately retains the same Alpha 0.6 storage keys:
+Alpha 0.6.32 deliberately retains the same Alpha 0.6 storage keys:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-The app remains a founder-trial static web/PWA prototype. Exact packaged-product nutrition should still be checked against the current package. Camera, OCR, speech recognition, installed-PWA cache replacement and mobile interaction require real-device HTTPS testing.
+The app remains a founder-trial static web/PWA prototype. Current package nutrition remains the preferred authority for packaged food. Camera, OCR, installed-PWA cache replacement and real iPhone interaction still require final device testing.

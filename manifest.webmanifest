@@ -1,6 +1,7 @@
 {
-  "name": "Healthy Eating Companion Founder Trial Alpha 0.6.32",
-  "short_name": "HE Companion",
+  "id": "/Lifestyle-Companion/index.html",
+  "name": "HEC — My Data · Founder Trial Alpha 0.6.33",
+  "short_name": "HEC My Data",
   "description": "Australian founder trial with a Companion Circle Home opening screen, optional food preferences, transparent energy goals and safe food planning.",
   "start_url": "./index.html",
   "scope": "./",
@@ -8,5 +9,8 @@
   "background_color": "#eef7ef",
   "theme_color": "#2e6d4d",
   "lang": "en-AU",
-  "icons": []
+  "icons": [
+    {"src":"./assets/app-icons/hec-my-data-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"./assets/app-icons/hec-my-data-512.png","sizes":"512x512","type":"image/png","purpose":"any"}
+  ]
 }

@@ -9,7 +9,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.32';
+  const VERSION='0.6.33';
   const REG=global.HECAustralianEntityRegistry;
   const GUIDELINE_SOURCE='Australian Dietary Guidelines · Eat for Health standard serves';
 
@@ -221,12 +221,12 @@
     const text=String(food?.packageServingText||food?.serving||'');
     const b=basisInfo(food),serveScale=finite(food?.units?.serve);
     if(!serveScale)return food;
-    const count=text.match(/(?:^|\s)(\d+(?:[.,]\d+)?)\s*(biscuits?|crackers?|slices?|pieces?|chips?|nuggets?|bars?|sachets?|sticks?|wafers?|rolls?|cakes?|serves?|servings?)\b/i);
+    const count=text.match(/(?:^|\s)(\d+(?:[.,]\d+)?)\s*(biscuits?|crackers?|slices?|pieces?|chips?|nuggets?|bars?|sachets?|sticks?|wafers?|rolls?|cakes?|teaspoons?|tablespoons?|tsp|tbsp|serves?|servings?)\b/i);
     if(count){
-      const qty=finite(String(count[1]).replace(',','.')),raw=norm(count[2]).replace(/s$/,''),key=raw==='serving'?'serve':raw==='piece'?'piece':raw;
+      const qty=finite(String(count[1]).replace(',','.')),raw=norm(count[2]).replace(/s$/,''),key=raw==='serving'?'serve':raw==='piece'?'piece':/^tea|^tsp/.test(raw)?'tsp':/^table|^tbsp/.test(raw)?'tbsp':raw;
       if(qty>0&&key!=='serve'){
         const mass=b.servingG?` (${fmt(b.servingG/qty)} g each)`:b.servingMl?` (${fmt(b.servingMl/qty)} mL each)`:'';
-        setUnit(food,key,`${raw.charAt(0).toUpperCase()+raw.slice(1)}${mass}`,serveScale/qty,{origin:'Explicit package serving count',confidence:'package-explicit'});
+        const household=key==='tsp'?'Teaspoon':key==='tbsp'?'Tablespoon':raw.charAt(0).toUpperCase()+raw.slice(1);setUnit(food,key,`${household}${mass}`,serveScale/qty,{origin:'Explicit package serving count',confidence:'package-explicit'});
       }
     }
     return food;
@@ -235,7 +235,7 @@
   function chooseDefault(food,context={}){
     const units=food?.units||{},category=inferCategory(food,context),s=stateInfo(food,context);
     if(explicitPackageServing(food)){
-      const preferred=['bar','sachet','biscuit','cracker','crispbread','slice','chip','piece','nugget','stick','wafer','roll','cake','serve'].find(k=>units[k]!==undefined);
+      const preferred=['bar','sachet','biscuit','cracker','crispbread','slice','chip','piece','nugget','stick','wafer','roll','cake','tsp','tbsp','serve'].find(k=>units[k]!==undefined);
       return preferred||food.defaultUnit||Object.keys(units)[0]||'g';
     }
     if(category==='fruit'){if(units.item!==undefined)return 'item';if(units.standardServe!==undefined)return 'standardServe';}
@@ -326,6 +326,8 @@
       food.servingFoundationSource=explicitPackageServing(food)?'Explicit package serving data':'Package/product data · no invented household conversion';
     }else addGuidelineMeasures(food,context);
     addMetricVolumeMeasures(food,context);
+    if(Number(food.units.g)>0&&food.units.kg===undefined)setUnit(food,'kg','kg',Number(food.units.g)*1000,{origin:'Exact metric conversion',confidence:'high'});
+    if(Number(food.units.mL)>0&&food.units.L===undefined)setUnit(food,'L','L',Number(food.units.mL)*1000,{origin:'Exact metric conversion',confidence:'high'});
     // A second sanitation pass is deliberate: category measures are added above,
     // then any alternatives made redundant by a guided choice (for example egg
     // sizes other than the selected Large) are removed before the dropdown/default.

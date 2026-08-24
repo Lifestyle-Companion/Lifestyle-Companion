@@ -6,7 +6,7 @@
 */
 (function(global){
   'use strict';
-  const VERSION='0.6.32';
+  const VERSION='0.6.33';
   function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
   function words(v){return norm(v).split(' ').filter(Boolean);}
 
@@ -43,6 +43,7 @@
     {id:'black-gold',type:'brand',name:'Black & Gold',aliases:['black and gold','black gold'],sourceMode:'commercial'},
     {id:'westacre',type:'brand',name:'Westacre',aliases:['westacre'],sourceMode:'commercial'},
     {id:'seasons-pride',type:'brand',name:'Seasons Pride',aliases:['seasons pride'],sourceMode:'commercial'},
+    {id:'pekish',type:'brand',name:'Pekish',aliases:['pekish','pekish eggs'],sourceMode:'commercial',foodConcept:'egg',foodFamily:'Eggs'},
 
     // Australian restaurant / takeaway vocabulary. Existing menu tables still
     // provide the actual foods; registry recognition only supplies intent/context.
@@ -58,7 +59,7 @@
     {id:'chicken-treat',type:'restaurant',name:'Chicken Treat',aliases:['chicken treat'],sourceMode:'restaurant',route:'restaurant'}
   ];
 
-  const ENTRIES=E.map(e=>({...e,aliases:[...new Set([e.name,...(e.aliases||[])])]}));
+  const ENTRIES=E.map(e=>({...e,market:e.market||'AU',country:e.country||'Australia',aliases:[...new Set([e.name,...(e.aliases||[])])]}));
   function aliasRecords(){
     const out=[];for(const entity of ENTRIES)for(const alias of entity.aliases){const n=norm(alias);if(n)out.push({entity,alias,n,tokenCount:words(alias).length});}
     return out.sort((a,b)=>b.n.length-a.n.length||b.tokenCount-a.tokenCount);

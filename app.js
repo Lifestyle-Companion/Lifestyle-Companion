@@ -1,9 +1,13 @@
 const $ = id => document.getElementById(id);
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",shortName:"HEC",version:"0.6.32",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional",locale:"en-AU"};
+const APP = window.HEC_APP;
+if(!APP?.version)throw new Error("HEC canonical configuration was not loaded");
 const KEY = APP.storageKey;
-const LEGACY_KEYS = ["healthyEatingAlpha05","healthyEatingAlpha04"];
+const LEGACY_KEYS = APP.legacyMainKeys || [];
 const VERSION = APP.version;
 const COMPANIONS = window.HEC_COMPANIONS || [];
+const VOICE_SYSTEM = window.HECCompanionVoices || null;
+const STAGE4 = window.HECStage4 || null;
+const WEIGHT_PROGRESS = window.HECWeightProgress || null;
 
 const DEFAULTS = {
   version: VERSION,
@@ -27,7 +31,8 @@ const DEFAULTS = {
   recommendations: {},
   companion: {
     enabled: true, configured: false, id: "percy-pelican", character: "🐦", characterName: "Percy the Pelican",
-    name: "Percy", customName: "", pronunciation: "", personality: "planner", voice: "", speechEnabled: true
+    name: "Percy", gender: "male", customName: "", pronunciation: "", personality: "planner", voice: "", voiceStyleId: "calm-organised",
+    speechEnabled: true, needsReselection: false, selectionStatus: "active"
   },
   heightUnit: "metric",
   weightUnit: "metric",
@@ -37,10 +42,12 @@ const DEFAULTS = {
 
 let data = clone(DEFAULTS);
 let voices = [];
+let voiceCatalog = null;
 let editMode = null;
 let returnToSettingsAfterRecommendations = false;
 
 function clone(value){ return JSON.parse(JSON.stringify(value)); }
+function persistentId(prefix){ return window.HECMigrations?.createId?.(prefix) || `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`; }
 function mergeDeep(target, source){
   if(!source || typeof source !== "object") return target;
   for(const [key, value] of Object.entries(source)){
@@ -73,14 +80,7 @@ function zonedParts(date=new Date(), timeZone=activeTimeZone()){
 function todayISO(){ const z=zonedParts(); return `${z.year}-${z.month}-${z.day}`; }
 window.HECDate={deviceTimeZone,activeTimeZone,zonedParts,todayISO};
 function ageFromDob(value){
-  if(!value) return NaN;
-  const dob = new Date(value + "T00:00:00");
-  if(Number.isNaN(dob.getTime())) return NaN;
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const month = now.getMonth() - dob.getMonth();
-  if(month < 0 || (month === 0 && now.getDate() < dob.getDate())) age--;
-  return age;
+  return STAGE4?.ageFromDob(value,todayISO()) ?? NaN;
 }
 function displayName(){
   return (data.personal.preferredName || data.personal.fullName || "").trim().split(/\s+/)[0] || "";
@@ -105,6 +105,13 @@ function friendlyError(id, text, spoken, inputId){
   if(inputId) $(inputId)?.classList.add("invalid");
   speakText(spoken || text);
   return false;
+}
+function setInlineError(errorId,controls,message){
+  const error=$(errorId);if(error)error.textContent=message||"";
+  controls.filter(Boolean).forEach(control=>{
+    control.setAttribute("aria-invalid",message?"true":"false");
+    control.classList.toggle("invalid",!!message);
+  });
 }
 function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
 
@@ -158,18 +165,28 @@ function migrateLegacy(legacy){
 }
 function normaliseCompanionRecord(record){
   const result = mergeDeep(clone(DEFAULTS.companion), record || {});
-  let selectedCompanion = COMPANIONS.find(item => item.id === result.id);
-  if(!selectedCompanion){
+  const savedId=String(record?.id||"").trim();
+  const id=String(result.id||"").toLowerCase();
+  let selectedCompanion = COMPANIONS.find(item => item.id === id || (item.aliases||[]).some(alias=>String(alias).toLowerCase()===id));
+  if(!selectedCompanion && !savedId){
     const oldName = String(result.name || result.characterName || "").toLowerCase();
     selectedCompanion = COMPANIONS.find(item => oldName.includes(item.name.toLowerCase()) || oldName.includes(item.species.toLowerCase()));
   }
-  selectedCompanion ||= COMPANIONS.find(item => item.id === "percy-pelican") || COMPANIONS[0];
   if(selectedCompanion){
     result.id = selectedCompanion.id;
     result.name = selectedCompanion.name;
+    result.gender = selectedCompanion.gender;
     result.character = selectedCompanion.icon;
     result.characterName = `${selectedCompanion.name} the ${selectedCompanion.species}`;
     result.personality = selectedCompanion.personality;
+    if(!String(result.voiceStyleId||"").trim())result.voiceStyleId=VOICE_SYSTEM?.defaultVoiceStyleId(selectedCompanion.id)||null;
+  }else if(savedId){
+    result.id=savedId;
+    result.name=record?.name??"";
+    result.gender=record?.gender??null;
+    result.character=record?.character??"🧭";
+    result.characterName=record?.characterName??record?.name??"";
+    result.personality=record?.personality??"";
   }
   return result;
 }
@@ -225,6 +242,7 @@ function updateCompanionUI(){
   document.querySelectorAll(".companion-only").forEach(el => el.classList.toggle("hidden", !enabled));
   document.querySelectorAll(".live-avatar").forEach(el => el.textContent = enabled ? data.companion.character : "🧭");
   if($("setup-avatar")) $("setup-avatar").textContent = enabled ? data.companion.character : "🧭";
+  renderCompanionVoiceStyles();
 }
 function show(id, {speak=true} = {}){
   // Alpha 0.6.32: allow the functional layer to cancel stale search/overlay
@@ -241,6 +259,7 @@ function show(id, {speak=true} = {}){
   if($("companion-back")) $("companion-back").dataset.go = editMode === "companion" ? "settings" : "password";
   if($("personal-back")) $("personal-back").dataset.go = editMode === "personal" ? "settings" : "companion";
   if($("health-back")) $("health-back").dataset.go = editMode === "health" ? "settings" : "personal";
+  if(id === "personal") updateSurnameVisibility();
 
   applyTheme();
   applyLanguage();
@@ -259,7 +278,57 @@ function show(id, {speak=true} = {}){
   }
 }
 
-function speakText(text, {force=false, allowWithoutCompanion=false} = {}){
+function companionVoiceResolution(companion=selectedCompanionDefinition()||data.companion,voiceStyleId=data.companion.voiceStyleId){
+  if(VOICE_SYSTEM)return VOICE_SYSTEM.resolveCompanionVoice(companion,voiceStyleId,voices,{savedVoiceName:data.companion.voice});
+  const chosen=voices.find(voice=>voice.name===data.companion.voice)||null;
+  return {voice:chosen,voiceName:chosen?.name||"",voiceStyleId,rate:.96,pitch:1,pending:voices.length===0};
+}
+function selectedCompanionVoiceStyleId(companion=selectedCompanionDefinition()){
+  const config=VOICE_SYSTEM?.voiceConfigFor(companion);
+  if(!config)return null;
+  const selectedStyle=selected("companion-voice-style");
+  if(config.styles.some(style=>style.id===selectedStyle))return selectedStyle;
+  return config.styles.some(style=>style.id===data.companion.voiceStyleId)?data.companion.voiceStyleId:config.defaultStyleId;
+}
+function updateCompanionVoiceStatus(companion=selectedCompanionDefinition()){
+  const status=$("voice-style-status");
+  if(!status)return;
+  if(!("speechSynthesis" in window)){
+    status.textContent="Voice preview is not supported by this browser. Your style choice will still be saved.";
+    return;
+  }
+  status.textContent=voices.length
+    ? `Ready to preview ${companion?.name||"your Companion"} using the best suitable voice on this device.`
+    : "Your device is preparing its available voices. Your selected style will stay in place while they load.";
+}
+function renderCompanionVoiceStyles(){
+  const fieldset=$("companion-voice-styles"),options=$("voice-style-options"),heading=$("companion-voice-heading");
+  if(!fieldset||!options)return;
+  const companion=selectedCompanionDefinition();
+  const config=VOICE_SYSTEM?.voiceConfigFor(companion);
+  const visible=currentCompanionChoice()&&!!config;
+  fieldset.classList.toggle("hidden",!visible);
+  if(!visible){options.innerHTML="";return;}
+  const selectedStyleId=selectedCompanionVoiceStyleId(companion);
+  if(heading)heading.textContent=`Choose ${companion.name}’s Voice`;
+  options.innerHTML=config.styles.map((style,index)=>
+    `<label class="voice-style-choice"><input type="radio" name="companion-voice-style" value="${escapeHtml(style.id)}" ${style.id===selectedStyleId?"checked":""}><span><strong>${escapeHtml(style.label)}</strong>${index===0?"<small>Recommended</small>":""}</span></label>`
+  ).join("");
+  options.querySelectorAll('input[name="companion-voice-style"]').forEach(input=>input.addEventListener("change",()=>{
+    window.speechSynthesis?.cancel?.();
+    updateCompanionVoiceStatus(companion);
+  }));
+  updateCompanionVoiceStatus(companion);
+}
+function initialiseCompanionVoices(){
+  if(voiceCatalog||!("speechSynthesis" in window)||!VOICE_SYSTEM?.createVoiceCatalog)return;
+  voiceCatalog=VOICE_SYSTEM.createVoiceCatalog(window.speechSynthesis,available=>{
+    voices=available;
+    renderCompanionVoiceStyles();
+  });
+  voiceCatalog.start();
+}
+function speakText(text, {force=false, allowWithoutCompanion=false,companion=null,voiceStyleId=null} = {}){
   if(!("speechSynthesis" in window)){
     toast("Spoken guidance is not supported by this browser.");
     return;
@@ -268,27 +337,18 @@ function speakText(text, {force=false, allowWithoutCompanion=false} = {}){
     if(!data.companion.enabled || !data.companion.configured || !data.companion.speechEnabled) return;
   }else if(!allowWithoutCompanion && !currentCompanionChoice()) return;
 
-  const utterance = new SpeechSynthesisUtterance(String(text || ""));
-  const chosen = voices.find(voice => voice.name === data.companion.voice);
-  if(chosen) utterance.voice = chosen;
-  utterance.lang = chosen?.lang || data.preferences.language || "en-AU";
-  const voiceStyle = {calm:[0.92,1],encouraging:[1,1.03],steady:[0.94,.98],thoughtful:[0.9,1],loyal:[.98,1],curious:[1,1.04],"light-hearted":[1.02,1.07],social:[1.03,1.05],planner:[.95,1],confident:[.98,.97],energetic:[1.07,1.06],direct:[1,.95],protective:[.93,1],resourceful:[1,1.02],relaxed:[.9,.98],patient:[.88,1]}[data.companion.personality] || [.96,1];
-  utterance.rate = voiceStyle[0];
-  utterance.pitch = voiceStyle[1];
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
+  const speechCompanion=companion||selectedCompanionDefinition()||data.companion;
+  const resolution=companionVoiceResolution(speechCompanion,voiceStyleId||data.companion.voiceStyleId);
+  if(VOICE_SYSTEM?.speakResolvedVoice){
+    VOICE_SYSTEM.speakResolvedVoice(window.speechSynthesis,window.SpeechSynthesisUtterance,String(text||""),resolution,{language:data.preferences.language||"en-AU"});
+    return;
+  }
+  const utterance=new SpeechSynthesisUtterance(String(text||""));
+  if(resolution.voice)utterance.voice=resolution.voice;
+  utterance.lang=resolution.voice?.lang||data.preferences.language||"en-AU";
+  utterance.rate=resolution.rate;utterance.pitch=resolution.pitch;
+  window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);
 }
-function populateVoices(){
-  if(!("speechSynthesis" in window)) return;
-  voices = window.speechSynthesis.getVoices();
-  const select = $("voice-select");
-  if(!select) return;
-  const current = data.companion.voice;
-  select.innerHTML = '<option value="">Default device voice</option>' +
-    voices.map(v => `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)}${v.lang ? " · " + escapeHtml(v.lang) : ""}</option>`).join("");
-  select.value = current;
-}
-if("speechSynthesis" in window) window.speechSynthesis.onvoiceschanged = populateVoices;
 
 const COUNTRY_CONFIG = {
   "Australia": {
@@ -543,25 +603,70 @@ $("password-next").addEventListener("click", () => {
 });
 
 function selectedCompanionDefinition(){
-  return COMPANIONS.find(item => item.id === data.companion.id) || COMPANIONS.find(item => item.id === "percy-pelican") || COMPANIONS[0] || null;
+  return COMPANIONS.find(item => item.id === data.companion.id) || null;
 }
 function applyCompanionDefinition(definition){
   if(!definition) return;
+  const changedCompanion=data.companion.id!==definition.id;
   data.companion.id = definition.id;
   data.companion.name = definition.name;
+  data.companion.gender = definition.gender;
   data.companion.character = definition.icon;
   data.companion.characterName = `${definition.name} the ${definition.species}`;
   data.companion.personality = definition.personality;
+  if(changedCompanion||!String(data.companion.voiceStyleId||"").trim())data.companion.voiceStyleId=VOICE_SYSTEM?.defaultVoiceStyleId(definition.id)||null;
+  data.companion.needsReselection = false;
+  data.companion.selectionStatus = "active";
+  if(data.migrationState?.companionReselection?.required){
+    data.migrationState.companionReselection.required=false;
+    data.migrationState.companionReselection.resolvedAt ||= new Date().toISOString();
+  }
+}
+function companionAltText(companion){return companion?`${companion.name} the ${companion.species}`:"Companion";}
+function companionArtworkSource(companion,variant){return companion?window.companionArtwork?.(companion.id,variant)||null:null;}
+function companionArtworkMarkup(companion,variant,className=""){
+  if(!companion)return "";
+  const source=companionArtworkSource(companion,variant),alt=companionAltText(companion);
+  if(!source)return `<span class="companion-artwork-fallback ${escapeHtml(className)}" role="img" aria-label="${escapeHtml(alt)}">${escapeHtml(companion.icon)}</span>`;
+  const sourceSet=window.companionArtworkSrcSet?.(companion.id,variant)||"";
+  return `<img class="${escapeHtml(className)}" data-companion-artwork="${escapeHtml(companion.id)}" data-companion-variant="${escapeHtml(variant)}" src="${escapeHtml(source)}"${sourceSet?` srcset="${escapeHtml(sourceSet)}"`:""} alt="${escapeHtml(alt)}" decoding="async"><span class="companion-artwork-fallback ${escapeHtml(className)} hidden" aria-hidden="true">${escapeHtml(companion.icon)}</span>`;
+}
+function bindCompanionArtworkFallbacks(root=document){
+  root.querySelectorAll?.("img[data-companion-artwork]").forEach(image=>{
+    const fallback=image.nextElementSibling?.classList.contains("companion-artwork-fallback")?image.nextElementSibling:null;
+    image.addEventListener("error",()=>{
+      image.classList.add("hidden");image.removeAttribute("srcset");image.removeAttribute("src");
+      if(fallback){fallback.classList.remove("hidden");fallback.removeAttribute("aria-hidden");fallback.setAttribute("role","img");fallback.setAttribute("aria-label",image.alt);}
+    },{once:true});
+  });
+}
+function setCompanionArtworkImage(image,companion,variant,fallback){
+  if(!image)return false;
+  const source=companionArtworkSource(companion,variant),sourceSet=companion?window.companionArtworkSrcSet?.(companion.id,variant)||"":"";
+  const showFallback=()=>{
+    image.classList.add("hidden");image.removeAttribute("srcset");image.removeAttribute("src");
+    fallback?.classList.remove("hidden");
+  };
+  if(!source){image.alt="";showFallback();return false;}
+  image.onerror=showFallback;
+  image.alt=companionAltText(companion);
+  if(sourceSet)image.srcset=sourceSet;else image.removeAttribute("srcset");
+  image.src=source;image.classList.remove("hidden");fallback?.classList.add("hidden");
+  return true;
+}
+function companionRoster(){
+  const ids=window.HEC_COMPANION_ARTWORK_ROSTER||COMPANIONS.map(companion=>companion.id);
+  return ids.map(id=>COMPANIONS.find(companion=>companion.id===id)).filter(Boolean);
 }
 let companionPreviewCandidateId = null;
-function companionPreviewMarkup(companion){
+function companionPreviewMarkup(companion,titleId="companion-preview-title"){
   if(!companion) return "";
-  return `<div class="companion-preview-portrait"><img src="assets/companions/${escapeHtml(companion.id)}.svg" alt="${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}"></div><div><span class="source-chip verified">Australian Companion</span><h3 id="companion-preview-modal-title">${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}</h3><p class="companion-tagline">${escapeHtml(companion.tagline)}</p><p><strong>Speaking Style:</strong> ${escapeHtml(companion.speakingStyle)}</p><p><strong>Especially Helpful With:</strong> ${companion.strengths.map(escapeHtml).join(" · ")}</p><blockquote>“${escapeHtml(companion.intro)}”</blockquote></div>`;
+  return `<div class="companion-preview-portrait">${companionArtworkMarkup(companion,"hero","companion-preview-image")}</div><div><span class="source-chip verified">Australian Companion</span><h3 id="${escapeHtml(titleId)}">${escapeHtml(companion.name)} the ${escapeHtml(companion.species)}</h3><p class="companion-tagline">${escapeHtml(companion.tagline)}</p><p><strong>Speaking Style:</strong> ${escapeHtml(companion.speakingStyle)}</p><p><strong>Especially Helpful With:</strong> ${companion.strengths.map(escapeHtml).join(" · ")}</p><blockquote>“${escapeHtml(companion.intro)}”</blockquote></div>`;
 }
 function renderCompanionPreview(){
   const companion = selectedCompanionDefinition();
   const panel = $("companion-preview");
-  if(panel && companion) panel.innerHTML = companionPreviewMarkup(companion);
+  if(panel){panel.innerHTML = companion ? companionPreviewMarkup(companion) : "";bindCompanionArtworkFallbacks(panel);}
 }
 function closeCompanionPreviewModal(){
   $("companion-preview-modal")?.classList.add("hidden");
@@ -571,7 +676,7 @@ function openCompanionPreviewModal(companion){
   if(!companion)return;
   companionPreviewCandidateId=companion.id;
   const body=$("companion-preview-modal-body");
-  if(body)body.innerHTML=companionPreviewMarkup(companion);
+  if(body){body.innerHTML=companionPreviewMarkup(companion,"companion-preview-modal-title");bindCompanionArtworkFallbacks(body);}
   const choose=$("companion-preview-modal-choose");
   if(choose)choose.textContent=`Choose ${companion.name}`;
   $("companion-preview-modal")?.classList.remove("hidden");
@@ -579,9 +684,10 @@ function openCompanionPreviewModal(companion){
 function renderCharacters(){
   const grid = $("character-grid");
   if(!grid) return;
-  grid.innerHTML = COMPANIONS.map(companion =>
-    `<button type="button" class="character companion-card ${data.companion.id === companion.id ? "selected" : ""}" data-companion-id="${escapeHtml(companion.id)}" aria-pressed="${data.companion.id === companion.id}"><img src="assets/companions/${escapeHtml(companion.id)}.svg" alt=""><span><strong>${escapeHtml(companion.name)}</strong><small>${escapeHtml(companion.species)}</small></span></button>`
+  grid.innerHTML = companionRoster().map(companion =>
+    `<button type="button" class="character companion-card ${data.companion.id === companion.id ? "selected" : ""}" data-companion-id="${escapeHtml(companion.id)}" aria-pressed="${data.companion.id === companion.id}"><span class="companion-card-art">${companionArtworkMarkup(companion,"picker","companion-picker-image")}</span><span class="companion-card-copy"><strong>${escapeHtml(companion.name)}</strong><small>${escapeHtml(companion.species)}</small></span></button>`
   ).join("");
+  bindCompanionArtworkFallbacks(grid);
   grid.querySelectorAll("[data-companion-id]").forEach(button => button.addEventListener("click", () => {
     const definition = COMPANIONS.find(item => item.id === button.dataset.companionId);
     openCompanionPreviewModal(definition);
@@ -600,7 +706,11 @@ $("companion-preview-modal-choose")?.addEventListener("click",()=>{
 function syncCompanionForm(){
   data.companion.enabled = selected("companion-choice") !== "no";
   applyCompanionDefinition(selectedCompanionDefinition());
-  data.companion.voice = $("voice-select")?.value || "";
+  const companion=selectedCompanionDefinition();
+  const voiceStyleId=selectedCompanionVoiceStyleId(companion);
+  if(data.companion.enabled&&voiceStyleId)data.companion.voiceStyleId=voiceStyleId;
+  const resolution=companionVoiceResolution(companion,voiceStyleId);
+  if(!data.companion.voice&&resolution.voiceName)data.companion.voice=resolution.voiceName;
   data.companion.speechEnabled = $("speech-enabled")?.checked !== false;
   data.preferences.theme = document.body.dataset.theme || data.preferences.theme;
 }
@@ -613,9 +723,9 @@ document.querySelectorAll("[data-theme-choice]").forEach(card => card.addEventLi
   applyTheme();
 }));
 $("preview-voice")?.addEventListener("click", () => {
-  syncCompanionForm();
   const companion = selectedCompanionDefinition();
-  speakText(companion?.intro || `Hello ${spokenUserName() || "there"}. I am ${spokenCompanionName()}.`, {force:true,allowWithoutCompanion:true});
+  const voiceStyleId=selectedCompanionVoiceStyleId(companion);
+  speakText(companion?.intro || `Hello ${spokenUserName() || "there"}. I am ${spokenCompanionName()}.`, {force:true,allowWithoutCompanion:true,companion,voiceStyleId});
 });
 $("companion-next")?.addEventListener("click", () => {
   syncCompanionForm();
@@ -655,19 +765,32 @@ $("preview-user-name")?.addEventListener("click", () => {
   speakText(`Hello ${pronunciation}.`, {force:true,allowWithoutCompanion:true});
 });
 
+function updateSurnameVisibility(){
+  $("surname-field")?.classList.toggle("hidden",editMode!=="personal");
+}
+$("full-name")?.addEventListener("input",()=>{
+  if($("full-name").value.trim())setInlineError("full-name-error",[$("full-name")],"");
+});
+
 $("personal-next").addEventListener("click", () => {
   const givenName = $("full-name").value.trim();
-  const surname = $("surname")?.value.trim() || "";
+  const surname = $("surname")?.value.trim() || data.personal.surname || "";
   const preferredName = $("preferred-name").value.trim() || givenName;
   const email = (data.email || $("personal-email")?.value || "").trim();
   let error = "", spoken = "";
+  setInlineError("full-name-error",[$("full-name")],givenName?"":"Enter your given name.");
   if(!givenName){ error = "Please enter your given name."; spoken = "Please enter your given name before we continue."; }
   else if(!validEmail(email)){ error = "Please check your email address."; spoken = "Please check your email address before we continue."; }
-  if(error) return friendlyError("personal-error", error, spoken);
+  if(error&&givenName){return friendlyError("personal-error", error, spoken);}
+  if(error){
+    $("full-name").scrollIntoView({behavior:"smooth",block:"center"});
+    $("full-name").focus({preventScroll:true});
+    return friendlyError("personal-error", error, spoken);
+  }
   const profileCountry=$("profile-country")?.value||"Australia",profileRegion=$("profile-region")?.value||"",profilePostcode=$("profile-postcode")?.value.trim()||"";
-  if(profileCountry==="Australia"&&!profileRegion) return friendlyError("personal-error","Please choose your Australian state or territory.","Please choose your state or territory.");
   if(profileCountry==="Australia"&&profilePostcode&&!australianPostcodeMatchesRegion(profilePostcode,profileRegion)) return friendlyError("personal-error","That postcode does not appear to match the selected state or territory. Please check both entries.","Please check that your postcode matches the selected state or territory.");
 
+  const chosenHomeTimeZone=$("home-timezone")?.value.trim() || data.personal.homeTimeZone || deviceTimeZone();
   data.personal = {
     ...data.personal,
     givenName,
@@ -678,9 +801,9 @@ $("personal-next").addEventListener("click", () => {
     country: $("profile-country")?.value || data.personal.country || "Australia",
     region: $("profile-region")?.value || "",
     postcode: $("profile-postcode")?.value.trim() || "",
-    homeTimeZone: $("home-timezone")?.value.trim() || deviceTimeZone(),
-    activeTimeZone: $("home-timezone")?.value.trim() || data.personal.activeTimeZone || deviceTimeZone(),
-    timeZoneBehaviour: $("timezone-behaviour")?.value || "ask",
+    homeTimeZone: chosenHomeTimeZone,
+    activeTimeZone: data.personal.activeTimeZone || chosenHomeTimeZone,
+    timeZoneBehaviour: STAGE4?.normaliseTimeZoneBehaviour($("timezone-behaviour")?.value) || "ask",
     email
   };
   data.email = email;
@@ -700,10 +823,12 @@ document.querySelectorAll(".segmented").forEach(group => group.addEventListener(
     data.heightUnit = value;
     $("height-metric").classList.toggle("hidden", value !== "metric");
     $("height-imperial").classList.toggle("hidden", value !== "imperial");
+    refreshVisibleHealthError("height");
   }else if(type === "weight-unit"){
     data.weightUnit = value;
     $("weight-metric").classList.toggle("hidden", value !== "metric");
     $("weight-imperial").classList.toggle("hidden", value !== "imperial");
+    refreshVisibleHealthError("weight");
   }
 }));
 function updateGoalOptions(){
@@ -844,20 +969,65 @@ function collectHealthForm(){
     selectedGoalWeight: selected("goal") === data.health.goal ? (Number($("selected-goal-weight").value) || 0) : 0
   };
 }
+const HEALTH_VALIDATION_ORDER=["dob","sex","height","weight","goal","activity"];
+function healthFieldControls(field){
+  if(field==="dob")return [$("dob")];
+  if(field==="sex")return [$("calculation-sex")];
+  if(field==="height")return data.heightUnit==="metric"?[$("height-cm")]:[$("height-ft"),$("height-in")];
+  if(field==="weight")return data.weightUnit==="metric"?[$("weight-kg")]:[$("weight-st"),$("weight-lb")];
+  if(field==="goal")return [...document.querySelectorAll('input[name="goal"]')];
+  if(field==="activity")return [$("activity")];
+  return [];
+}
+function healthValidationErrors(form=collectHealthForm()){
+  return STAGE4.validateRecommendationFields({
+    dob:$("dob").value,today:todayISO(),sex:form.sex,heightCm:form.heightCm,
+    weightKg:form.weightKg,goal:form.goal,activity:form.activity
+  });
+}
+function allHealthFieldControls(field){
+  if(field==="height")return [$("height-cm"),$("height-ft"),$("height-in")];
+  if(field==="weight")return [$("weight-kg"),$("weight-st"),$("weight-lb")];
+  return healthFieldControls(field);
+}
+function renderHealthFieldError(field,message){
+  const errorId=`${field==="sex"?"calculation-sex":field}-error`;
+  setInlineError(errorId,allHealthFieldControls(field),"");
+  setInlineError(errorId,healthFieldControls(field),message);
+}
+function firstHealthControl(field){return healthFieldControls(field).find(control=>control&&!control.closest(".hidden"))||healthFieldControls(field)[0];}
+function focusFirstHealthError(errors){
+  const field=HEALTH_VALIDATION_ORDER.find(name=>errors[name]);if(!field)return;
+  const control=firstHealthControl(field);if(!control)return;
+  control.focus({preventScroll:true});
+  control.scrollIntoView({behavior:"smooth",block:"center"});
+}
+function refreshVisibleHealthError(field){
+  const errorId=`${field==="sex"?"calculation-sex":field}-error`;
+  if(!$(errorId)?.textContent)return;
+  const errors=healthValidationErrors();renderHealthFieldError(field,errors[field]);
+  if(!HEALTH_VALIDATION_ORDER.some(name=>errors[name]))$("health-error").textContent="";
+}
+$("dob")?.addEventListener("input",()=>refreshVisibleHealthError("dob"));
+$("calculation-sex")?.addEventListener("change",()=>refreshVisibleHealthError("sex"));
+["height-cm","height-ft","height-in"].forEach(id=>$(id)?.addEventListener("input",()=>refreshVisibleHealthError("height")));
+["weight-kg","weight-st","weight-lb"].forEach(id=>$(id)?.addEventListener("input",()=>refreshVisibleHealthError("weight")));
+document.querySelectorAll('input[name="goal"]').forEach(input=>input.addEventListener("change",()=>refreshVisibleHealthError("goal")));
+$("activity")?.addEventListener("change",()=>refreshVisibleHealthError("activity"));
 $("calculate-button").addEventListener("click", () => {
   data.personal.dob = $("dob").value;
   data.personal.energyUnit = $("energy-unit").value;
   const form = collectHealthForm();
   const age = ageFromDob(data.personal.dob);
-  let error = "", spoken = "";
-  if(!data.personal.dob || age < 18 || age > 100){ error = "Please enter a valid date of birth for an adult user."; spoken = "Please check your date of birth. This founder trial is currently designed for adults."; }
-  else if(!form.sex){ error = "Please select the option used for the energy calculation."; spoken = "Please choose the option used for your energy calculation."; }
-  else if(!form.heightCm || form.heightCm < 100 || form.heightCm > 250){ error = "Please enter a valid height."; spoken = "Please check your height before we continue."; }
-  else if(!form.weightKg || form.weightKg < 30 || form.weightKg > 400){ error = "Please enter a valid weight."; spoken = "Please check your weight before we continue."; }
-  else if(!form.goal){ error = "Please choose a goal."; spoken = "Please choose whether you want to lose, maintain, or gain weight."; }
-  else if(!form.activity){ error = "Please choose your daily activity."; spoken = "Please choose the daily activity level that suits you best."; }
+  const errors=healthValidationErrors(form);
+  HEALTH_VALIDATION_ORDER.forEach(field=>renderHealthFieldError(field,errors[field]));
+  const firstError=HEALTH_VALIDATION_ORDER.find(field=>errors[field]);
   // Flexible fasting tools do not require permanent days or a fixed energy target during setup.
-  if(error) return friendlyError("health-error", error, spoken);
+  if(firstError){
+    focusFirstHealthError(errors);
+    return friendlyError("health-error","Please correct the highlighted fields before calculating.",errors[firstError]);
+  }
+  $("health-error").textContent="";
 
   const preview = calculateRecommendationSet({
     sex: form.sex, heightCm: form.heightCm, weightKg: form.weightKg, goal: form.goal,
@@ -909,7 +1079,7 @@ function renderRecommendations(){
   const items = [
     ["BMI Planning Estimate", formatWeight(r.bmi), "One screening measure only; it does not define your health"],
     ["Reference Weight Range", `${r.healthyLow}–${r.healthyHigh} kg`, "General BMI reference, not a compulsory destination"],
-    ["Recommended Goal", `${formatWeight(r.recommendedGoalWeight)} kg`, "Guidance, not a compulsory target"],
+    ["HEC Suggested Starting Goal", `${formatWeight(r.recommendedGoalWeight)} kg`, "Guidance, not a compulsory target"],
     ["Daily Energy", energyDisplay(r.energyKj), `Based on ${formatWeight(r.basedOnWeightKg)} kg`],
     ["Daily Protein", `${roundWhole(r.protein)} g`, "Rounded starting estimate"],
     ["Daily Fat", `${roundWhole(r.fat)} g`, "Rounded starting estimate"],
@@ -1041,7 +1211,8 @@ $("finish-setup").addEventListener("click", () => {
   data.profileStartedDate = data.profileStartedDate || todayISO();
   if(!data.weightHistory.length){
     const startingDate=todayISO();data.health.startingWeightDate=startingDate;
-    data.weightHistory.push({date:startingDate,weightKg:data.health.startingWeightKg,note:"Starting weight",isStartingWeight:true,timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
+    const recordedAt=new Date().toISOString();
+    data.weightHistory.push({id:persistentId("weight"),date:startingDate,weightKg:data.health.startingWeightKg,note:"Starting weight",isStartingWeight:true,timeZone:activeTimeZone(),recordedAt,createdAt:recordedAt,updatedAt:recordedAt});
   }
   save();
   if(returnToSettingsAfterRecommendations){
@@ -1104,13 +1275,10 @@ function renderHome(){
   const avatar = enabled ? data.companion.character : "🥗";
   const companionDefinition = selectedCompanionDefinition();
   const portrait = $("home-avatar-image");
-  if(portrait){
-    portrait.classList.toggle("hidden", !enabled || !companionDefinition);
-    portrait.src = companionDefinition ? `assets/companions/${companionDefinition.id}.svg` : "";
-    portrait.alt = companionDefinition ? `${companionDefinition.name} the ${companionDefinition.species}` : "";
-  }
-  $("home-avatar").classList.toggle("hidden", enabled && !!companionDefinition);
-  $("home-avatar").textContent = avatar;
+  const avatarFallback=$("home-avatar");
+  avatarFallback.textContent = avatar;
+  if(enabled&&companionDefinition)setCompanionArtworkImage(portrait,companionDefinition,"hero",avatarFallback);
+  else{if(portrait){portrait.alt="";portrait.classList.add("hidden");portrait.removeAttribute("srcset");portrait.removeAttribute("src");}avatarFallback.classList.remove("hidden");}
   if($("message-avatar")) $("message-avatar").textContent = avatar;
   $("home-companion-name").textContent = enabled ? companionDisplayName() : "Healthy Eating Companion";
   if($("message-name")) $("message-name").textContent = enabled ? `${companionDisplayName()} Says` : "Healthy Eating Companion";
@@ -1142,8 +1310,13 @@ document.querySelectorAll(".room").forEach(button => button.addEventListener("cl
   if(room === "settings"){ show("settings"); return; }
   if(room === "quick-weight"){ show("weight-checkin", {speak:false}); return; }
   if(room === "quick-food" && typeof window.openAlpha05Feature === "function"){ window.openAlpha05Feature("quick-log",{fromHome:true}); return; }
-  if(room === "progress-weight"){ show("progress-weight-hub", {speak:false}); return; }
+  if(room === "progress-weight"){
+    if(typeof window.openAlpha05Feature === "function")window.openAlpha05Feature("progress-history",{fromHome:true,progressView:"weight"});
+    else show("progress-history",{speak:false});
+    return;
+  }
   if(typeof window.openAlpha05Feature === "function"){
+    if(room === "exercise-activity"){ window.openAlpha05Feature("exercise-log",{fromHome:true}); return; }
     if(room === "daily-progress"){ window.openAlpha05Feature("daily-progress",{fromHome:true}); return; }
     if(room === "diary"){ window.openAlpha05Feature("food-diary",{fromHome:true}); return; }
     if(room === "database"){ window.openAlpha05Feature("food-library",{fromHome:true}); return; }
@@ -1186,11 +1359,12 @@ function renderSettings(){
       <div class="summary-item"><span>Goal</span><strong>${escapeHtml(goalLabel(data.health.goal))}: ${escapeHtml(formatWeight(data.health.selectedGoalWeight))} kg</strong></div>
       <div class="summary-item"><span>Current weight</span><strong>${escapeHtml(formatWeight(data.health.currentWeightKg))} kg</strong></div>
       <div class="summary-item"><span>Daily energy</span><strong>${escapeHtml(energyDisplay(data.recommendations.energyKj))}</strong></div>
-      <div class="summary-item"><span>Spoken guidance</span><strong>${data.companion.enabled && data.companion.speechEnabled ? "On" : "Off"}</strong></div>
+      ${data.companion.enabled?`<div class="summary-item"><span>Spoken guidance</span><strong>${data.companion.speechEnabled ? "On" : "Off"}</strong></div>`:""}
     </div>`;
   $("toggle-companion").textContent = data.companion.enabled ? "Turn Companion off" : "Turn Companion on";
   $("toggle-speech").textContent = data.companion.speechEnabled ? "Turn spoken guidance off" : "Turn spoken guidance on";
   $("toggle-speech").disabled = !data.companion.enabled;
+  $("toggle-speech").classList.toggle("hidden",!data.companion.enabled);
 }
 $("edit-language").addEventListener("click", () => {
   editMode = "language";
@@ -1268,8 +1442,8 @@ function recalculateFromStored(){
   data.health.lastCalculationWeightKg = data.health.currentWeightKg;
 }
 function latestApplicableWeightRecord(){
-  const today=todayISO();
-  return [...(data.weightHistory||[])].filter(item=>item?.date&&item.date<=today&&Number(item.weightKg)>0).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")))[0]||null;
+  if(WEIGHT_PROGRESS)return WEIGHT_PROGRESS.latestApplicable(data.weightHistory,todayISO());
+  const today=todayISO();return [...(data.weightHistory||[])].filter(item=>item?.date&&item.date<=today&&Number(item.weightKg)>0).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")))[0]||null;
 }
 function nearestWeightRecordForDate(date){
   const target=new Date(`${date}T12:00:00`).getTime();return [...(data.weightHistory||[])].filter(item=>item?.date&&item.date!==date&&Number(item.weightKg)>0).sort((a,b)=>Math.abs(new Date(`${a.date}T12:00:00`).getTime()-target)-Math.abs(new Date(`${b.date}T12:00:00`).getTime()-target)||String(b.date).localeCompare(String(a.date)))[0]||null;
@@ -1281,11 +1455,16 @@ function friendlyWeightDate(value){
 function shiftWeightISO(value,days){const d=new Date(`${value||todayISO()}T12:00:00`);d.setDate(d.getDate()+days);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function friendlyWeightRelativeDate(value){const today=todayISO();if(value===today)return `Today — ${friendlyWeightDate(value)}`;if(value===shiftWeightISO(today,-1))return `Yesterday — ${friendlyWeightDate(value)}`;if(value===shiftWeightISO(today,1))return `Tomorrow — ${friendlyWeightDate(value)}`;return friendlyWeightDate(value);}
 function updateCheckinDateDisplay(){const value=$("checkin-date")?.value||todayISO(),relative=$("checkin-date-relative"),full=$("checkin-date-full");if(!relative||!full)return;const today=todayISO();relative.textContent=value===today?"Today":value===shiftWeightISO(today,-1)?"Yesterday":value===shiftWeightISO(today,1)?"Tomorrow":"Selected Date";full.textContent=friendlyWeightDate(value);}
-function startingWeightRecord(){const history=[...(data.weightHistory||[])].filter(item=>item?.date&&Number(item.weightKg)>0);if(!history.length)return null;const date=data.health?.startingWeightDate;if(date){const exact=history.find(item=>item.date===date&&(item.isStartingWeight||/starting weight/i.test(item.note||"")))||history.find(item=>item.date===date);if(exact)return exact;}const marked=history.filter(item=>item.isStartingWeight||/starting weight/i.test(item.note||"")).sort((a,b)=>String(a.recordedAt||"").localeCompare(String(b.recordedAt||"")));if(marked.length){data.health.startingWeightDate=marked[0].date;marked[0].isStartingWeight=true;return marked[0];}return history.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0];}
+function startingWeightRecord(){
+  const profileStart=data.profileStartedDate||"",history=[...(data.weightHistory||[])].filter(item=>item?.date&&Number(item.weightKg)>0&&(!profileStart||item.date>=profileStart));if(!history.length)return null;
+  const date=data.health?.startingWeightDate;if(date){const exact=history.find(item=>item.date===date&&(item.isStartingWeight||/starting weight/i.test(item.note||"")))||history.find(item=>item.date===date);if(exact)return exact;}
+  const marked=history.filter(item=>item.isStartingWeight||/starting weight/i.test(item.note||"")).sort((a,b)=>String(a.recordedAt||"").localeCompare(String(b.recordedAt||"")));return marked[0]||history.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.recordedAt||"").localeCompare(String(b.recordedAt||"")))[0];
+}
 let lastSavedCheckinSnapshot = null;
+let checkinSavePending = false;
 function currentCheckinSnapshot(){return {date:$("checkin-date")?.value||todayISO(),weight:roundWeight(Number($("checkin-weight")?.value)||0),goal:roundWeight(Number($("checkin-goal")?.value)||0),note:$("checkin-note")?.value.trim()||""};}
 function checkinSnapshotsEqual(a,b){return !!a&&!!b&&a.date===b.date&&Number(a.weight)===Number(b.weight)&&Number(a.goal)===Number(b.goal)&&(a.note||"")===(b.note||"");}
-function setCheckinSaveState(saved){const b=$("save-checkin");if(!b)return;b.disabled=!!saved;b.textContent=saved?"Saved ✓":"Save Check-In And Review Plan";}
+function setCheckinSaveState(saved){[$("save-checkin"),$("save-checkin-view")].filter(Boolean).forEach(button=>{button.disabled=!!saved||checkinSavePending;button.setAttribute("aria-busy",checkinSavePending?"true":"false");});}
 function markCheckinDirty(){if(!lastSavedCheckinSnapshot)return;setCheckinSaveState(checkinSnapshotsEqual(currentCheckinSnapshot(),lastSavedCheckinSnapshot));}
 function renderWeightCheckin(){
   const latest=latestApplicableWeightRecord();
@@ -1302,47 +1481,69 @@ function renderWeightCheckin(){
 }
 ["checkin-weight","checkin-goal","checkin-note"].forEach(id=>$(id)?.addEventListener("input",markCheckinDirty));
 $("checkin-date")?.addEventListener("input",()=>{updateCheckinDateDisplay();markCheckinDirty();});$("checkin-date")?.addEventListener("change",()=>{updateCheckinDateDisplay();markCheckinDirty();});
-function saveCheckinSnapshot(snapshot,{outlierConfirmed=false}={}){
+function openWeightProgressGraph(){
+  if(typeof window.openAlpha05Feature==="function")window.openAlpha05Feature("progress-history",{progressView:"weight"});else show("progress-history",{speak:false});
+}
+function renderSavedCheckinResult(record,message,recommendationsUpdated){
+  const updated=recommendationsUpdated?`<h4>Updated Recommendations</h4><p>${escapeHtml(message)} Current daily energy: ${escapeHtml(energyDisplay(data.recommendations.energyKj))}.</p>`:`<p>${escapeHtml(message)}</p>`;
+  $("checkin-result").innerHTML=`<strong>Saved</strong>${updated}<div class="checkin-result-actions"><button class="primary" data-view-weight-graph type="button">View Weight Graph</button><button class="secondary" data-edit-weight-date="${escapeHtml(record.date)}" type="button">Edit Weight</button></div>`;
+  $("checkin-result").classList.remove("hidden");
+}
+function saveCheckinSnapshot(snapshot,{outlierConfirmed=false,navigateAfter=false}={}){
+  if(checkinSavePending)return {status:"pending"};
+  checkinSavePending=true;setCheckinSaveState(false);
   const date=snapshot.date,weight=snapshot.weight,goal=snapshot.goal,note=snapshot.note||"Progress Check-In";
   const profileStart=data.profileStartedDate||data.health?.startingWeightDate||todayISO();
-  if(date>todayISO()) return friendlyError("checkin-error","Future-dated weight check-ins are not allowed.","Choose today or an earlier date.");
-  if(date<profileStart) return friendlyError("checkin-error",`Weight entries cannot be dated before your Companion profile started on ${friendlyWeightDate(profileStart)}.`,`Choose your profile start date or later.`);
-  if(checkinSnapshotsEqual(snapshot,lastSavedCheckinSnapshot)){toast("Already Saved — No Changes To Save");return;}
-  if(!weight || weight < 30 || weight > 400) return friendlyError("checkin-error", "Please enter a valid weight.", "Please check your weight.");
+  const stop=(status,action)=>{checkinSavePending=false;setCheckinSaveState(checkinSnapshotsEqual(snapshot,lastSavedCheckinSnapshot));action?.();return {status};};
+  const dateStatus=WEIGHT_PROGRESS?.validateDate(date,{profileStart,today:todayISO()});
+  if(dateStatus==="invalid")return stop("invalid-date",()=>friendlyError("checkin-error","Please choose a valid Check-In Date.","Choose a valid date."));
+  if(dateStatus==="future"||(!dateStatus&&date>todayISO()))return stop("future",()=>friendlyError("checkin-error","Future-dated weight check-ins are not allowed.","Choose today or an earlier date."));
+  if(dateStatus==="before-profile"||(!dateStatus&&date<profileStart))return stop("before-profile",()=>friendlyError("checkin-error",`Weight entries cannot be dated before your Companion profile started on ${friendlyWeightDate(profileStart)}.`,`Choose your profile start date or later.`));
+  if(checkinSnapshotsEqual(snapshot,lastSavedCheckinSnapshot))return stop("unchanged",()=>{toast("Already Saved — No Changes To Save");if(navigateAfter)openWeightProgressGraph();});
+  if(!weight || weight < 30 || weight > 400)return stop("invalid-weight",()=>friendlyError("checkin-error", "Please enter a valid weight.", "Please check your weight."));
   const latestBefore=latestApplicableWeightRecord(),currentWeightBefore=Number(latestBefore?.weightKg || data.health.currentWeightKg || weight);
-  const goalError = validateGoalWeight(data.health.goal, currentWeightBefore, goal, data.recommendations.healthyLow || 0);if(goalError) return friendlyError("checkin-error", goalError, goalError);
+  const goalError = validateGoalWeight(data.health.goal, currentWeightBefore, goal, data.recommendations.healthyLow || 0);if(goalError)return stop("invalid-goal",()=>friendlyError("checkin-error", goalError, goalError));
   const existing = data.weightHistory.find(item => item.date === date);
   const nearby=nearestWeightRecordForDate(date),signedDifference=nearby?roundWeight(Number(weight)-Number(nearby.weightKg)):0,nearbyDifference=Math.abs(signedDifference);
   if(nearby&&nearbyDifference>2.0&&!outlierConfirmed){
     const title="That Weight Looks Quite Different";
     const copy=`Your nearest recorded weight is ${formatWeight(nearby.weightKg)} kg on ${friendlyWeightRelativeDate(nearby.date)}. You entered ${formatWeight(weight)} kg, a change of ${signedDifference>0?"+":""}${formatWeight(signedDifference)} kg. Please check that the new weight is correct.`;
     const extra=`<div class="weight-warning-comparison"><div><span>Nearest Weight</span><strong>${escapeHtml(formatWeight(nearby.weightKg))} kg</strong><small>${escapeHtml(friendlyWeightRelativeDate(nearby.date))}</small></div><div><span>Entered Weight</span><strong>${escapeHtml(formatWeight(weight))} kg</strong><small>Change ${signedDifference>0?"+":""}${escapeHtml(formatWeight(signedDifference))} kg</small></div></div><p class="fine">A large change can be genuine. This check is only here to catch typing mistakes before they affect your progress and recommendations.</p>`;
+    checkinSavePending=false;setCheckinSaveState(false);
     if(typeof window.HECOpenModal==="function"){
-      window.HECOpenModal(title,copy,`Yes, Save ${formatWeight(weight)} kg`,()=>saveCheckinSnapshot(snapshot,{outlierConfirmed:true}),extra);
+      window.HECOpenModal(title,copy,`Yes, Save ${formatWeight(weight)} kg`,()=>saveCheckinSnapshot(snapshot,{outlierConfirmed:true,navigateAfter}),extra);
       const cancel=$("a05-modal-cancel");if(cancel)cancel.textContent="No, Let Me Correct It";
-    }else if(confirm(`${copy}\n\nIs ${formatWeight(weight)} kg correct?`))saveCheckinSnapshot(snapshot,{outlierConfirmed:true});
+    }else if(confirm(`${copy}\n\nIs ${formatWeight(weight)} kg correct?`))saveCheckinSnapshot(snapshot,{outlierConfirmed:true,navigateAfter});
     else $("checkin-weight")?.focus();
-    return;
+    return {status:"confirmation-required"};
   }
   if(existing && Number(existing.weightKg)===Number(weight) && (existing.note||"Progress Check-In")===note && Number(data.health.selectedGoalWeight||goal)===Number(goal)){
-    lastSavedCheckinSnapshot=snapshot;setCheckinSaveState(true);toast("Already Saved — No Changes To Save");return;
+    lastSavedCheckinSnapshot=snapshot;return stop("unchanged",()=>{toast("Already Saved — No Changes To Save");if(navigateAfter)openWeightProgressGraph();});
   }
   const persist=()=>{
-    if(existing){existing.weightKg=roundWeight(weight);existing.note=note||"Updated Check-In";existing.timeZone=activeTimeZone();existing.recordedAt=new Date().toISOString();}
-    else data.weightHistory.push({date,weightKg:roundWeight(weight),note,timeZone:activeTimeZone(),recordedAt:new Date().toISOString()});
+    const recordedAt=new Date().toISOString();
+    const upsert=WEIGHT_PROGRESS?.upsertWeightRecord(data.weightHistory,{date,weightKg:weight,note},{id:persistentId("weight"),now:recordedAt,timeZone:activeTimeZone()});
+    if(upsert?.record)data.weightHistory=upsert.records;
+    else if(existing){const originalRecordedAt=existing.recordedAt;existing.id ||= persistentId("weight");existing.createdAt ||= originalRecordedAt||recordedAt;existing.weightKg=roundWeight(weight);existing.note=note;existing.timeZone=activeTimeZone();existing.recordedAt=recordedAt;existing.updatedAt=recordedAt;}
+    else data.weightHistory.push({id:persistentId("weight"),date,weightKg:roundWeight(weight),note,timeZone:activeTimeZone(),recordedAt,createdAt:recordedAt,updatedAt:recordedAt});
+    const savedRecord=upsert?.record||(data.weightHistory||[]).find(item=>item.date===date);
     const latestAfter=latestApplicableWeightRecord(),latestWeight=Number(latestAfter?.weightKg || data.health.currentWeightKg || weight),savedIsCurrent=!!latestAfter&&latestAfter.date===date,previousCalculationWeight=Number(data.health.lastCalculationWeightKg||currentWeightBefore||latestWeight),goalChanged=Math.abs(goal-Number(data.health.selectedGoalWeight||0))>=0.1,meaningfulCurrentWeightChange=savedIsCurrent&&Math.abs(latestWeight-previousCalculationWeight)>=1;
     data.health.currentWeightKg=roundWeight(latestWeight);data.health.selectedGoalWeight=roundWeight(goal);data.recommendations.selectedGoalWeight=roundWeight(goal);
-    let message;
-    if(meaningfulCurrentWeightChange||goalChanged){recalculateFromStored();message=data.recommendations.manual?"Check-In saved. Your health estimates were refreshed while your manual targets were retained.":`Check-In saved. Recommendations were recalculated using ${formatWeight(latestWeight)} kg.`;}
+    let message,recommendationsUpdated=false;
+    if(meaningfulCurrentWeightChange||goalChanged){recalculateFromStored();recommendationsUpdated=true;message=data.recommendations.manual?"Your health estimates were refreshed while your manual targets were retained.":`Recommendations were recalculated using ${formatWeight(latestWeight)} kg.`;}
     else if(!savedIsCurrent)message=`Historical weight saved for ${friendlyWeightRelativeDate(date)}. Your current weight remains ${formatWeight(latestWeight)} kg because a newer entry exists.`;
-    else message="Check-In saved. Your recommendations stayed steady because the change was less than 1 kg.";
-    save();lastSavedCheckinSnapshot=currentCheckinSnapshot();setCheckinSaveState(true);$("checkin-result").innerHTML=`<strong>Saved ✓</strong><p>${escapeHtml(message)} Current daily energy: ${escapeHtml(energyDisplay(data.recommendations.energyKj))}.</p>`;$("checkin-result").classList.remove("hidden");renderWeightHistoryOnly();if(data.companion.enabled)speakText("Weight and date saved.");
+    else message="Your recommendations stayed steady because the current change was less than 1 kg.";
+    save();lastSavedCheckinSnapshot=currentCheckinSnapshot();checkinSavePending=false;setCheckinSaveState(true);renderSavedCheckinResult(savedRecord,message,recommendationsUpdated);renderWeightHistoryOnly();if(data.companion.enabled)speakText("Weight and date saved.");if(navigateAfter)openWeightProgressGraph();
+    return {status:"saved",record:savedRecord,recommendationsUpdated};
   };
   if(existing && Number(existing.weightKg)!==Number(weight)){
-    if(confirm(`A weight is already recorded for ${friendlyWeightRelativeDate(date)}. Replace ${formatWeight(existing.weightKg)} kg with ${formatWeight(weight)} kg?`))persist();
-  }else persist();
+    if(confirm(`A weight is already recorded for ${friendlyWeightRelativeDate(date)}. Replace ${formatWeight(existing.weightKg)} kg with ${formatWeight(weight)} kg?`))return persist();
+    return stop("cancelled");
+  }
+  return persist();
 }
-$("save-checkin").addEventListener("click", () => saveCheckinSnapshot(currentCheckinSnapshot()));
+$("save-checkin")?.addEventListener("click", () => saveCheckinSnapshot(currentCheckinSnapshot()));
+$("save-checkin-view")?.addEventListener("click", () => saveCheckinSnapshot(currentCheckinSnapshot(),{navigateAfter:true}));
 
 function renderWeightHistoryOnly(){
   const history=[...(data.weightHistory||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||"").localeCompare(String(a.recordedAt||"")));
@@ -1353,21 +1554,15 @@ function renderWeightHistoryOnly(){
   $("weight-history").innerHTML=history.length?`${summary}<h4>Recent Weight Entries</h4>${rows(history.slice(0,5))}${history.length>5?`<details class="weight-history-all"><summary>View All Weight History (${history.length})</summary>${rows(history.slice(5))}</details>`:""}`:'<div class="empty-state">No weight check-ins have been recorded yet.</div>';
 }
 document.addEventListener("click",event=>{
+  const view=event.target.closest("[data-view-weight-graph]");if(view){event.preventDefault();openWeightProgressGraph();return;}
+  const add=event.target.closest("[data-open-weight-checkin]");if(add){event.preventDefault();show("weight-checkin",{speak:false});return;}
   const row=event.target.closest("[data-edit-weight-date]");if(!row)return;
   const item=(data.weightHistory||[]).find(x=>x.date===row.dataset.editWeightDate);if(!item)return;
+  if(!$("weight-checkin")?.classList.contains("active"))show("weight-checkin",{speak:false});
   $("checkin-date").value=item.date;updateCheckinDateDisplay();$("checkin-weight").value=formatWeight(item.weightKg);if($("checkin-note"))$("checkin-note").value=item.note||"";
   $("checkin-result").innerHTML=`<strong>Editing Historical Entry</strong><p>Saving ${escapeHtml(friendlyWeightDate(item.date))} will not replace your current weight if a newer dated entry exists.</p>`;$("checkin-result").classList.remove("hidden");
   lastSavedCheckinSnapshot=null;setCheckinSaveState(false);
   $("checkin-date").scrollIntoView({behavior:"smooth",block:"center"});
-});
-
-$("reset-trial").addEventListener("click", () => {
-  if(confirm("Reset this founder trial and delete the saved profile on this device?")){
-    localStorage.removeItem(KEY);
-    LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
-    localStorage.removeItem(APP.functionalStorageKey);
-    location.reload();
-  }
 });
 
 function populateForms(){
@@ -1386,9 +1581,11 @@ function populateForms(){
   updateProfileRegionOptions(true);
   if($("profile-postcode")) $("profile-postcode").value=data.personal.postcode||"";
   if($("home-timezone")) $("home-timezone").value=data.personal.homeTimeZone||deviceTimeZone();
-  if($("timezone-behaviour")) $("timezone-behaviour").value=data.personal.timeZoneBehaviour||"ask";
+  if($("timezone-behaviour")) $("timezone-behaviour").value=STAGE4?.normaliseTimeZoneBehaviour(data.personal.timeZoneBehaviour)||"ask";
   if($("detected-timezone")) $("detected-timezone").textContent=`Device time zone: ${deviceTimeZone()}`;
   $("dob").value = data.personal.dob || "";
+  const dobLimits=STAGE4?.dobBounds(todayISO());
+  if(dobLimits){$("dob").min=dobLimits.min;$("dob").max=dobLimits.max;$("dob").dataset.pickerStart=dobLimits.pickerStart;}
   $("energy-unit").value = data.personal.energyUnit || "kJ";
 
   $("country").value = data.personal.country || suggestedCountryForLanguage(data.preferences.language);
@@ -1448,7 +1645,7 @@ function populateForms(){
   updateFastingOptions();
 
   renderCharacters();
-  populateVoices();
+  renderCompanionVoiceStyles();
   updateCompanionUI();
   updateAddressPreview();
   if(Object.keys(data.recommendations || {}).length) renderRecommendations();
@@ -1470,6 +1667,7 @@ if(!data.goalMilestones) data.goalMilestones = [];
 if(!data.weightHistory) data.weightHistory = [];
 if(!data.health.startingWeightDate){const start=startingWeightRecord();if(start)data.health.startingWeightDate=start.date;}
 applyTheme();
+initialiseCompanionVoices();
 populateForms();
 save();
 if(data.completed) show("home", {speak:false}); // alpha06.js immediately opens Daily Progress once functional data is ready.
@@ -1478,7 +1676,7 @@ else show("welcome", {speak:false});
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   let refreshingForNewWorker=false;
   navigator.serviceWorker.addEventListener("controllerchange",()=>{if(refreshingForNewWorker)return;refreshingForNewWorker=true;location.reload();});
-  navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(VERSION)}`,{updateViaCache:"none"}).then(reg=>reg.update()).catch(() => {});
+  if(window.HECInstallation?.isOriginSafe(APP,location.origin))navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(VERSION)}&role=${encodeURIComponent(APP.installationRole)}`,{scope:APP.serviceWorkerScope,updateViaCache:"none"}).then(reg=>reg.update()).catch(() => {});
 }
 
 /* Alpha 0.6.23 — compact companion message card below the Home circle. */

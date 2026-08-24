@@ -1,35 +1,27 @@
-HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.32
+HEALTHY EATING COMPANION — FOUNDER TRIAL ALPHA 0.6.33
 
-DEPLOYMENT
-1. Keep your latest JSON backup safe before replacing the current build.
-2. Extract/upload the COMPLETE Alpha 0.6.32 folder, or upload the supplied changed-files-only package over Alpha 0.6.31.
-3. Keep the same GitHub Pages website address and do not mix runtime files from different Alpha versions.
-4. Wait for GitHub Pages to finish publishing.
-5. Fully close HEC on the iPhone and reopen it. Confirm the Home badge says Alpha 0.6.32.
-6. Confirm profile, Diary, weight/history, saved foods/recipes and settings are still present before further testing.
+RELEASE-CANDIDATE DEPLOYMENT
+1. Keep a current JSON backup safe before replacing an earlier build.
+2. Upload the complete Alpha 0.6.33 release candidate over Alpha 0.6.32 at the same GitHub Pages address. Do not mix runtime files from different versions.
+3. Wait for publishing to finish, fully close HEC, then reopen it while online.
+4. Confirm the page title or Home badge says Alpha 0.6.33.
+5. Confirm the existing profile, Diary, weight history, activities, My Foods, recipes, Shopping and preferences remain present.
+6. Reopen the installed app offline only after one successful online load.
 
-WHAT IS NEW IN ALPHA 0.6.32
-Alpha 0.6.32 is a search/catalogue, diary planning, scanner-basis and startup-reliability consolidation build.
+WHAT IS NEW
+Alpha 0.6.33 integrates the approved Stage 1–8 work: safer release/reset handling; the canonical 16-companion roster and production artwork; curated portable voice styles; onboarding, time-zone and iPad improvements; Exercise & Activity; Weight & Nutrition Progress Graphs; refined Weight Check-In, Shopping and Recent flows; stronger Australian food catalogue/search and serving handling; and founder-trial barcode and Nutrition Panel review workflows.
 
-Main changes:
-- faster local search settling and earlier online lookup, with clearer progress wording;
-- much broader Australian KFC, McDonald’s/Maccas and Hungry Jack’s menu snapshots, grouped by menu category;
-- missing chain nutrition still stops safely rather than creating a false 0-Cal entry;
-- Recent Meal copying now respects the meal the user deliberately selected instead of a stale Breakfast/Lunch/Dinner add context;
-- whole-meal Copy and Move controls, including copy to multiple future dates and Same Weekday x4;
-- individual diary foods can be moved to another date and meal;
-- Open Food Facts serving-basis coherence checks prevent a per-serving energy value being combined with per-100-g macros;
-- improved Nutrition Panel preprocessing for dark/coloured labels and low-contrast panels;
-- barcode/OCR libraries now load only when scanning is actually used, reducing normal app-start dependency on external libraries;
-- service-worker startup is cache-first where appropriate, with a short navigation timeout and parallel cache refresh to reduce blank/slow launches;
-- existing brand/product identity, serving and guided-search improvements from Alpha 0.6.31 are retained.
+DUAL-INSTALL TESTING
+The repository root is HEC — My Data and preserves the established historical storage namespace. HEC — TEST uses the same application source with the two small files under deployment/test overlaid at a genuinely separate HTTPS origin. Never place TEST under another path on the My Data hostname. Follow DUAL_INSTALL_DEPLOYMENT_ALPHA_0_6_33.md before any external deployment.
 
-IMPORTANT ABOUT LARGE RETAILER / CHAIN CATALOGUES
-Alpha 0.6.32 adds a stronger catalogue architecture and broad current menu snapshots for KFC, McDonald’s and Hungry Jack’s. A static founder build cannot honestly guarantee that every chain or supermarket product remains complete every day as menus and supermarket ranges change. HEC therefore keeps source verification separate from discovery and refuses to invent nutrition for catalogue items that do not yet have verified values. The same architecture is intended for continuing expansion to other Australian chains and retailers.
+See RELEASE_NOTES_ALPHA_0_6_33.txt for the user-visible summary and HEC_ALPHA_0_6_33_BUILD_AND_TEST_REPORT.md for the software verification record.
 
 DATA STORAGE
-Alpha 0.6.32 deliberately retains the same Alpha 0.6 storage keys:
+Alpha 0.6.33 deliberately retains the established Alpha 0.6 storage keys:
 - healthyEatingCompanionAlpha06
 - healthyEatingCompanionAlpha06Functional
 
-The app remains a founder-trial static web/PWA prototype. Current package nutrition remains the preferred authority for packaged food. Camera, OCR, installed-PWA cache replacement and real iPhone interaction still require final device testing.
+IMPORTANT LIMITATIONS
+This remains a static Founder Trial, not a public production health service. It does not claim a complete or continuously current Australian product database. Current package information remains the preferred authority for packaged food. Online product data can be incomplete or outdated. Nutrition Panel OCR must be reviewed and corrected by the user.
+
+Real iPhone/iPad testing remains a release gate for camera barcode capture, OCR accuracy, speech voices, installed-PWA update behaviour, native sharing and printing. Do not declare the release candidate finally released until that physical-device checklist passes.

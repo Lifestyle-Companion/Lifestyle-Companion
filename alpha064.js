@@ -1,9 +1,13 @@
 (() => {
 "use strict";
-const APP=window.HEC_APP||{};
-const MAIN_KEY=APP.storageKey||"healthyEatingCompanionAlpha06";
-const EXT_KEY=APP.functionalStorageKey||"healthyEatingCompanionAlpha06Functional";
-const ADMIN_KEY="healthyEatingCompanionAlpha064Admin";
+const APP=window.HEC_APP;
+if(!APP?.version)throw new Error("HEC canonical configuration was not loaded");
+const MAIN_KEY=APP.storageKey;
+const EXT_KEY=APP.functionalStorageKey;
+const ADMIN_KEY=APP.adminStorageKey;
+const STAGE4=window.HECStage4;
+const RELEASE_SLUG=APP.version.replace(/\./g,"-");
+const INSTALLATION_SLUG=APP.installationRole;
 const $=id=>document.getElementById(id);
 const qa=s=>[...document.querySelectorAll(s)];
 const clone=v=>JSON.parse(JSON.stringify(v));
@@ -27,14 +31,16 @@ ensureSchemas();
 function handleTimeZone(){
   const main=read(MAIN_KEY,{}),p=main.personal||{},device=deviceTZ();
   p.homeTimeZone||=device;p.activeTimeZone||=p.homeTimeZone;p.timeZoneBehaviour||="ask";
-  if(main.completed&&device!==p.activeTimeZone){
-    if(p.timeZoneBehaviour==="device")p.activeTimeZone=device;
-    else if(p.timeZoneBehaviour==="ask"){
-      const useDevice=confirm(`Your device time zone is now ${device}.\n\nUse this as the app's current local time zone?\n\nChoose Cancel to keep ${p.activeTimeZone}.`);
-      if(useDevice)p.activeTimeZone=device;
-    }else p.activeTimeZone=p.homeTimeZone;
+  const previousActive=p.activeTimeZone;
+  let decision=STAGE4.evaluateTimeZoneChange({completed:main.completed,deviceTimeZone:device,activeTimeZone:p.activeTimeZone,homeTimeZone:p.homeTimeZone,behaviour:p.timeZoneBehaviour,lastDecision:p.timeZoneDecision});
+  if(decision.prompt){
+    const approved=confirm(`Your device time zone is now ${device}.\n\nWould you like HEC to use it as your active time zone?\n\nChoose Cancel to keep ${p.activeTimeZone}. Existing Diary, meal and weight dates will not be changed.`);
+    decision=STAGE4.evaluateTimeZoneChange({completed:main.completed,deviceTimeZone:device,activeTimeZone:p.activeTimeZone,homeTimeZone:p.homeTimeZone,behaviour:p.timeZoneBehaviour,lastDecision:p.timeZoneDecision,approved});
   }
-  const changed=p.activeTimeZone!==read(MAIN_KEY,{}).personal?.activeTimeZone;
+  p.activeTimeZone=decision.activeTimeZone;
+  p.timeZoneBehaviour=decision.behaviour;
+  if(decision.lastDecision&&decision.lastDecision!==p.timeZoneDecision)p.timeZoneDecision={...decision.lastDecision,decidedAt:new Date().toISOString()};
+  const changed=p.activeTimeZone!==previousActive;
   main.personal=p;write(MAIN_KEY,main);
   if(changed)setTimeout(()=>location.reload(),0);
 }
@@ -42,7 +48,7 @@ handleTimeZone();
 
 // Navigation: every working room has both Back and Home.
 const APP_SCREEN_EXCLUSIONS=new Set(["welcome","language","register","verify","password","companion","personal","health","recommendations","home"]);
-const functionalScreens=new Set(["food-diary","food-library","food-entry-editor","custom-food","recipe-builder","quick-log","scan-centre","meal-planner","daily-progress","exercise-log","progress-weight-hub","progress-history","shopping-list","food-preferences","family-connections","printable-report"]);
+const functionalScreens=new Set(["food-diary","food-library","food-entry-editor","custom-food","recipe-builder","quick-log","scan-centre","meal-planner","daily-progress","exercise-log","progress-history","shopping-list","food-preferences","family-connections","printable-report"]);
 let navStack=[],lastActive=activeScreen(),goingBack=false;
 const scrollByScreen={};
 function installNavigation(){
@@ -114,13 +120,13 @@ document.addEventListener("click",event=>{
 
 // Backup and restore.
 function downloadJson(name,value){const blob=new Blob([JSON.stringify(value,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);}
-$("export-all-data")?.addEventListener("click",()=>{downloadJson(`healthy-eating-companion-alpha-0-6-9-backup-${window.HECDate?.todayISO?.()||"today"}.json`,{format:"HEC-BACKUP-1",version:APP.version,exportedAt:new Date().toISOString(),profile:read(MAIN_KEY,{}),functional:read(EXT_KEY,{})});track("data:backup");});
+$("export-all-data")?.addEventListener("click",()=>{downloadJson(`healthy-eating-companion-${INSTALLATION_SLUG}-alpha-${RELEASE_SLUG}-backup-${window.HECDate?.todayISO?.()||"today"}.json`,{format:"HEC-BACKUP-1",version:APP.version,installationRole:APP.installationRole,exportedAt:new Date().toISOString(),profile:read(MAIN_KEY,{}),functional:read(EXT_KEY,{})});track("data:backup");});
 $("import-all-data")?.addEventListener("change",async event=>{
-  const file=event.target.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());if(!payload.profile||!payload.functional)throw new Error("This is not a complete Healthy Eating Companion backup.");if(!confirm("Restore this backup and replace the app data currently stored on this device?"))return;write(MAIN_KEY,payload.profile);write(EXT_KEY,payload.functional);location.reload();}catch(error){alert(`Backup could not be restored: ${error.message}`);}finally{event.target.value="";}
+  const file=event.target.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());if(!payload.profile||!payload.functional)throw new Error("This is not a complete Healthy Eating Companion backup.");if(APP.installationRole==="my-data"&&payload.installationRole==="test")throw new Error("A HEC — TEST backup cannot replace the historical HEC — My Data installation.");if(!confirm(`Restore this backup into ${APP.displayName} and replace the data currently stored in this installation?`))return;write(MAIN_KEY,payload.profile);write(EXT_KEY,payload.functional);location.reload();}catch(error){alert(`Backup could not be restored: ${error.message}`);}finally{event.target.value="";}
 });
 
 // Feedback: local record plus email/share handoff for cross-device founder delivery.
-function feedbackPayload(){const main=read(MAIN_KEY,{});return {id:`feedback-${Date.now().toString(36)}`,type:$("feedback-type")?.value||"Other Feedback",screen:$("feedback-screen")?.value.trim()||activeScreen(),message:$("feedback-message")?.value.trim()||"",responseOk:!!$("feedback-response-ok")?.checked,version:APP.version,device:`${navigator.platform||"Device"} · ${navigator.userAgent}`,submittedAt:new Date().toISOString()};}
+function feedbackPayload(){const main=read(MAIN_KEY,{});return {id:`feedback-${Date.now().toString(36)}`,type:$("feedback-type")?.value||"Other Feedback",screen:$("feedback-screen")?.value.trim()||activeScreen(),message:$("feedback-message")?.value.trim()||"",responseOk:!!$("feedback-response-ok")?.checked,version:APP.version,installationRole:APP.installationRole,device:`${navigator.platform||"Device"} · ${navigator.userAgent}`,submittedAt:new Date().toISOString()};}
 $("submit-feedback")?.addEventListener("click",async()=>{
   const item=feedbackPayload();if(!item.message){toast("Please enter your feedback first.");return;}const admin=read(ADMIN_KEY,{feedback:[]});admin.feedback||=[];admin.feedback.unshift(item);write(ADMIN_KEY,admin);track(`feedback:${item.type}`);
   const main=read(MAIN_KEY,{}),recipient=main.trial?.feedbackEmail||"",subject=`Healthy Eating Companion ${APP.version} Feedback — ${item.type}`,body=`Type: ${item.type}\nScreen: ${item.screen}\nApp version: ${item.version}\nSubmitted: ${item.submittedAt}\n\n${item.message}\n\nTechnical information:\n${item.device}`;
@@ -145,11 +151,19 @@ $("founder-unlock")?.addEventListener("click",async()=>{if(!founderEnabled()){al
 $("founder-feedback-email")?.addEventListener("change",event=>{const admin=read(ADMIN_KEY,{});admin.feedbackEmail=event.target.value.trim();write(ADMIN_KEY,admin);});
 $("create-invite")?.addEventListener("click",()=>{const admin=read(ADMIN_KEY,{invites:[]});admin.invites||=[];if(admin.invites.length>=10){alert("This founder trial currently allows up to 10 invitation slots.");return;}const code=Math.random().toString(36).slice(2,8).toUpperCase(),name=$("invite-name").value.trim()||`Trial Tester ${admin.invites.length+1}`,contact=$("invite-contact").value.trim(),base=`${location.origin}${location.pathname}`,url=`${base}?invite=${encodeURIComponent(code)}&from=${encodeURIComponent("Mal")}${admin.feedbackEmail?`&feedback=${encodeURIComponent(admin.feedbackEmail)}`:""}`;admin.invites.push({code,name,contact,url,createdAt:new Date().toISOString()});write(ADMIN_KEY,admin);$("invite-name").value="";$("invite-contact").value="";renderFounder();});
 document.addEventListener("click",async event=>{const share=event.target.closest("[data-share-invite]"),copy=event.target.closest("[data-copy-invite]"),remove=event.target.closest("[data-remove-invite]");if(!share&&!copy&&!remove)return;const admin=read(ADMIN_KEY,{invites:[]}),index=Number((share||copy||remove).dataset.shareInvite??(share||copy||remove).dataset.copyInvite??(share||copy||remove).dataset.removeInvite),invite=admin.invites[index];if(!invite)return;if(remove){admin.invites.splice(index,1);write(ADMIN_KEY,admin);renderFounder();return;}if(share&&navigator.share){try{await navigator.share({title:"Healthy Eating Companion Founder Trial",text:`${invite.name}, use this private trial link:`,url:invite.url});return;}catch{}}await navigator.clipboard?.writeText(invite.url);toast("Invitation link copied.");});
-$("export-insights")?.addEventListener("click",()=>downloadJson(`hec-alpha-0-6-9-local-insights.json`,read(ADMIN_KEY,{})));
+$("export-insights")?.addEventListener("click",()=>downloadJson(`hec-${INSTALLATION_SLUG}-alpha-${RELEASE_SLUG}-local-insights.json`,read(ADMIN_KEY,{})));
 
 // Data deletion / deregistration.
-async function clearInstalledData(includeFounder=true){localStorage.removeItem(MAIN_KEY);localStorage.removeItem(EXT_KEY);["healthyEatingAlpha05","healthyEatingAlpha04","healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"].forEach(k=>localStorage.removeItem(k));if(includeFounder)localStorage.removeItem(ADMIN_KEY);if("caches" in window){for(const key of await caches.keys())await caches.delete(key);}if(navigator.serviceWorker){for(const reg of await navigator.serviceWorker.getRegistrations())await reg.unregister();}}
-$("leave-app")?.addEventListener("click",async()=>{if(!confirm("Leave Healthy Eating Companion and permanently remove this profile and all app data from this browser? Download a backup first if you may return."))return;await clearInstalledData(true);location.reload();});
+function deleteOwnedMirror(){return new Promise(resolve=>{try{const request=indexedDB.deleteDatabase(APP.mirrorDatabaseName);request.onsuccess=request.onerror=request.onblocked=()=>resolve();}catch{resolve();}});}
+async function clearInstalledData(includeFounder=true){
+  window.HECInstallation.assertDestructiveOrigin(APP,location.origin);
+  const keys=window.HECInstallation.resetStorageKeys(APP,includeFounder?"full":"keep-library");
+  keys.forEach(key=>localStorage.removeItem(key));
+  await deleteOwnedMirror();
+  if("caches" in window)for(const key of await caches.keys())if(window.HECInstallation.ownsCacheName(APP,key))await caches.delete(key);
+  if(navigator.serviceWorker)for(const registration of await navigator.serviceWorker.getRegistrations())if(window.HECInstallation.ownsServiceWorkerRegistration(APP,registration,location.href))await registration.unregister();
+}
+$("leave-app")?.addEventListener("click",async()=>{if(APP.installationRole!=="test"){alert("HEC — My Data can only be permanently cleared from its advanced data deletion controls after a backup warning.");return;}if(!confirm("Delete every record stored only inside HEC — TEST? HEC — My Data is not accessed."))return;try{await clearInstalledData(true);location.reload();}catch(error){alert(error.message);}});
 
 // Restore view-specific controls whenever screens are opened.
 const screenRenderObserver=new MutationObserver(()=>{if(activeScreen()==="founder-tools"&&founderEnabled())renderFounder();if(activeScreen()==="home"){const stored=read(MAIN_KEY,{}).preferences?.lastInspiration;if(stored&&$("message-text")){ $("message-type").textContent=contentLabel(stored.category);$("message-text").textContent=stored.text;}}});
@@ -159,10 +173,11 @@ qa(".screen").forEach(s=>screenRenderObserver.observe(s,{attributes:true,attribu
 // Alpha 0.6.13 — first Companion polish pass and permission guidance.
 function polishCompanionHome(){
   const centre=document.getElementById('home-companion'),img=document.getElementById('home-avatar-image'),name=document.getElementById('home-companion-name');if(!centre)return;
-  centre.classList.add('companion-polished');centre.setAttribute('aria-label',`${name?.textContent||'Companion'} — tap for guidance`);
+  const main=read(MAIN_KEY,{}),enabled=main.companion?.enabled!==false,cid=main.companion?.id||main.companion?.characterId||'';const c=(window.HEC_COMPANIONS||[]).find(x=>x.id===cid||x.name===main.companion?.name),action=document.getElementById('home-companion-action');
+  centre.classList.add('companion-polished');centre.setAttribute('aria-label',`${name?.textContent||'Companion'} — ${enabled?'tap for guidance':'tap for written guidance'}`);
   if(img&&!img.classList.contains('hidden'))img.classList.add('companion-idle-animation');
-  const main=read(MAIN_KEY,{}),cid=main.companion?.id||main.companion?.characterId||'';const c=(window.HEC_COMPANIONS||[]).find(x=>x.id===cid||x.name===main.companion?.name);
-  if(c){centre.dataset.personality=c.personality||'';const action=document.getElementById('home-companion-action');if(action)action.textContent=`Tap for guidance`;}
+  if(c&&enabled){centre.dataset.personality=c.personality||'';if(action)action.textContent=`Tap for guidance`;}
+  else if(!enabled){delete centre.dataset.personality;if(action)action.textContent=`Tap for written guidance`;}
 }
 function installPermissionGuidance(){
   const shopping=document.getElementById('shopping-add-status');if(shopping&&!shopping.dataset.permissionCopy){shopping.dataset.permissionCopy='1';shopping.insertAdjacentHTML('afterend','<p class="fine permission-guidance">Speech permission is normally requested only the first time. If iPhone asks again, check Safari/HE Companion permissions in Settings.</p>');}

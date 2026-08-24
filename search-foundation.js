@@ -11,15 +11,15 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.32';
+  const VERSION='0.6.33';
   const REG=global.HECAustralianEntityRegistry;
   const WORD_NUMBERS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,half:.5,a:1,an:1};
   const IRREGULAR={bananas:'banana',oranges:'orange',apples:'apple',potatoes:'potato',tomatoes:'tomato',berries:'berry',cherries:'cherry',loaves:'loaf',leaves:'leaf',fries:'fries',fish:'fish',cheese:'cheese',rice:'rice',pasta:'pasta',couscous:'couscous',eggs:'egg',sausages:'sausage'};
   const UNIT_WORDS={
-    g:['g','gram','grams'],ml:['ml','millilitre','millilitres','milliliter','milliliters'],kg:['kg','kilogram','kilograms'],
-    item:['item','items','piece','pieces'],slice:['slice','slices'],serve:['serve','serves','serving','servings'],
+    g:['g','gram','grams'],ml:['ml','millilitre','millilitres','milliliter','milliliters'],kg:['kg','kilogram','kilograms'],L:['l','litre','litres','liter','liters'],
+    item:['item','items'],piece:['piece','pieces'],slice:['slice','slices'],serve:['serve','serves','serving','servings'],
     cup:['cup','cups'],tbsp:['tablespoon','tablespoons','tbsp'],tsp:['teaspoon','teaspoons','tsp'],
-    bar:['bar','bars'],biscuit:['biscuit','biscuits'],sachet:['sachet','sachets'],packet:['packet','packets'],
+    bar:['bar','bars'],biscuit:['biscuit','biscuits'],cracker:['cracker','crackers'],sachet:['sachet','sachets'],packet:['packet','packets'],can:['can','cans'],bottle:['bottle','bottles'],
     pie:['pie','pies'],sausage:['sausage','sausages'],egg:['egg','eggs']
   };
   const UNIT_LOOKUP={};Object.entries(UNIT_WORDS).forEach(([u,words])=>words.forEach(w=>UNIT_LOOKUP[w]=u));
@@ -34,7 +34,7 @@
   // when records make it useful; skip = not normally useful for the basic food.
   const CONCEPTS=[
     {key:'pie',label:'Pie',aliases:['pie'],category:'pie',sourcePolicy:'early',facetOrder:['kind','filling','protein','source','form','size'],natural:{unit:'pie',label:'Individual Pie (about 175 g)',grams:175}},
-    {key:'sausage',label:'Sausage',aliases:['sausage','snag'],category:'meat',sourcePolicy:'early',facetOrder:['protein','flavour','source','prep','addedFat','size'],natural:{unit:'sausage',label:'Sausage (about 75 g)',grams:75}},
+    {key:'sausage',label:'Sausage',aliases:['sausage','snag','sausage sizzle','bunnings sausage','bunnings snag'],category:'meat',sourcePolicy:'early',facetOrder:['protein','flavour','source','prep','addedFat','size'],natural:{unit:'sausage',label:'Sausage (about 75 g)',grams:75}},
     {key:'banana',label:'Banana',aliases:['banana'],category:'fruit',sourcePolicy:'skip',facetOrder:['variety','form'],natural:{unit:'item',label:'Medium Banana (150 g Australian standard fruit serve)',grams:150}},
     {key:'orange',label:'Orange',aliases:['orange'],category:'fruit',sourcePolicy:'skip',facetOrder:['variety','form'],natural:{unit:'item',label:'Medium Orange (150 g Australian standard fruit serve)',grams:150}},
     {key:'apple',label:'Apple',aliases:['apple'],category:'fruit',sourcePolicy:'skip',facetOrder:['variety','form'],natural:{unit:'item',label:'Medium Apple (150 g Australian standard fruit serve)',grams:150}},
@@ -43,7 +43,7 @@
     {key:'grape',label:'Grapes',aliases:['grape'],category:'fruit',sourcePolicy:'skip',facetOrder:['variety','form'],natural:{unit:'g',label:'g',grams:1}},
     {key:'mango',label:'Mango',aliases:['mango'],category:'fruit',sourcePolicy:'skip',facetOrder:['variety','form'],natural:{unit:'item',label:'Mango',grams:200}},
     {key:'strawberry',label:'Strawberries',aliases:['strawberry'],category:'fruit',sourcePolicy:'skip',facetOrder:['form'],natural:{unit:'g',label:'g',grams:1}},
-    {key:'potato',label:'Potato',aliases:['potato','spud'],category:'vegetable',sourcePolicy:'contextual',facetOrder:['variety','form','prep','source'],natural:{unit:'g',label:'g',grams:1}},
+    {key:'potato',label:'Potato',aliases:['potato','spud','potato scallop','potato cake','potato fritter'],category:'vegetable',sourcePolicy:'contextual',facetOrder:['variety','form','prep','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'tomato',label:'Tomato',aliases:['tomato'],category:'vegetable',sourcePolicy:'skip',facetOrder:['variety','form','prep'],natural:{unit:'item',label:'Medium Tomato (about 120 g)',grams:120}},
     {key:'capsicum',label:'Capsicum',aliases:['capsicum','bell pepper'],category:'vegetable',sourcePolicy:'skip',facetOrder:['variety','form','prep'],natural:{unit:'g',label:'g',grams:1}},
     {key:'carrot',label:'Carrot',aliases:['carrot'],category:'vegetable',sourcePolicy:'skip',facetOrder:['form','prep'],natural:{unit:'g',label:'g',grams:1}},
@@ -54,8 +54,8 @@
     {key:'cheese',label:'Cheese',aliases:['cheese'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','style','form','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'milk',label:'Milk',aliases:['milk'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','source'],natural:{unit:'mL',label:'mL',grams:1}},
     {key:'yoghurt',label:'Yoghurt',aliases:['yoghurt','yogurt'],category:'dairy',sourcePolicy:'early',facetOrder:['type','fat','flavour','source'],natural:{unit:'g',label:'g',grams:1}},
-    {key:'egg',label:'Egg',aliases:['egg'],category:'egg',sourcePolicy:'skip',facetOrder:['species','part','size','prep','addedFat'],natural:{unit:'egg',label:'Egg',grams:52},supplemental:{species:['Chicken','Duck','Quail'],part:['Whole','Yolk','White'],prep:['Raw','Boiled','Poached','Microwave Poached','Fried'],size:['Small','Medium','Large','X-Large','Jumbo','King-Size'],addedFat:['No added fat/oil']}},
-    {key:'bread',label:'Bread',aliases:['bread'],category:'grain',sourcePolicy:'early',facetOrder:['type','grain','source','prep','size'],natural:{unit:'slice',label:'Slice',grams:40}},
+    {key:'egg',label:'Egg',aliases:['egg'],category:'egg',sourcePolicy:'skip',facetOrder:['species','part','size','prep','addedFat'],natural:{unit:'egg',label:'Egg',grams:52},supplemental:{species:['Chicken','Duck','Quail'],part:['Whole','Yolk','White'],prep:['Raw','Boiled','Poached','Microwave Poached','Fried','Baked / Oven','Air Fried'],size:['Small','Medium','Large','X-Large','Jumbo','King-Size'],addedFat:['No added fat/oil']}},
+    {key:'bread',label:'Bread',aliases:['bread','toast','toasted bread'],category:'grain',sourcePolicy:'early',facetOrder:['type','grain','source','prep','size'],natural:{unit:'slice',label:'Slice',grams:40}},
     {key:'rice',label:'Rice',aliases:['rice'],category:'grain',sourcePolicy:'contextual',facetOrder:['type','grain','prep','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'pasta',label:'Pasta',aliases:['pasta','spaghetti','macaroni','penne','fettuccine'],category:'grain',sourcePolicy:'contextual',facetOrder:['type','prep','source'],natural:{unit:'g',label:'g',grams:1}},
     {key:'cereal',label:'Breakfast Cereal',aliases:['cereal'],category:'grain',sourcePolicy:'early',facetOrder:['type','source'],natural:{unit:'g',label:'g',grams:1}},
@@ -114,7 +114,7 @@
     for(let i=0;i<ws.length;i++){
       const w=ws[i];
       if(quantity===null&&(Number.isFinite(Number(w))||WORD_NUMBERS[w]!==undefined)){quantity=Number.isFinite(Number(w))?Number(w):WORD_NUMBERS[w];continue;}
-      if(!unit&&UNIT_LOOKUP[w]){unit=UNIT_LOOKUP[w];if(['item','slice','serve','pie','sausage','egg','biscuit','bar','sachet','packet'].includes(unit))keep.push(singularWord(w));continue;}
+      if(!unit&&UNIT_LOOKUP[w]){unit=UNIT_LOOKUP[w];if(['item','piece','slice','serve','pie','sausage','egg','biscuit','cracker','bar','sachet','packet','can','bottle'].includes(unit))keep.push(singularWord(w));continue;}
       keep.push(w);
     }
     const food=singular(keep.join(' ')),entities=REG?.identify?REG.identify(raw):[];return {raw:String(raw||''),normalised:n,food,quantity:quantity===null?1:quantity,unit,tokens:tokens(food),entities,entityResidual:REG?.stripRecognisedEntities?REG.stripRecognisedEntities(food):food};
@@ -219,8 +219,8 @@
 
   function splitCompoundQuery(raw){
     const text=String(raw||'').trim();if(!text)return[];
-    const eggToast=text.match(/^\s*(?:(\d+|one|two|three|four|five|six)\s+)?eggs?\s+on\s+(?:toast|toasted bread)\s*$/i);
-    if(eggToast){const q=eggToast[1]?`${eggToast[1]} eggs`:'egg';return [q,'toasted bread'];}
+    const supported=(left,right,connector)=>{const a=conceptFromQuery(left),b=conceptFromQuery(right),ak=a?.key,bk=b?.key,brand=REG?.primary?REG.primary(right,['brand']):null;if(connector==='on')return ak==='egg'&&bk==='bread';if(connector==='and')return (ak==='egg'&&bk==='bread')||(ak==='banana'&&bk==='yoghurt')||(ak==='cereal'&&bk==='milk');if(connector==='with')return (ak==='cereal'&&bk==='milk')||(ak==='bread'&&(bk==='spread'||brand?.entity?.id==='flora'));return false;};
+    for(const connector of ['on','and','with']){const parts=text.split(new RegExp(`\\s+${connector}\\s+`,'i'));if(parts.length===2&&parts.every(Boolean)&&supported(parts[0],parts[1],connector))return parts.map(x=>x.trim());}
     return [];
   }
 

@@ -1,20 +1,20 @@
 <!doctype html>
-<html lang="en-AU">
+<html lang="en-AU" data-hec-release="0.6.33">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#eef7ef">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Healthy Eating Companion">
-  <title>Healthy Eating Companion — Founder Trial Alpha 0.6.32</title>
-  <link rel="manifest" href="manifest.webmanifest?v=0.6.32">
-  <link rel="stylesheet" href="styles.css?v=0.6.32">
+  <meta name="apple-mobile-web-app-title" content="HEC My Data">
+  <title>HEC — My Data — Founder Trial Alpha 0.6.33</title>
+  <link rel="manifest" href="manifest.webmanifest?v=0.6.33">
+  <link rel="stylesheet" href="styles.css?v=0.6.33">
 </head>
 <body data-theme="garden">
 <div id="app">
   <section id="welcome" class="screen active welcome-screen">
     <div class="welcome-card">
-      <div class="badge">Founder Trial · Alpha 0.6.32</div>
+      <div class="badge">Founder Trial · Alpha 0.6.33</div>
       <div class="logo">🥗</div>
       <h1>Healthy Eating Companion</h1>
       <p class="lead">Welcome. Set up Healthy Eating Companion your way—with a talking Companion, a quiet Companion, or no Companion at all.</p>
@@ -51,7 +51,7 @@
           <label class="selection-card"><input type="radio" name="language" value="en-GB"><span><strong>English (United Kingdom)</strong><small>United Kingdom regional formats</small></span></label>
           <label class="selection-card"><input type="radio" name="language" value="en-US"><span><strong>English (United States)</strong><small>United States regional formats</small></span></label>
         </div>
-        <p class="fine">Alpha 0.6.32 uses English wording throughout. Its text and regional settings are now structured so more languages can be added later.</p>
+        <p class="fine">Alpha 0.6.33 uses English wording throughout. Its text and regional settings are structured so more languages can be added later.</p>
         <small id="language-error" class="field-error"></small>
         <button id="language-next" class="primary wide">Continue</button>
       </div>
@@ -120,12 +120,15 @@
           <div class="section-heading"><div><h3>Meet The Australian Companions</h3><p>Each character already has a name, personality, speaking style and areas where they are especially helpful.</p></div></div>
           <div id="character-grid" class="character-grid companion-roster"></div>
           <div id="companion-preview" class="companion-preview hidden" aria-live="polite"></div>
-          <p class="fine">The Alpha 0.6.32 portraits are replaceable prototype artwork. The companion identities and behaviour are now stored separately so full expression sets and animation can be added without changing saved profiles.</p>
-          <div class="form-grid">
-            <label>Device voice<select id="voice-select"><option value="">Default device voice</option></select></label>
-            <label class="toggle full"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
-          </div>
-          <button id="preview-voice" class="secondary wide">🔊 Hear this Companion’s introduction</button>
+          <p class="fine">Approved production artwork is stored separately from companion identity and behaviour, so appearance updates do not change your saved Companion preferences.</p>
+          <fieldset id="companion-voice-styles" class="voice-style-panel companion-only">
+            <legend id="companion-voice-heading">Choose Your Companion’s Voice</legend>
+            <p class="fine">Choose a broad speaking style. Healthy Eating Companion will find the best suitable English voice available on each device.</p>
+            <div id="voice-style-options" class="voice-style-options"></div>
+            <p id="voice-style-status" class="fine" aria-live="polite">Your device is preparing its available voices.</p>
+          </fieldset>
+          <label class="toggle companion-only"><input id="speech-enabled" type="checkbox" checked><span>Allow my Companion to speak instructions automatically</span></label>
+          <button id="preview-voice" class="secondary wide companion-only">🔊 Hear this Companion’s introduction</button>
         </div>
 
         <fieldset>
@@ -166,15 +169,15 @@
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐦</span><p>Only your email, given name and preferred name are needed here. Address and phone details are not requested in this trial.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
         <div class="form-grid">
-          <label>Given Name *<input id="full-name" autocomplete="given-name" placeholder="For example, Malcolm"></label>
-          <label>Surname<input id="surname" autocomplete="family-name" placeholder="For example, West"></label>
+          <label>Given Name *<input id="full-name" autocomplete="given-name" placeholder="For example, Malcolm" aria-invalid="false" aria-describedby="full-name-error"><small id="full-name-error" class="field-error" aria-live="polite"></small></label>
+          <label id="surname-field" class="hidden">Surname<input id="surname" autocomplete="family-name" placeholder="For example, West"></label>
           <label>Preferred Name<input id="preferred-name" placeholder="For example, Mal"><small class="field-help">Leave blank to use your given name.</small></label>
           <label class="full">Say my preferred name like this<input id="preferred-pronunciation" placeholder="Optional phonetic spelling"></label>
         </div>
         <input id="personal-email" type="hidden">
         <button id="preview-user-name" class="secondary">🔊 Preview my preferred name</button>
         <p class="fine">Health details needed for the recommendation are asked on the next screen, with an explanation of why they are used.</p>
-        <details class="optional-profile-details"><summary>Location &amp; Time Zone (Optional)</summary><p class="fine">These settings help the app show the correct local day, date and time. Daylight saving is handled automatically by the selected time zone.</p><div class="form-grid"><label>Country<select id="profile-country"><option>Australia</option><option>New Zealand</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option></select></label><label id="profile-region-label">State, Territory Or Province<select id="profile-region"><option value="">Select</option></select></label><label>Postcode or ZIP Code<input id="profile-postcode" inputmode="text"></label><label>Home Time Zone<input id="home-timezone" placeholder="Australia/Brisbane"><small class="field-help" id="detected-timezone"></small></label><label class="full">When My Device Time Zone Changes<select id="timezone-behaviour"><option value="ask">Ask Me Before Changing</option><option value="device">Automatically Follow My Device</option><option value="home">Always Use My Home Time Zone</option></select></label></div></details>
+        <details class="optional-profile-details"><summary>Location &amp; Time Zone (Optional)</summary><p class="fine">These settings help the app show the correct local day, date and time. Daylight saving is handled automatically by the selected time zone.</p><div class="form-grid"><label>Country<select id="profile-country"><option>Australia</option><option>New Zealand</option><option>United Kingdom</option><option>United States</option><option>Canada</option><option>Other</option></select></label><label id="profile-region-label">State, Territory Or Province<select id="profile-region"><option value="">Select</option></select></label><label>Postcode or ZIP Code<input id="profile-postcode" inputmode="text"></label><label>Home Time Zone<input id="home-timezone" placeholder="Australia/Brisbane"><small class="field-help" id="detected-timezone"></small></label><label class="full">When My Device Time Zone Changes<select id="timezone-behaviour"><option value="ask">Ask Before Using My Device's New Time Zone</option><option value="home">Keep Using My Current HEC Time Zone</option></select><small class="field-help">HEC never changes its active time zone unless you approve the change.</small></label></div></details>
 
         <div id="founder-contact-fields" class="hidden" aria-hidden="true">
           <select id="country"><option value="Australia">Australia</option><option value="New Zealand">New Zealand</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Canada">Canada</option><option value="Other">Other</option></select>
@@ -204,32 +207,34 @@
       <aside class="guide-note speakable"><span class="guide-avatar live-avatar">🐵</span><p>These details prepare a starting recommendation. You remain in control of your selected goal weight.</p><button class="speak-note companion-only" aria-label="Repeat instruction">🔊</button></aside>
       <div class="card">
         <div class="form-grid">
-          <label>Date of birth *<input id="dob" type="date"><small class="field-help">Used to estimate resting energy needs.</small></label>
+          <label>Date of birth *<input id="dob" type="date" aria-invalid="false" aria-describedby="dob-help dob-error"><small id="dob-help" class="field-help">Used to estimate resting energy needs. Choose your actual date; HEC does not fill one in for you.</small><small id="dob-error" class="field-error" aria-live="polite"></small></label>
           <label>Preferred energy unit<select id="energy-unit"><option value="kJ">Kilojoules (kJ)</option><option value="Cal">Calories (Cal)</option></select><small class="field-help">You can change this later.</small></label>
         </div>
         <hr>
-        <label>Sex Used For Energy Calculation *<select id="calculation-sex"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="manual">Prefer not to say — set energy manually</option></select><small class="field-help">Used only to calculate your estimated energy needs.</small></label>
+        <label>Sex Used For Energy Calculation *<select id="calculation-sex" aria-invalid="false" aria-describedby="calculation-sex-help calculation-sex-error"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="manual">Prefer not to say — set energy manually</option></select><small id="calculation-sex-help" class="field-help">Used only to calculate your estimated energy needs.</small><small id="calculation-sex-error" class="field-error" aria-live="polite"></small></label>
 
         <fieldset>
           <legend>Height *</legend>
           <div class="segmented" data-group="height-unit"><button type="button" class="active" data-value="metric">Metric</button><button type="button" data-value="imperial">Imperial</button></div>
-          <div id="height-metric" class="unit-fields"><label>Centimetres<input id="height-cm" type="number" min="100" max="250" step="0.1" inputmode="decimal"></label></div>
-          <div id="height-imperial" class="unit-fields hidden"><label>Feet<input id="height-ft" type="number" min="3" max="8"></label><label>Inches<input id="height-in" type="number" min="0" max="11.9" step="0.1"></label></div>
+          <div id="height-metric" class="unit-fields"><label>Centimetres<input id="height-cm" type="number" min="100" max="250" step="0.1" inputmode="decimal" aria-invalid="false" aria-describedby="height-error"></label></div>
+          <div id="height-imperial" class="unit-fields hidden"><label>Feet<input id="height-ft" type="number" min="3" max="8" aria-invalid="false" aria-describedby="height-error"></label><label>Inches<input id="height-in" type="number" min="0" max="11.9" step="0.1" aria-invalid="false" aria-describedby="height-error"></label></div>
+          <small id="height-error" class="field-error" aria-live="polite"></small>
         </fieldset>
 
         <fieldset>
           <legend id="weight-legend">Starting Weight *</legend>
           <div class="segmented" data-group="weight-unit"><button type="button" class="active" data-value="metric">Metric</button><button type="button" data-value="imperial">Imperial</button></div>
-          <div id="weight-metric" class="unit-fields"><label>Kilograms<input id="weight-kg" type="number" min="30" max="400" step="0.1" inputmode="decimal"></label></div>
-          <div id="weight-imperial" class="unit-fields hidden"><label>Stone<input id="weight-st" type="number" min="4" max="60"></label><label>Pounds<input id="weight-lb" type="number" min="0" max="13.9" step="0.1"></label></div>
+          <div id="weight-metric" class="unit-fields"><label>Kilograms<input id="weight-kg" type="number" min="30" max="400" step="0.1" inputmode="decimal" aria-invalid="false" aria-describedby="weight-error"></label></div>
+          <div id="weight-imperial" class="unit-fields hidden"><label>Stone<input id="weight-st" type="number" min="4" max="60" aria-invalid="false" aria-describedby="weight-error"></label><label>Pounds<input id="weight-lb" type="number" min="0" max="13.9" step="0.1" aria-invalid="false" aria-describedby="weight-error"></label></div>
+          <small id="weight-error" class="field-error" aria-live="polite"></small>
         </fieldset>
 
         <fieldset>
           <legend>Your Goal *</legend>
           <div class="choice-grid three">
-            <label><input type="radio" name="goal" value="lose"> Lose Weight</label>
-            <label><input type="radio" name="goal" value="maintain"> Maintain Weight</label>
-            <label><input type="radio" name="goal" value="gain"> Gain Weight</label>
+            <label><input type="radio" name="goal" value="lose" aria-invalid="false" aria-describedby="goal-error"> Lose Weight</label>
+            <label><input type="radio" name="goal" value="maintain" aria-invalid="false" aria-describedby="goal-error"> Maintain Weight</label>
+            <label><input type="radio" name="goal" value="gain" aria-invalid="false" aria-describedby="goal-error"> Gain Weight</label>
           </div>
           <div id="goal-options" class="conditional hidden">
             <input id="selected-goal-weight" type="hidden" value="">
@@ -243,17 +248,18 @@
               <label class="selection-card"><input type="radio" name="loss-rate" value="fast"><span><strong>Fast</strong><small>A larger conservative trial reduction.</small></span></label>
             </div>
           </div>
+          <small id="goal-error" class="field-error" aria-live="polite"></small>
         </fieldset>
 
         <fieldset>
           <legend>Fasting Interest</legend>
-          <p class="fine">Fasting days and energy targets may change from week to week. This setting records only whether you would like fasting tools available.</p>
+          <p class="fine">Turn this on if you may want to eat less on some days. You will choose the day and amount later; nothing is scheduled during setup.</p>
           <div class="choice-grid">
             <label><input type="radio" name="fasting" value="none" checked> I Do Not Want Fasting Tools</label>
             <label><input type="radio" name="fasting" value="custom"> Make Flexible Fasting Tools Available</label>
           </div>
           <div id="custom-fasting" class="conditional hidden">
-            <p>When Meal Planner is built, you will be able to choose any day as a fasting day and set that day’s target—for example, 500 Cal—without being locked into permanent weekly days.</p>
+            <p>When Meal Planner is available, you can choose a lower-energy day only when you want one and set that day's target. HEC will not lock you into the same days each week.</p>
             <input id="fasting-energy" type="hidden" value="500"><span id="fasting-unit-label" class="hidden">Cal</span>
           </div>
         </fieldset>
@@ -277,8 +283,8 @@
         </aside>
 
         <label>How Active Is Your Normal Day? *
-          <small class="field-help">Consider your usual work, household activity, standing and walking. Do not include exercise that you intend to record separately.</small>
-          <select id="activity">
+          <small id="activity-help" class="field-help">Consider your usual work, household activity, standing and walking. Do not include exercise that you intend to record separately.</small>
+          <select id="activity" aria-invalid="false" aria-describedby="activity-help activity-error">
             <option value="">Select</option>
             <option value="1.2">Mostly seated — desk work, driving or little usual walking</option>
             <option value="1.375">Lightly active — some standing and walking during the day</option>
@@ -286,10 +292,11 @@
             <option value="1.725">Very active — physical work for much of the day</option>
             <option value="1.9">Heavy physical work — strenuous manual work for most of the day</option>
           </select>
+          <small id="activity-error" class="field-error" aria-live="polite"></small>
         </label>
 
         <fieldset class="exercise-credit-fieldset">
-          <legend>When I Record Extra Exercise, Should It Increase My Food Energy Allowance?</legend>
+          <legend>Exercise Energy</legend>
           <p class="fine">Your normal activity choice above already covers usual work, standing, walking and household activity. This setting applies only to extra exercise you record separately, so the same activity is not counted twice.</p>
           <div class="choice-grid three"><label><input type="radio" name="exercise-credit" value="0" checked> No — Keep My Food Target Unchanged</label><label><input type="radio" name="exercise-credit" value="50"> Add Back 50%</label><label><input type="radio" name="exercise-credit" value="100"> Add Back 100%</label></div>
           <p class="fine">You can change this later in Settings → Edit Health Profile.</p>
@@ -301,7 +308,7 @@
     </main>
   </section>
 
-  <section id="recommendations" class="screen content-screen" data-speech="I have prepared a starting plan for you. Review the recommended goal and choose the goal weight that suits you.">
+  <section id="recommendations" class="screen content-screen" data-speech="I have prepared a starting plan for you. Review the HEC suggested starting goal and choose the goal weight that suits you.">
     <header class="topbar sticky">
       <button class="back" data-go="health">← Back</button>
       <div class="grow"><h2>Your Recommendations</h2><p>Step 8 of 8 · Review your plan</p></div>
@@ -316,9 +323,9 @@
 
       <div class="card">
         <h3>Your Weight Goal</h3>
-        <p class="fine">The recommended goal is guidance only. Choose one current goal weight. You can change it later, and the app will retain a private history of your updates.</p>
+        <p class="fine">The HEC Suggested Starting Goal is guidance only. Choose one current goal weight. You can change it later, and the app will retain a private history of your updates.</p>
         <div class="goal-summary-row">
-          <div><span>Recommended Goal</span><strong id="recommended-goal-display">—</strong></div>
+          <div><span>HEC Suggested Starting Goal</span><strong id="recommended-goal-display">—</strong></div>
           <label>My Selected Goal Weight (kg)<input id="review-selected-goal" type="number" min="30" max="400" step="0.1"></label>
         </div>
         <small id="milestone-error" class="field-error"></small>
@@ -341,10 +348,10 @@
 
   <section id="home" class="screen home-screen">
     <header class="home-header compact-home-header">
-      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.32</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
+      <div><div class="badge">Healthy Eating Companion · Alpha 0.6.33</div><h1 id="home-greeting">Welcome</h1><p id="home-summary"></p></div>
     </header>
     <main class="home-main home-main-centred">
-      <div class="circle seven-room-circle" aria-label="Healthy Eating Companion Home navigation">
+      <div class="circle seven-room-circle nine-room-circle" aria-label="Healthy Eating Companion Home navigation">
         <div class="orbit"></div>
         <button class="room r1" data-room="daily-progress"><span>📊</span><b>Daily Progress</b><small>Today at a glance</small></button>
         <button class="room r2" data-room="quick-food"><span>⚡</span><b>Quick Food Log</b><small>Type, speak or scan</small></button>
@@ -352,8 +359,9 @@
         <button class="room r4" data-room="database"><span>🥕</span><b>Food Library</b><small>Find, save and scan</small></button>
         <button class="room r5" data-room="settings"><span>⚙️</span><b>Settings</b><small>Your choices</small></button>
         <button class="room r6" data-room="shopping-list"><span>🛒</span><b>Shopping List</b><small>Groceries and ingredients</small></button>
-        <button class="room r7" data-room="progress-weight"><span>📈</span><b>Nutrition, Balance &amp; Weight</b><small>Progress graphs</small></button>
+        <button class="room r7" data-room="progress-weight"><span>📈</span><b>Weight &amp; Nutrition Progress Graphs</b><small>Review your progress</small></button>
         <button class="room r8" data-room="quick-weight"><span>⚖️</span><b>Quick Weight Log</b><small>Record weight</small></button>
+        <button class="room r9" data-room="exercise-activity"><span>🏃</span><b>Exercise &amp; Activity</b><small>Record extra activity</small></button>
         <button id="home-companion" class="companion-centre"><img id="home-avatar-image" class="home-avatar-image hidden" alt=""><span id="home-avatar">🐦</span><strong id="home-companion-name">Companion</strong><small id="home-companion-action">Tap for guidance</small></button>
       </div>
       <div id="inspiration-card" class="home-message daily-inspiration-card tappable-card compact-companion-message-card" role="button" tabindex="0" aria-label="Tap for another food tip, quote, joke or fact">
@@ -560,13 +568,17 @@
         <div id="ocr-progress" class="status-box hidden"></div>
         <div id="ocr-review" class="hidden">
           <div class="status-box scan-review-warning"><strong>Check Every Value Against The Package</strong><p>OCR can misread decimal points, units and columns. Compare the editable values below with the package before saving.</p></div>
-          <div class="form-grid">
-            <label>Nutrition Values Shown<select id="ocr-basis"><option value="serving">Per Serving</option><option value="100">Per 100 g / 100 mL</option></select></label>
-            <label>Food Name<input id="ocr-food-name"></label><label>Serving Amount<input id="ocr-serving-amount" type="number" step="0.1" placeholder="e.g. 125"></label><label>Serving Unit<select id="ocr-serving-unit"><option>g</option><option>mL</option><option>serving</option></select></label>
-            <p id="ocr-scale-status" class="fine full"></p><label>Calories<input id="ocr-calories" type="number" step="0.1"></label><label>Protein (g)<input id="ocr-protein" type="number" step="0.1"></label><label>Carbohydrate (g)<input id="ocr-carbs" type="number" step="0.1"></label><label>Fat (g)<input id="ocr-fat" type="number" step="0.1"></label><label>Saturated Fat (g)<input id="ocr-sat-fat" type="number" step="0.1"></label><label>Fibre (g)<input id="ocr-fibre" type="number" step="0.1"></label><label>Sugars (g)<input id="ocr-sugar" type="number" step="0.1"></label><label>Sodium (mg)<input id="ocr-sodium" type="number" step="1"></label>
+          <div class="form-grid"><label>Food Name<input id="ocr-food-name"></label><label>Brand / Retailer<input id="ocr-food-brand"></label><label>Manufacturer Serving Amount<input id="ocr-serving-amount" type="number" step="0.1" placeholder="e.g. 125"></label><label>Serving Unit<select id="ocr-serving-unit"><option>g</option><option>mL</option></select></label></div>
+          <p id="ocr-scale-status" class="fine"></p>
+          <div class="ocr-column-grid">
+            <fieldset id="ocr-serving-column"><legend>Per Serving — As Printed</legend><div class="form-grid"><label>Calories<input id="ocr-calories" type="number" step="0.1"></label><label>Protein (g)<input id="ocr-protein" type="number" step="0.1"></label><label>Carbohydrate (g)<input id="ocr-carbs" type="number" step="0.1"></label><label>Fat (g)<input id="ocr-fat" type="number" step="0.1"></label><label>Saturated Fat (g)<input id="ocr-sat-fat" type="number" step="0.1"></label><label>Fibre (g)<input id="ocr-fibre" type="number" step="0.1"></label><label>Sugars (g)<input id="ocr-sugar" type="number" step="0.1"></label><label>Sodium (mg)<input id="ocr-sodium" type="number" step="1"></label></div></fieldset>
+            <fieldset id="ocr-100-column"><legend>Per 100 g / 100 mL — As Printed</legend><div class="form-grid"><label>Calories<input id="ocr100-calories" type="number" step="0.1"></label><label>Protein (g)<input id="ocr100-protein" type="number" step="0.1"></label><label>Carbohydrate (g)<input id="ocr100-carbs" type="number" step="0.1"></label><label>Fat (g)<input id="ocr100-fat" type="number" step="0.1"></label><label>Saturated Fat (g)<input id="ocr100-sat-fat" type="number" step="0.1"></label><label>Fibre (g)<input id="ocr100-fibre" type="number" step="0.1"></label><label>Sugars (g)<input id="ocr100-sugar" type="number" step="0.1"></label><label>Sodium (mg)<input id="ocr100-sodium" type="number" step="1"></label></div></fieldset>
           </div>
+          <div id="ocr-review-status" class="status-box scan-review-warning"></div>
+          <label class="toggle"><input id="ocr-package-confirmed" type="checkbox"><span>I checked the name, serving size and nutrition values against the current package.</span></label>
+          <label id="ocr-discrepancy-confirm-row" class="toggle hidden"><input id="ocr-discrepancy-confirmed" type="checkbox"><span>I reviewed the difference between the printed per-serving and per-100 values.</span></label>
           <details class="ocr-raw-details"><summary>Show Recognised Text</summary><label>Recognised Text<textarea id="ocr-text" rows="8"></textarea></label></details>
-          <button id="use-ocr-values" class="primary wide" type="button">Review As A Custom Food</button>
+          <div class="scan-review-actions"><button class="secondary" type="button" data-capture-action="save" data-capture-source="ocr">Save To My Foods Only</button><button class="secondary" type="button" data-capture-action="add" data-capture-source="ocr">Add To Diary</button><button class="primary" type="button" data-capture-action="both" data-capture-source="ocr">Save &amp; Add To Diary</button></div>
         </div>
       </div>
 
@@ -575,7 +587,7 @@
         <p>Photo recognition must never guess calories silently. Describe or search for each visible food, then confirm quantities in the Food Library.</p>
         <div class="quick-action-row"><button id="photo-find-food" class="primary" type="button">Find Foods In This Meal</button><button id="photo-add-note" class="secondary" type="button">Keep Photo As A Diary Note</button></div>
       </div>
-      <div id="scan-review-card" class="card hidden"><h3>Review Scanned Product</h3><div id="scan-food-preview"></div><button id="review-scan-food" class="primary wide">Review This Food</button></div>
+      <div id="scan-review-card" class="card hidden"><h3>Review Scanned Product</h3><div id="scan-food-preview"></div><div id="scan-review-status" class="status-box scan-review-warning"></div><div class="scan-review-actions"><button class="secondary" type="button" data-capture-action="save" data-capture-source="barcode">Save To My Foods Only</button><button class="secondary" type="button" data-capture-action="add" data-capture-source="barcode">Add To Diary</button><button class="primary" type="button" data-capture-action="both" data-capture-source="barcode">Save &amp; Add To Diary</button></div></div>
     </main>
   </section>
 
@@ -660,26 +672,63 @@
     </main>
   </section>
 
-  <section id="exercise-log" class="screen content-screen"><header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Exercise & Extra Activity</h2><p>Anything Above Your Usual Day</p></div></header><main class="page"><div class="card"><div class="form-grid"><label>Activity<input id="exercise-name" placeholder="Mowing, gym, brisk walk, heavy work..."></label><label>Duration (minutes)<input id="exercise-minutes" type="number" min="1"></label><label>Intensity<select id="exercise-intensity"><option>Light</option><option selected>Moderate</option><option>Vigorous</option></select></label><label>Estimated Calories Burned<input id="exercise-calories" type="number" min="0"></label><label>Credit To Today’s Food Allowance<select id="exercise-credit-choice"><option value="0">None</option><option value="50">50%</option><option value="100">All</option><option value="custom">Custom</option></select></label><label>Custom Credit (Cal)<input id="exercise-custom-credit" type="number" min="0"></label><label class="full">Notes<textarea id="exercise-notes" rows="2"></textarea></label></div><button id="add-exercise" class="primary wide">Add Activity</button></div><div class="card"><h3>Activity History</h3><div id="exercise-history"></div></div></main></section>
-
-  <section id="progress-weight-hub" class="screen content-screen">
-    <header class="topbar sticky"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Nutrition, Balance &amp; Weight Progress</h2><p>Review nutrition balance, weight trends and progress over time.</p></div></header>
-    <main class="page">
-      <div class="subroom-grid">
-        <button data-open-feature="progress-history"><span>📈</span><strong>Progress History</strong><small>Weight, food, hydration and activity trends</small></button>
-        <button data-open-feature="daily-progress"><span>🥗</span><strong>Nutrition Balance</strong><small>Review today’s nutrition balance and guidance</small></button>
-        <button data-open-feature="printable-report"><span>🖨️</span><strong>Printable Report</strong><small>Preview, print or save a PDF</small></button>
+  <section id="exercise-log" class="screen content-screen">
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Exercise &amp; Activity</h2><p>Record movement that is extra to your usual day.</p></div></header>
+    <main class="page activity-page">
+      <div class="guide-note activity-baseline-note"><strong>Your everyday movement is already included.</strong><p>Your usual work, standing, walking and household activity are represented by the Activity Level in your HEC profile. Add something here when it is extra activity you deliberately want to record, so it is not counted twice.</p></div>
+      <div class="card activity-entry-card">
+        <div class="activity-form-heading"><div><span class="eyebrow">Activity Record</span><h3 id="activity-form-title">Add Activity</h3></div><button id="cancel-exercise-edit" class="secondary hidden" type="button">Cancel Edit</button></div>
+        <p class="fine">HEC energy figures are practical estimates, not medical measurements. You can choose manual energy whenever you have a better figure.</p>
+        <div id="activity-preset-grid" class="activity-preset-grid" role="group" aria-label="Choose an activity">
+          <button type="button" data-activity-preset="walking"><span>🚶</span>Walking</button>
+          <button type="button" data-activity-preset="cycling"><span>🚲</span>Cycling</button>
+          <button type="button" data-activity-preset="swimming"><span>🏊</span>Swimming</button>
+          <button type="button" data-activity-preset="gym-work"><span>🏋️</span>Gym Work</button>
+          <button type="button" data-activity-preset="gardening"><span>🌱</span>Gardening</button>
+          <button type="button" data-activity-preset="mowing"><span>🌿</span>Mowing</button>
+          <button type="button" data-activity-preset="hiking"><span>🥾</span>Hiking</button>
+          <button type="button" data-activity-preset="manual-other"><span>✍️</span>Manual / Other Activity</button>
+        </div>
+        <div class="form-grid activity-form-grid">
+          <label>Activity<select id="exercise-type"><option value="walking">Walking</option><option value="cycling">Cycling</option><option value="swimming">Swimming</option><option value="gym-work">Gym Work</option><option value="gardening">Gardening</option><option value="mowing">Mowing</option><option value="hiking">Hiking</option><option value="manual-other">Manual / Other Activity</option></select></label>
+          <label id="exercise-name-field" class="hidden">Activity Name<input id="exercise-name" maxlength="80" placeholder="Describe the activity"></label>
+          <label>Date<input id="exercise-date" type="date"></label>
+          <label>Duration (minutes)<input id="exercise-minutes" type="number" min="1" max="1440" step="1" inputmode="numeric"></label>
+          <label id="exercise-distance-field">Distance (km) <span class="fine">Optional</span><input id="exercise-distance" type="number" min="0" max="1000" step="0.01" inputmode="decimal"></label>
+          <label id="exercise-intensity-field">Intensity<select id="exercise-intensity"><option>Light</option><option selected>Moderate</option><option>Vigorous</option></select></label>
+          <label>Energy Source<select id="exercise-energy-source"><option value="estimate">HEC Estimate</option><option value="manual">Enter Manually</option></select></label>
+          <label>Raw Exercise Energy (Cal)<input id="exercise-calories" type="number" min="0" max="10000" step="1" inputmode="numeric"></label>
+          <label class="full">Notes <span class="fine">Optional</span><textarea id="exercise-notes" rows="3" maxlength="500"></textarea></label>
+        </div>
+        <div id="exercise-provenance" class="status-box activity-provenance" aria-live="polite"></div>
+        <div id="exercise-policy-summary" class="status-box activity-policy-summary" aria-live="polite"></div>
+        <div id="exercise-error" class="field-error" aria-live="polite"></div>
+        <button id="add-exercise" class="primary wide" type="button">Save Activity</button>
+        <div id="exercise-saved-state" class="success-message hidden" role="status" aria-live="polite"></div>
       </div>
+      <div class="card"><div class="activity-form-heading"><div><span class="eyebrow">Your Records</span><h3>Recent Activity</h3></div></div><div id="exercise-history"></div></div>
     </main>
   </section>
 
   <section id="progress-history" class="screen content-screen">
-    <header class="topbar"><button class="back" data-go="home">← Back</button><div class="grow"><h2>Progress History</h2><p>Weight, food, hydration and activity trends—without badges or game-style streaks.</p></div><button class="help-button" data-help="progress-history">Help With This Screen</button></header>
-    <main class="page">
-      <div class="card"><div class="segmented history-period"><button data-period="7">7 Days</button><button data-period="14">14 Days</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button></div><div id="history-summary" class="status-box"></div></div>
-      <div class="card"><h3>Weight Trend</h3><div id="history-bars" class="history-bars"></div></div>
-      <div class="card"><h3>Recorded-Day Nutrition</h3><div id="nutrition-history"></div></div>
-      <div class="card"><h3>Activity &amp; Fluids</h3><div id="activity-history-summary"></div></div>
+    <header class="topbar sticky compact-feature-header"><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Weight &amp; Nutrition Progress Graphs</h2><p>Review your recorded progress over time.</p></div><div class="quick-action-row compact-header-actions"><button class="secondary" data-open-feature="printable-report" type="button">Print / Save Report</button><button class="help-button" data-help="progress-history" type="button">Help</button></div></header>
+    <main class="page stage6-progress-page">
+      <div class="card stage6-progress-controls">
+        <div class="segmented progress-view-switch" role="tablist" aria-label="Progress graph category"><button class="active" data-progress-view="weight" role="tab" aria-selected="true" aria-controls="progress-weight-panel">Weight</button><button data-progress-view="nutrition" role="tab" aria-selected="false" aria-controls="progress-nutrition-panel">Nutrition</button></div>
+      </div>
+      <section id="progress-weight-panel" class="progress-panel" role="tabpanel">
+        <div id="weight-journey-summary" class="weight-journey-summary" aria-live="polite"></div>
+        <div class="card stage6-weight-chart-card">
+          <div class="stage6-chart-heading"><div><span class="eyebrow">Recorded Weight</span><h3>Weight Trend</h3></div><button class="primary" data-open-weight-checkin type="button">Add Weight Check-In</button></div>
+          <div class="segmented history-period" aria-label="Weight graph range"><button data-period="7">7 Days</button><button data-period="14">14 Days</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button></div>
+          <div id="history-bars" class="history-bars"></div>
+          <div id="weight-point-summary" class="weight-point-summary" aria-live="polite"></div>
+        </div>
+      </section>
+      <section id="progress-nutrition-panel" class="progress-panel hidden" role="tabpanel">
+        <div class="card"><h3>Recorded-Day Nutrition</h3><p class="fine">Averages include days with Diary entries only. Unrecorded days are not treated as zero.</p><div id="nutrition-history"></div></div>
+        <div class="card"><h3>Activity &amp; Fluids</h3><div id="activity-history-summary"></div></div>
+      </section>
     </main>
   </section>
 
@@ -735,18 +784,19 @@
         <button id="food-data-settings" class="secondary">Food Data Sources</button>
         <button data-open-feature="send-feedback" class="secondary">Send Feedback</button>
         <button data-open-feature="data-privacy" class="secondary">Data, Backup &amp; Privacy</button>
+        <div id="installation-identity" class="installation-identity" aria-live="polite"></div>
         <button id="founder-tools-button" data-open-feature="founder-tools" class="secondary hidden">Founder Trial Tools</button>
-        <button id="reset-trial" class="danger-button">Reset App for Testing</button>
-        <button id="leave-app" class="danger-button">Leave Healthy Eating Companion</button>
+        <button id="reset-trial" class="danger-button hidden" data-test-reset-control>Reset HEC — TEST</button>
+        <button id="leave-app" class="danger-button hidden" data-test-reset-control>Delete This TEST Installation Data</button>
       </div>
     </main>
   </section>
 
   <section id="send-feedback" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Send Feedback</h2><p>Tell us what works and what needs improvement.</p></div></header><main class="page narrow"><div class="card"><div class="form-grid"><label>Feedback Type<select id="feedback-type"><option>Something I Like</option><option>Something I Dislike</option><option>Something Seems Inaccurate</option><option>I Found a Bug</option><option>Suggest a New Feature</option><option>Other Feedback</option></select></label><label>Screen or Feature<input id="feedback-screen" placeholder="Optional"></label><label class="full">Your Feedback<textarea id="feedback-message" rows="7" required></textarea></label><label class="toggle full"><input id="feedback-response-ok" type="checkbox"><span>You may contact me about this feedback.</span></label></div><button id="submit-feedback" class="primary wide">Prepare Feedback</button><p class="fine">App version and basic device information are included. Diary text, food entries, weight, photos and address details are not attached automatically.</p><div id="feedback-status" class="status-box hidden"></div></div></main></section>
 
-  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.32 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, foods, meals, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine">A backup is recommended before major testing changes or clearing browser history.</p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card danger-zone"><h3>Testing And Leaving</h3><p><strong>Reset App for Testing</strong> can restart onboarding while keeping your My Foods and My Meals &amp; Recipes library. A separate full reset remains available when you deliberately want to delete everything.</p><p><strong>Leave Healthy Eating Companion</strong> removes the local registration, profile and all app data from this browser.</p></div></main></section>
+  <section id="data-privacy" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Data, Backup &amp; Privacy</h2></div></header><main class="page narrow"><div class="card"><h3>Your Data Stays Between Versions</h3><p>Alpha 0.6.33 uses the same private browser storage keys as earlier Alpha 0.6 releases. Updating files at the same website address does not intentionally remove profiles, diary entries, foods, meals, recipes or lists.</p><div class="quick-action-row"><button id="export-all-data" class="primary">Download Backup</button><label class="file-button secondary">Restore Backup<input id="import-all-data" type="file" accept="application/json"></label></div><p class="fine"><strong>Keep a readable backup before any advanced data operation or deployment change.</strong></p></div><div class="card"><h3>Anonymous Usage Information</h3><label class="toggle"><input id="analytics-consent" type="checkbox"><span>Help improve the app by recording anonymous feature-use counts on this device.</span></label><p class="fine">Private diary text, food details, weight, address and phone numbers are not included in these counts.</p></div><div class="card hidden" data-test-reset-control><h3>HEC — TEST Data</h3><p>This installation is disposable and isolated. Use the Reset controls in Settings whenever a clean onboarding run is needed.</p></div><details id="my-data-advanced-reset" class="card danger-zone advanced-reset hidden" data-my-data-reset-control><summary>Advanced My Data deletion controls</summary><div class="advanced-reset-body"><h3>Permanent Historical Data Deletion</h3><p><strong>This is HEC — My Data.</strong> A Full Reset permanently deletes the historical profile, Diary, weights, activities, My Foods, My Recipes, Shopping, companion and preferences stored in this installation.</p><p>Download and verify a full backup first. Ordinary use never requires this reset.</p><label>Type <strong>DELETE MY DATA</strong> to unlock Full Reset<input id="my-data-reset-confirm-text" autocomplete="off" spellcheck="false"></label><button id="my-data-full-reset" class="danger-button wide" type="button">Full Reset HEC — My Data</button></div></details></main></section>
 
-  <section id="founder-tools" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Founder Trial Tools</h2><p>Local founder-only testing controls.</p></div></header><main class="page"><div id="founder-lock-card" class="card"><h3>Developer Access</h3><p>Set or enter a six-digit local PIN. This protects the tools on this device only.</p><label>Founder PIN<input id="founder-pin" type="password" inputmode="numeric" maxlength="6"></label><button id="founder-unlock" class="primary">Unlock</button><small id="founder-lock-status" class="field-error"></small></div><div id="founder-dashboard" class="hidden"><div class="card"><h3>Invite Trial Testers</h3><p>Create up to 10 invitation links for friends and family.</p><div class="form-grid"><label>Feedback Email<input id="founder-feedback-email" type="email" placeholder="Address that receives tester feedback"></label><label>Name<input id="invite-name"></label><label>Email or Note<input id="invite-contact"></label></div><button id="create-invite" class="primary">Create Invitation</button><div id="invite-list"></div><p class="fine">In this static trial, invitation records and the 10-person limit are stored on this device. Secure cross-device enforcement will require a protected server in a future build.</p></div><div class="card"><h3>Developer Insights</h3><div id="developer-insights"></div><button id="export-insights" class="secondary">Export Local Insights</button><p class="fine">These figures cover this browser only until a privacy-protected analytics service is connected.</p></div><div class="card"><h3>Feedback Received on This Device</h3><div id="founder-feedback-list"></div></div></div></main></section>
+  <section id="founder-tools" class="screen content-screen"><header class="topbar sticky"><button class="back" data-hec-back>← Back</button><button class="home-nav-button" data-go="home">🏠 Home</button><div class="grow"><h2>Founder Trial Tools</h2><p>Local founder-only testing controls.</p></div></header><main class="page"><div id="founder-lock-card" class="card"><h3>Developer Access</h3><p>Set or enter a six-digit local PIN. This protects the tools on this device only.</p><label>Founder PIN<input id="founder-pin" type="password" inputmode="numeric" maxlength="6"></label><button id="founder-unlock" class="primary">Unlock</button><small id="founder-lock-status" class="field-error"></small></div><div id="founder-dashboard" class="hidden"><div class="card"><h3>Installation Diagnostics</h3><div id="installation-diagnostics"></div></div><div class="card"><h3>Invite Trial Testers</h3><p>Create up to 10 invitation links for friends and family.</p><div class="form-grid"><label>Feedback Email<input id="founder-feedback-email" type="email" placeholder="Address that receives tester feedback"></label><label>Name<input id="invite-name"></label><label>Email or Note<input id="invite-contact"></label></div><button id="create-invite" class="primary">Create Invitation</button><div id="invite-list"></div><p class="fine">In this static trial, invitation records and the 10-person limit are stored on this device. Secure cross-device enforcement will require a protected server in a future build.</p></div><div class="card"><h3>Developer Insights</h3><div id="developer-insights"></div><button id="export-insights" class="secondary">Export Local Insights</button><p class="fine">These figures cover this browser only until a privacy-protected analytics service is connected.</p></div><div class="card"><h3>Feedback Received on This Device</h3><div id="founder-feedback-list"></div></div></div></main></section>
 
   <section id="weight-checkin" class="screen content-screen" data-speech="Record your current weight and selected goal. Recommendations update only after a meaningful change, so small daily fluctuations do not keep changing your plan.">
     <header class="topbar"><button class="back" data-go="home">← Back</button><div><h2>Weight Check-In</h2><p>Update Progress And Adapt Your Plan</p></div></header>
@@ -766,7 +816,7 @@
           <label>Current Selected Goal (kg)<input id="checkin-goal" type="number" min="30" max="400" step="0.1"></label><label>Note<input id="checkin-note" maxlength="120" placeholder="Optional note"></label>
         </div>
         <small id="checkin-error" class="field-error"></small>
-        <button id="save-checkin" class="primary wide">Save Check-In And Review Plan</button>
+        <div class="checkin-save-actions"><button id="save-checkin" class="primary" type="button">Save Weight Check-In</button><button id="save-checkin-view" class="secondary" type="button">Save &amp; View Weight Graph</button></div>
         <div id="checkin-result" class="status-box hidden"></div>
       </div>
       <div class="card">
@@ -783,14 +833,51 @@
 
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
-<script src="config.js?v=0.6.32"></script>
-<script src="companions.js?v=0.6.32"></script>
-<script src="app.js?v=0.6.32"></script>
-<script src="entity-registry.js?v=0.6.32"></script>
-<script src="search-foundation.js?v=0.6.32"></script>
-<script src="guided-branching.js?v=0.6.32"></script>
-<script src="serving-foundation.js?v=0.6.32"></script>
-<script src="alpha06.js?v=0.6.32"></script>
-<script src="alpha064.js?v=0.6.32"></script>
+<script src="installation-config.js?v=0.6.33"></script>
+<script src="config.js?v=0.6.33"></script>
+<script>
+(() => {
+  "use strict";
+  const expected=document.documentElement.dataset.hecRelease;
+  const actual=window.HEC_APP?.version||"";
+  const runtimeFiles=[
+    "installation-foundation.js",
+    "migrations.js","companions.js","companion-artwork.js","companion-voice-metadata.js","companion-voices.js",
+    "stage4-foundation.js","weight-progress-foundation.js","app.js","entity-registry.js","search-foundation.js",
+    "food-catalogue.js","guided-branching.js","packaged-foods.js","capture-foundation.js","serving-foundation.js",
+    "activity-foundation.js","alpha06.js","alpha064.js"
+  ];
+  function releaseNotice(title,copy){
+    document.title=`Healthy Eating Companion — ${title}`;
+    document.getElementById("app")?.setAttribute("hidden","");
+    let notice=document.getElementById("hec-release-status");
+    if(!notice){notice=document.createElement("main");notice.id="hec-release-status";notice.setAttribute("role","status");notice.style.cssText="max-width:36rem;margin:12vh auto;padding:2rem;font:1rem/1.5 system-ui;text-align:center";document.body.appendChild(notice);}
+    notice.innerHTML=`<h1>${title}</h1><p>${copy}</p>`;
+  }
+  function refreshReleaseWorker(){
+    releaseNotice("Updating Healthy Eating Companion","A new app version is being prepared. Your saved data is not being changed.");
+    window.stop();
+    if(!("serviceWorker" in navigator)||!location.protocol.startsWith("http")){
+      releaseNotice("Update Needed","Reload this page while online to finish updating Healthy Eating Companion.");
+      return;
+    }
+    let reloading=false;
+    const reload=()=>{if(reloading)return;reloading=true;location.reload();};
+    const hadController=!!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange",reload,{once:true});
+    navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(expected)}&role=${encodeURIComponent(window.HEC_APP?.installationRole||"my-data")}`,{updateViaCache:"none"})
+      .then(registration=>registration.update())
+      .then(()=>{if(!hadController)navigator.serviceWorker.ready.then(reload);})
+      .catch(()=>releaseNotice("Update Paused","Healthy Eating Companion could not finish updating. Check your connection, then reload this page."));
+  }
+  const role=window.HEC_APP?.installationRole||"";
+  const roleOriginSafe=role!=="test"||(window.HEC_APP?.expectedOrigin&&window.HEC_APP.expectedOrigin===location.origin&&location.protocol==="https:");
+  if(!roleOriginSafe){releaseNotice("HEC TEST Safety Lock","This TEST build is not running at its approved isolated origin. No HEC runtime or destructive TEST operation has been started.");window.stop();return;}
+  if(!expected||actual!==expected){refreshReleaseWorker();return;}
+  window.HEC_RELEASE_READY=runtimeFiles.reduce((chain,file)=>chain.then(()=>new Promise((resolve,reject)=>{
+    const script=document.createElement("script");script.src=`${file}?v=${encodeURIComponent(actual)}`;script.onload=resolve;script.onerror=()=>reject(new Error(`${file} failed to load`));document.body.appendChild(script);
+  })),Promise.resolve()).catch(()=>releaseNotice("App Could Not Start","Reload while online. Your saved data remains on this device."));
+})();
+</script>
 </body>
 </html>

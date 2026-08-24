@@ -1,10 +1,16 @@
 (() => {
 "use strict";
 
-const APP = window.HEC_APP || {name:"Healthy Eating Companion",version:"0.6.32",storageKey:"healthyEatingCompanionAlpha06",functionalStorageKey:"healthyEatingCompanionAlpha06Functional"};
+const APP = window.HEC_APP;
+if(!APP?.version)throw new Error("HEC canonical configuration was not loaded");
+const ACTIVITY = window.HECActivity;
+const WEIGHT_PROGRESS = window.HECWeightProgress;
+const ACTIVE_VERSION = APP.version;
 const MAIN_KEY = APP.storageKey;
 const EXT_KEY = APP.functionalStorageKey;
-const LEGACY_EXT_KEYS = ["healthyEatingAlpha05Functional","healthyEatingAlpha04Extensions"];
+const LEGACY_EXT_KEYS = APP.legacyFunctionalKeys || [];
+const RESET_RELOAD_SESSION_KEY = APP.resetSessionKey;
+let resetInProgress = false;
 const by = id => document.getElementById(id);
 const q = selector => document.querySelector(selector);
 const qa = selector => [...document.querySelectorAll(selector)];
@@ -15,7 +21,8 @@ const whole = value => Math.round(Number(value) || 0);
 const isoToday = () => window.HECDate?.todayISO?.() || `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-${String(new Date().getDate()).padStart(2,"0")}`;
 const activeTimeZone = () => window.HECDate?.activeTimeZone?.() || Intl.DateTimeFormat().resolvedOptions().timeZone || "Australia/Brisbane";
 const localClock = () => { const z=window.HECDate?.zonedParts?.() || {}; return `${String(z.hour ?? new Date().getHours()).padStart(2,"0")}:${String(z.minute ?? new Date().getMinutes()).padStart(2,"0")}`; };
-const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+const uid = prefix => window.HECMigrations?.createId?.(prefix) || `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+const recordTimestamps = createdAt => {const updatedAt=new Date().toISOString();return {createdAt:createdAt||updatedAt,updatedAt};};
 const clone = value => JSON.parse(JSON.stringify(value));
 const formatDate = value => value ? new Intl.DateTimeFormat("en-AU", {weekday:"short", day:"numeric", month:"short", year:"numeric"}).format(new Date(value + "T12:00:00")).replace(",","") : "";
 const formatNumber = (value, precise=false) => {
@@ -138,7 +145,7 @@ const MEAL_SUGGESTIONS = [
 ];
 
 const EXT_DEFAULTS = {
-  version:"0.6.16", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
+  version:"0.6.16", diary:{}, daySettings:{}, water:{}, fluidTargets:{}, steps:{}, dailyNotes:{}, exercise:[], exerciseCreditPolicies:[], shopping:[], onlineFoods:[], onlineSearchCache:{},
   family:{enabled:false,name:"",email:""}, connections:{}, customFoods:[], savedFoodIds:[], recipes:[], mealTemplates:[], shoppingVoiceAliases:{},
   ui:{diaryDate:isoToday(),progressDate:isoToday(),plannerDate:isoToday(),diaryView:"all",libraryTab:"all",foodSearch:"",foodSearchByTab:{},scanMode:"food",pendingMeal:"",plannerResults:{},plannerRejected:{},plannerAccepted:{},plannerSessionActive:false,singleMealPreferences:{},recipeDraft:[],recipeName:"",recipeServings:4,recipeNotes:"",returnToRecipe:false,replacingEntryId:"",pendingDrink:null}
 };
@@ -172,6 +179,18 @@ function loadExt(){
 }
 const ext = loadExt();
 const saveExt = () => localStorage.setItem(EXT_KEY,JSON.stringify(ext));
+const activityPolicies = () => Array.isArray(ext.exerciseCreditPolicies)?ext.exerciseCreditPolicies:[];
+const activityAllowanceCredit = record => ACTIVITY.allowanceCredit(record,activityPolicies());
+const activityRawEnergy = record => ACTIVITY.rawEnergy(record);
+function ensureActivityCreditPolicy(){
+  const main=mainData(),effectiveDate=main.profileStartedDate||isoToday(),before=JSON.stringify(activityPolicies());
+  if(!ext.exerciseCreditPolicies?.length)ext.exerciseCreditPolicies=ACTIVITY.recordPolicy([], {percent:main.health?.exerciseCredit,effectiveDate,id:uid("exercise-policy"),now:new Date().toISOString()});
+  return before!==JSON.stringify(activityPolicies());
+}
+function syncActivityCreditPolicy(){
+  ensureActivityCreditPolicy();const main=mainData(),next=ACTIVITY.recordPolicy(activityPolicies(),{percent:main.health?.exerciseCredit,effectiveDate:isoToday(),id:uid("exercise-policy"),now:new Date().toISOString()});
+  if(JSON.stringify(next)!==JSON.stringify(activityPolicies())){ext.exerciseCreditPolicies=next;saveExt();if(q("#exercise-log.active"))renderExercise();}
+}
 
 let AFCD_FOODS=[];
 let afcdLoaded=false;
@@ -234,7 +253,7 @@ function convertAfcdFood(raw){
   const gravity=n(raw.specificGravity),liquid=/water|juice|drink|beverage|coffee|tea|cordial|soft drink|milk/.test(normalise(raw.name));
   const units={g:.01,serving:1},labels={g:"g",serving:"100 g Serving"};
   if(liquid&&gravity>0){units.mL=gravity/100;labels.mL="mL";}
-  return {id:raw.id,afcdKey:raw.afcdKey,name:raw.name,brand:"Australian Food Composition Database",category:afcdCategory(raw),country:"Australia",aliases:friendlyAliasesForAfcd(raw.name),defaultAmount:liquid&&gravity>0?100:100,defaultUnit:liquid&&gravity>0?"mL":"g",units,unitLabels:labels,serving:"Reference Values per 100 g",nutrients:raw.nutrients,score:7,source:"Food Standards Australia New Zealand · AFCD Release 3",verified:true,ingredients:raw.description||"",allergens:[],waterMl:n(raw.moisture),hydrationType:liquid?"drink":"food",foodGroups:afcdFoodGroups(raw),afcd:true,derivation:raw.derivation||""};
+  return {id:raw.id,afcdKey:raw.afcdKey,sourceId:raw.afcdKey||raw.id,recordType:"afcd",verificationStatus:"verified",market:"AU",name:raw.name,brand:"Australian Food Composition Database",category:afcdCategory(raw),country:"Australia",aliases:friendlyAliasesForAfcd(raw.name),defaultAmount:liquid&&gravity>0?100:100,defaultUnit:liquid&&gravity>0?"mL":"g",units,unitLabels:labels,serving:"Reference Values per 100 g",nutrients:raw.nutrients,score:7,source:"Food Standards Australia New Zealand · AFCD Release 3",verified:true,ingredients:raw.description||"",allergens:[],waterMl:n(raw.moisture),hydrationType:liquid?"drink":"food",foodGroups:afcdFoodGroups(raw),afcd:true,derivation:raw.derivation||""};
 }
 async function loadAfcdFoods(){
   if(afcdLoaded)return AFCD_FOODS;
@@ -360,7 +379,7 @@ function recipeProfile(recipe){
 }
 function recipeAsFood(recipe){
   const profile=recipeProfile(recipe);
-  return {id:recipe.id,name:recipe.name,brand:"My Recipe",category:"Recipe",country:"Australia",aliases:[recipe.name],defaultAmount:1,defaultUnit:"serve",units:{serve:1},unitLabels:{serve:"recipe serving"},serving:`1 of ${recipe.servings} servings`,nutrients:recipe.perServe,foodGroups:recipe.foodGroups||profile.foodGroups,waterMl:n(recipe.waterMl)||profile.waterMl,hydrationType:"food",score:recipe.score || 7,source:"User Recipe",verified:false,ingredients:recipe.ingredients.map(i => i.name).join(", "),allergens:[]};
+  return {id:recipe.id,sourceId:recipe.id,recordType:"recipe",verificationStatus:"user-confirmed",market:"AU",name:recipe.name,brand:"My Recipe",category:"Recipe",country:"Australia",aliases:[recipe.name],defaultAmount:1,defaultUnit:"serve",units:{serve:1},unitLabels:{serve:"recipe serving"},serving:`1 of ${recipe.servings} servings`,nutrients:recipe.perServe,foodGroups:recipe.foodGroups||profile.foodGroups,waterMl:n(recipe.waterMl)||profile.waterMl,hydrationType:"food",score:recipe.score || 7,source:"User Recipe",verified:false,ingredients:recipe.ingredients.map(i => i.name).join(", "),allergens:[]};
 }
 function recommendedNormalTarget(){
   const main=mainData(),r=main.recommendations||{};
@@ -380,7 +399,7 @@ function currentGoals(date=isoToday()){
   const settings=ext.daySettings[date]||{},type=settings.type||"normal";
   const standard=type==="fasting"?(n(ext.dayTypeTargets?.fasting)||500):recommendedNormalTarget();
   const calTarget=settings.customTarget?(n(settings.targetCal)||standard):standard;
-  const exerciseCredit=(ext.exercise||[]).filter(x=>(x.localDate||x.date?.slice(0,10))===date).reduce((sum,x)=>sum+n(x.credit),0),hydration=hydrationReference(),macros=balancedMacroTargets(calTarget||300);
+  const exerciseCredit=(ext.exercise||[]).filter(x=>ACTIVITY.localDateOf(x)===date).reduce((sum,x)=>sum+activityAllowanceCredit(x),0),hydration=hydrationReference(),macros=balancedMacroTargets(calTarget||300);
   return {calories:calTarget?calTarget+exerciseCredit:0,baseCalories:calTarget,exerciseCredit,hydration:hydration.fluids,fluids:hydration.fluids,protein:calTarget?macros.protein:0,fat:calTarget?macros.fat:0,carbs:calTarget?macros.carbs:0,fibre:30,sugar:null,freeSugar:calTarget?calTarget*.10/4:0,addedSugar:calTarget?calTarget*.10/4:0,sodium:2000,steps:10000,foodGroups:foodGroupGoals(),dayType:type};
 }
 function entriesForDate(date){ return ext.diary[date] || []; }
@@ -414,8 +433,10 @@ function openFeature(id,options={}){
     if(id==="daily-progress")ext.ui.progressDate=today;
     if(id==="meal-planner"){ext.ui.plannerDate=today;resetPlannerSelections();}
     if(id==="food-library"){ext.ui.pendingMeal="";ext.ui.foodSearch="";ext.ui.libraryTab="all";}
+    if(id==="progress-history")ext.ui.progressView="weight";
     saveExt();
   }
+  if(id==="progress-history"&&options.progressView)ext.ui.progressView=options.progressView==="nutrition"?"nutrition":"weight";
   if(id==="food-library"&&options.freshSearch){ext.ui.foodSearch="";ext.ui.libraryTab="all";saveExt();}
   if(typeof window.show === "function") window.show(id,{speak:false});
   else { qa(".screen").forEach(s => s.classList.remove("active")); by(id)?.classList.add("active"); window.scrollTo(0,0); }
@@ -424,7 +445,7 @@ function openFeature(id,options={}){
   if(id === "food-library") renderLibrary();
   if(id === "daily-progress") renderDailyProgress();
   if(id === "exercise-log") renderExercise();
-  if(id === "progress-history") renderHistory(currentPeriod());
+  if(id === "progress-history"){setProgressView(ext.ui.progressView||"weight",false);renderHistory(currentPeriod());}
   if(id === "shopping-list") renderShopping();
   if(id === "food-preferences") renderFoodPreferences();
   if(id === "family-connections") renderConnections();
@@ -687,12 +708,13 @@ function saveEditorEntry(andSaveFood=false){
     showActionToast(`${food.name} has no usable energy value. Add or correct its Calories before logging it.`,null,8000);
     return;
   }
+  const existingEntry=editorState.entryId?findEntry(editorState.entryId):null;
   const record = {
     id:editorState.entryId || uid("entry"),foodId:baseFood.id,name:food.name,brand:food.brand || "",date,meal:selectedMeal,status:"eaten",
-    amount,unit,unitLabel:cleanUserUnitLabel(unitLabel(food,unit)),metricEquivalent:naturalMetricEquivalent(food,amount,unit),time:by("entry-time").value,notes:by("entry-notes").value,nutrients:values,foodGroups:scaledFoodGroups(food,amount,unit),waterMl:scaledWaterMl(food,amount,unit),hydrationType:food.hydrationType||"food",score:food.score,source:food.source || editorState.source,variantSelections:food.variantSelections||{},createdAt:new Date().toISOString(),localDate:date,timeZone:activeTimeZone()
+    amount,unit,unitLabel:cleanUserUnitLabel(unitLabel(food,unit)),metricEquivalent:naturalMetricEquivalent(food,amount,unit),time:by("entry-time").value,notes:by("entry-notes").value,nutrients:values,foodGroups:scaledFoodGroups(food,amount,unit),waterMl:scaledWaterMl(food,amount,unit),hydrationType:food.hydrationType||"food",score:food.score,source:food.source || editorState.source,variantSelections:food.variantSelections||{},foodSnapshot:P8?.diarySnapshot?.(food,{amount,unit,unitLabel:cleanUserUnitLabel(unitLabel(food,unit)),nutrients:values})||null,localDate:date,timeZone:activeTimeZone(),...recordTimestamps(existingEntry?.entry?.createdAt||existingEntry?.entry?.recordedAt)
   };
   if(editorState.entryId){
-    const found = findEntry(editorState.entryId);
+    const found = existingEntry;
     if(found){ ext.diary[found.date].splice(found.index,1); if(!ext.diary[found.date].length) delete ext.diary[found.date]; }
   }
   if(ext.ui.replacingEntryId && !editorState.entryId){
@@ -751,6 +773,7 @@ function saveDaySettings(showMessage=true){
 by("save-day-settings")?.addEventListener("click",()=>saveDaySettings(true));
 
 function snapshotFood(entry){
+  const stored=P8?.foodFromSnapshot?.(entry);if(stored)return {...stored,foodGroups:entry.foodGroups||{},waterMl:n(entry.waterMl),hydrationType:entry.hydrationType||"food",score:entry.score};
   return {id:entry.foodId || uid("snapshot"),name:entry.name,brand:entry.brand,defaultAmount:entry.amount,defaultUnit:entry.unit,units:{[entry.unit]:1/entry.amount},unitLabels:{[entry.unit]:entry.unitLabel},serving:`${entry.amount} ${entry.unitLabel}`,nutrients:entry.nutrients,foodGroups:entry.foodGroups||{},waterMl:n(entry.waterMl),hydrationType:entry.hydrationType||"food",score:entry.score,source:entry.source};
 }
 function requestDeleteEntry(id){
@@ -764,7 +787,7 @@ function requestCopyEntry(id){
   const target=shiftISO(found.date,1);
   openModal(`Copy ${found.entry.name}`,`Choose the date for the independent copy.`,`Copy`,() => {
     const date=by("modal-copy-date")?.value || target;
-    const copy={...clone(found.entry),id:uid("entry"),date,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()};
+    const copy={...clone(found.entry),id:uid("entry"),date,localDate:date,timeZone:activeTimeZone(),...recordTimestamps()};
     ext.diary[date] ||= [];ext.diary[date].push(copy);saveExt();showActionToast(`${copy.name} copied to ${formatDate(date)}.`,() => {ext.diary[date]=ext.diary[date].filter(e=>e.id!==copy.id);saveExt();},8000);
   },`<label>Copy To Date<input id="modal-copy-date" type="date" value="${target}"></label>`);
 }
@@ -809,7 +832,7 @@ function saveMealTemplatePrompt(meal){
   const date=diaryDate();const entries=entriesForDate(date).filter(e=>e.meal===meal);if(!entries.length)return;
   openModal("Save This Meal",`Save these ${entries.length} ${entries.length===1?"item":"items"} as a reusable meal.`,`Save Meal`,() => {
     const name=by("modal-meal-name")?.value.trim() || `${meal} from ${formatDate(date)}`;
-    ext.mealTemplates.push({id:uid("meal"),name,items:entries.map(e=>({...clone(e),id:undefined,date:undefined,status:"eaten"})),createdAt:new Date().toISOString()});saveExt();showActionToast(`${name} saved to My Meals & Recipes.`,null,2000);
+    ext.mealTemplates.push({id:uid("meal"),name,items:entries.map(e=>({...clone(e),id:undefined,date:undefined,status:"eaten"})),...recordTimestamps()});saveExt();showActionToast(`${name} saved to My Meals & Recipes.`,null,2000);
   },`<label>Meal Name<input id="modal-meal-name" value="${esc(meal)}"></label>`);
 }
 
@@ -859,6 +882,7 @@ function searchRank(food,query){
   return 0;
 }
 function foodRecordType(food){
+  if(window.HECFoodCatalogue)return window.HECFoodCatalogue.provenance(food).label;
   if(food.category==="Recipe"||food.brand==="My Recipe")return "My Recipe";
   if(food.source==="User Created")return "My Food";
   if(food.afcd)return "Australian AFCD Food";
@@ -874,7 +898,7 @@ function renderRecentLibrary(query=""){
   const nq=normalise(query),groups=recentGroups(14).map(g=>({...g,items:g.items.filter(e=>!nq||normalise(`${e.name} ${e.brand||""}`).includes(nq))})).filter(g=>g.items.length);
   by("food-results").innerHTML=groups.length?groups.map(g=>`<section class="recent-meal-group"><header><div><strong>${esc(g.meal)} · ${g.items.length===1?'Recent Food':'Recent Meal'}</strong><small>${esc(relativeDateLabel(g.date))}</small></div>${g.items.length>1?`<button data-recent-meal-add="${esc(g.date)}|${esc(g.meal)}">Add To ${esc(g.meal)}</button>`:''}</header>${g.items.map(e=>`<div class="recent-entry-row"><span><strong>${esc(e.name)}</strong><small>${esc(entryNaturalQuantity(e))} · ${energyText(e.nutrients?.calories)}</small></span><button data-recent-entry-add="${esc(e.id)}" aria-label="Add ${esc(e.name)} to Diary">＋ Add Food</button></div>`).join("")}</section>`).join(""):`<div class="resource-empty"><strong>No Recent Foods Yet.</strong><p>Foods and meals from the last 14 days will appear here for quick reuse.</p></div>`;
 }
-function copyRecentEntry(entry,targetDate,targetMeal){const copy={...clone(entry),id:uid("entry"),date:targetDate,localDate:targetDate,meal:targetMeal,status:"eaten",time:localClock(),createdAt:new Date().toISOString(),timeZone:activeTimeZone()};ext.diary[targetDate]||=[];ext.diary[targetDate].push(copy);return copy;}
+function copyRecentEntry(entry,targetDate,targetMeal){const copy={...clone(entry),id:uid("entry"),date:targetDate,localDate:targetDate,meal:targetMeal,status:"eaten",time:localClock(),timeZone:activeTimeZone(),...recordTimestamps()};ext.diary[targetDate]||=[];ext.diary[targetDate].push(copy);return copy;}
 function cachedOnlineMatches(query){
   if(!query || query.trim().length<3)return [];
   return (ext.onlineFoods||[]).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>=620).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name)).map(x=>x.food);
@@ -888,7 +912,7 @@ function renderFoodLiveMatches(query){
   if(typeof alpha0618R2GuideLabels==="function" && typeof alpha0618R2Text==="function"){
     const qn=alpha0618R2Text(term);
     if(/\bburger king\b/.test(qn)){
-      box.innerHTML='<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha 0.6.32</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>';
+      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian location rules applied · Alpha ${ACTIVE_VERSION}</small></div><button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent — guided menu</small></span><b>›</b></button>`;
       box.classList.remove("hidden");return;
     }
     const chain=typeof alpha0618ChainFor==="function"?alpha0618ChainFor(term):null;
@@ -896,12 +920,12 @@ function renderFoodLiveMatches(query){
       const alias=(chain.aliases||[]).find(a=>qn.includes(a))||"";
       const tail=qn.replace(alias,"").trim();
       const items=(chain.items||[]).filter(x=>!tail||alpha0618R2Text(x).includes(tail)).slice(0,3);
-      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha 0.6.32</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
+      box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Australian menu first · Alpha ${ACTIVE_VERSION}</small></div>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join("")}`;
       box.classList.remove("hidden");return;
     }
     const guides=alpha0618R2GuideLabels(term);
     const guideHtml=guides.map(g=>`<button type="button" class="live-match-row alpha0618-r2-guide-row" data-alpha0618-r2-guide="${esc(g.label)}"><span><strong>${esc(g.label)}</strong><small>Guided entry · choose type, preparation and amount</small></span><b>›</b></button>`).join("");
-    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha 0.6.32</small></div>${guideHtml}`;
+    box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Guided Food Entry · Alpha ${ACTIVE_VERSION}</small></div>${guideHtml}`;
     box.classList.remove("hidden");return;
   }
 
@@ -928,7 +952,7 @@ function renderLibrary(){
   if(tab==="online"){renderOnlineLibrary(query);return;}
   const localFoods=[...FOODS,...(ext.customFoods||[]),...AFCD_FOODS];
   const libraryFoods=tab==="saved"?allFoods().filter(food=>ext.savedFoodIds.includes(food.id)):localFoods.filter(food=>food.category!=="Recipe");
-  let ranked=libraryFoods.filter(food=>tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0).sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
+  let ranked=libraryFoods.filter(food=>tab==="custom"?food.source==="User Created":true).map(food=>({food,rank:searchRank(food,query)})).filter(item=>item.rank>0);if(window.HECFoodCatalogue?.dedupeRanked)ranked=window.HECFoodCatalogue.dedupeRanked(ranked);ranked.sort((a,b)=>b.rank-a.rank||Number(b.food.country==="Australia")-Number(a.food.country==="Australia")||a.food.name.localeCompare(b.food.name));
   const strongMatch=ranked.some(item=>item.rank>=760);
   let visible=query?ranked.filter(item=>item.rank>=(strongMatch?760:620)):ranked;
   let intro="";
@@ -954,13 +978,13 @@ function renderLibrary(){
 }
 
 function resourceFoodRow(food){
-  const saved=ext.savedFoodIds.includes(food.id),safety=foodSafety(food);
-  return `<article class="resource-row ${food.afcd?"afcd-row":""} ${safety.blocked?"food-warning":""}"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}${food.afcd?'<span class="afcd-badge">AFCD</span>':""}</strong><small>${esc([food.brand,cleanMeasureText(food.serving),energyText(food.nutrients?.calories)].filter(Boolean).join(" · "))}</small></button><button class="resource-save ${saved?"saved":""}" data-food-save="${esc(food.id)}" aria-label="${saved?"Remove from":"Save to"} Favourite Foods">${saved?"✓":"☆"}</button><button class="resource-add" data-food-add="${esc(food.id)}" aria-label="Review and add ${esc(food.name)}">＋</button></article>`;
+  const saved=ext.savedFoodIds.includes(food.id),safety=foodSafety(food),loggable=window.HECFoodCatalogue?.canLog?window.HECFoodCatalogue.canLog(food):hasEnergyValue(food?.nutrients?.calories);
+  return `<article class="resource-row ${food.afcd?"afcd-row":""} ${safety.blocked||!loggable?"food-warning":""}"><button class="resource-main" data-food-details="${esc(food.id)}"><strong>${esc(food.name)}${food.afcd?'<span class="afcd-badge">AFCD</span>':""}</strong><small>${esc([food.brand,cleanMeasureText(food.serving),energyText(food.nutrients?.calories)].filter(Boolean).join(" · "))}</small></button><button class="resource-save ${saved?"saved":""}" data-food-save="${esc(food.id)}" aria-label="${saved?"Remove from":"Save to"} Favourite Foods">${saved?"✓":"☆"}</button><button class="resource-add" data-food-add="${esc(food.id)}" aria-label="${loggable?"Review and add":"Nutrition incomplete for"} ${esc(food.name)}" ${loggable?'':'disabled title="Complete the nutrition information before adding to Diary"'}>＋</button></article>`;
 }
 function foodCard(food){return resourceFoodRow(food);}
 document.addEventListener("click",event=>{
   const tab=event.target.closest("[data-library-tab]");if(tab){ext.ui.libraryTab=tab.dataset.libraryTab;by("resource-add-menu")?.classList.add("hidden");saveExt();renderLibrary();if(tab.dataset.libraryTab==="all")scheduleAllResourcesOnlineSearch();return;}
-  const add=event.target.closest("[data-food-add]");if(add){const food=getFood(add.dataset.foodAdd),drink=ext.ui.pendingDrink||null;prepareEntry(food,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"",status:"eaten",amount:drink?.amount||null,unit:drink&&unitOptions(food).mL!==undefined?"mL":null});if(drink){ext.ui.pendingDrink=null;saveExt();}return;}
+  const add=event.target.closest("[data-food-add]");if(add){const food=getFood(add.dataset.foodAdd);if(window.HECFoodCatalogue&&!window.HECFoodCatalogue.canLog(food)){showActionToast('Complete And Confirm This Food’s Nutrition Before Adding It To Diary.',null,6000);return;}const drink=ext.ui.pendingDrink||null;prepareEntry(food,{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||"",status:"eaten",amount:drink?.amount||null,unit:drink&&unitOptions(food).mL!==undefined?"mL":null});if(drink){ext.ui.pendingDrink=null;saveExt();}return;}
   const save=event.target.closest("[data-food-save]");if(save){toggleSavedFood(save.dataset.foodSave);return;}
   const details=event.target.closest("[data-food-details]");if(details){showFoodDetails(details.dataset.foodDetails);return;}
   const recipeAdd=event.target.closest("[data-recipe-add]");if(recipeAdd){prepareEntry(getFood(recipeAdd.dataset.recipeAdd),{date:ext.ui.diaryDate||isoToday(),meal:ext.ui.pendingMeal||""});return;}
@@ -1009,7 +1033,7 @@ function onlineNutrientRecord(list,names,preferredUnits=[]){
   if(units.length)return matches.find(x=>units.includes(String(x.unitName||x.nutrient?.unitName||x.nutrient?.unit||"").toUpperCase()))||null;
   return matches[0];
 }
-function onlineNutrientValue(list,names,preferredUnits=[]){let found=onlineNutrientRecord(list,names,preferredUnits);if(!found&&preferredUnits.length)found=onlineNutrientRecord(list,names);return found?n(found.value??found.amount):0;}
+function onlineNutrientValue(list,names,preferredUnits=[]){let found=onlineNutrientRecord(list,names,preferredUnits);if(!found&&preferredUnits.length)found=onlineNutrientRecord(list,names);return found?n(found.value??found.amount):null;}
 function onlineEnergyKcal(list){
   const names=["Energy","Energy (Atwater General Factors)","Energy (Atwater Specific Factors)"];
   const kcal=onlineNutrientRecord(list,names,["KCAL"]);if(kcal)return n(kcal.value??kcal.amount);
@@ -1045,8 +1069,8 @@ function alpha0630PruneOnlineFoods(maxUnsaved=220){
   const list=Array.isArray(ext.onlineFoods)?ext.onlineFoods:[],saved=new Set(ext.savedFoodIds||[]),keepSaved=list.filter(f=>saved.has(f.id)),unsaved=list.filter(f=>!saved.has(f.id)).slice(-maxUnsaved),seen=new Set();
   ext.onlineFoods=[...keepSaved,...unsaved].filter(f=>f?.id&&!seen.has(f.id)&&seen.add(f.id));
 }
-function alpha0631UsableOnlineFood(food){const cal=Number(food?.nutrients?.calories);if(!food?.id||!food?.nutrients||!Number.isFinite(cal))return false;if(cal>0)return true;const n=s23Norm(`${food?.name||''} ${food?.brand||''}`);return cal===0&&/\bwater\b|\bzero sugar\b|\bsugar free\b|\bdiet soft drink\b/.test(n);}
-function upsertOnlineFoods(foods){foods.forEach(food=>{if(!alpha0631UsableOnlineFood(food))return;const i=ext.onlineFoods.findIndex(x=>x.id===food.id);if(i>=0)ext.onlineFoods[i]=food;else ext.onlineFoods.push(food);});alpha0630PruneOnlineFoods();alpha0630InvalidateFoodSearchCaches();}
+function alpha0631UsableOnlineFood(food){if(!food?.id||!food?.nutrients||!hasEnergyValue(food.nutrients.calories))return false;const cal=Number(food.nutrients.calories);if(cal>0)return true;const n=s23Norm(`${food?.name||''} ${food?.brand||''}`);return cal===0&&/\bwater\b|\bzero sugar\b|\bsugar free\b|\bdiet soft drink\b/.test(n);}
+function upsertOnlineFoods(foods){foods.forEach(food=>{if(!alpha0631UsableOnlineFood(food))return;const i=ext.onlineFoods.findIndex(x=>x.id===food.id);if(i>=0){const existing=ext.onlineFoods[i];ext.onlineFoods[i]={...food,...recordTimestamps(existing.createdAt||existing.savedAt)};}else ext.onlineFoods.push({...food,...recordTimestamps(food.createdAt||food.savedAt)});});alpha0630PruneOnlineFoods();alpha0630InvalidateFoodSearchCaches();}
 alpha0630PruneOnlineFoods(); // cache only; saved online foods are always retained
 async function searchOpenFoodFacts(query,signal){
   const fields="code,product_name,generic_name,brands,countries,countries_tags,nutriments,serving_size,serving_quantity,serving_quantity_unit,ingredients_text,allergens,image_front_small_url";
@@ -1054,7 +1078,8 @@ async function searchOpenFoodFacts(query,signal){
   const response=await fetch(url,{headers:{Accept:"application/json"},signal});if(!response.ok)throw new Error(`Open Food Facts ${response.status}`);const data=await response.json();return (data.products||[]).map(makeOpenFoodFactsFood).filter(alpha0631UsableOnlineFood);
 }
 async function searchUsda(query,signal){
-  const settings=ext.foodDataSettings||{},key=settings.usdaKey||"DEMO_KEY";const url=`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(query)}&pageSize=20`;
+  const settings=ext.foodDataSettings||{},key=String(settings.usdaKey||"").trim();if(!key)return [];
+  const url=`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(query)}&pageSize=20`;
   const response=await fetch(url,{headers:{Accept:"application/json"},signal});if(!response.ok)throw new Error(`FoodData Central ${response.status}`);const data=await response.json();return (data.foods||[]).map(makeUsdaFood).filter(alpha0631UsableOnlineFood);
 }
 function renderOnlineLibrary(query=""){
@@ -1149,7 +1174,7 @@ function addMealTemplate(id){
   openModal(`Add ${template.name}?`,`Choose where this reusable meal belongs. This creates independent Diary entries on ${formatDate(date)}.`,"Add To Diary",()=>{
     const meal=by("saved-meal-target-meal")?.value||knownMeal;if(!meal){showActionToast("Choose a meal before adding this saved meal.",null,5000);return;}
     ext.diary[date] ||= [];
-    template.items.forEach(item=>ext.diary[date].push({...clone(item),id:uid("entry"),date,meal,status:"eaten",localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()}));saveExt();openFeature("food-diary");showActionToast(`${template.name} added to ${meal}.`,null,2000);
+    template.items.forEach(item=>ext.diary[date].push({...clone(item),id:uid("entry"),date,meal,status:"eaten",localDate:date,timeZone:activeTimeZone(),...recordTimestamps()}));saveExt();openFeature("food-diary");showActionToast(`${template.name} added to ${meal}.`,null,2000);
   },`<label>Meal<select id="saved-meal-target-meal"><option value="">Choose A Meal</option>${mealOptions}</select></label>`);
 }
 function deleteMealTemplate(id){const template=ext.mealTemplates.find(m=>m.id===id);if(!template)return;openModal(`Delete ${template.name}?`,`Past diary entries will not be changed.`,`Delete`,()=>{const idx=ext.mealTemplates.findIndex(m=>m.id===id);const removed=ext.mealTemplates.splice(idx,1)[0];saveExt();renderLibrary();showActionToast(`${removed.name} deleted from My Meals & Recipes.`,()=>{ext.mealTemplates.splice(idx,0,removed);saveExt();renderLibrary();},8000);});}
@@ -1160,7 +1185,7 @@ by("save-custom-food")?.addEventListener("click",()=>{
   if(!name||cal===""){by("custom-food-error").textContent="Enter a food name and Calories.";return;}
   const nutrientValue=id=>by(id).value===""?null:Number(by(id).value);
   const amount=n(by("custom-serving-amount").value)||1,unit=by("custom-serving-unit").value;
-  const food={id:uid("custom"),name,brand:by("custom-food-brand").value.trim(),category:"Custom Food",country:"Australia",aliases:[name],defaultAmount:amount,defaultUnit:unit,units:{[unit]:1/amount},unitLabels:{[unit]:unit},serving:`${amount} ${unit}`,nutrients:{calories:Number(cal),protein:nutrientValue("custom-protein"),carbs:nutrientValue("custom-carbs"),fat:nutrientValue("custom-fat"),satFat:nutrientValue("custom-sat-fat"),fibre:nutrientValue("custom-fibre"),sugar:nutrientValue("custom-sugar"),sodium:nutrientValue("custom-sodium")},foodGroups:{},waterMl:0,hydrationType:"food",score:7,source:"User Created",verified:false,ingredients:by("custom-ingredients").value.trim(),allergens:[]};
+  const food={id:uid("custom"),recordType:"private",verificationStatus:"user-confirmed",market:"AU",name,brand:by("custom-food-brand").value.trim(),category:"Custom Food",country:"Australia",aliases:[name],defaultAmount:amount,defaultUnit:unit,units:{[unit]:1/amount},unitLabels:{[unit]:unit},serving:`${amount} ${unit}`,nutrients:{calories:Number(cal),protein:nutrientValue("custom-protein"),carbs:nutrientValue("custom-carbs"),fat:nutrientValue("custom-fat"),satFat:nutrientValue("custom-sat-fat"),fibre:nutrientValue("custom-fibre"),sugar:nutrientValue("custom-sugar"),sodium:nutrientValue("custom-sodium")},foodGroups:{},waterMl:0,hydrationType:"food",score:7,source:"User Created",verified:false,ingredients:by("custom-ingredients").value.trim(),allergens:[],...recordTimestamps()};
   ext.customFoods.push(food);saveExt();["custom-food-name","custom-food-brand","custom-cal","custom-protein","custom-carbs","custom-fat","custom-sat-fat","custom-fibre","custom-sugar","custom-sodium","custom-ingredients"].forEach(id=>by(id).value="");if(ext.ui.returnToRecipe){ext.ui.returnToRecipe=false;ext.ui.recipeSelectedFoodId=food.id;saveExt();openFeature("recipe-builder");showActionToast(`${food.name} created and ready to add to your recipe.`,null,2000);}else{ext.ui.libraryTab="custom";openFeature("food-library");showActionToast(`${food.name} saved to My Foods.`,null,2000);}
 });
 
@@ -1219,7 +1244,7 @@ by("recipe-servings")?.addEventListener("input",renderRecipeDraft);
 by("save-recipe")?.addEventListener("click",()=>{
   const name=by("recipe-name").value.trim(),servings=Math.max(1,whole(by("recipe-servings").value));if(!name||!recipeDraft.length){by("recipe-error").textContent="Enter a Recipe Name and at least one Ingredient.";return;}
   const total=sumNutrients(recipeDraft),per=Object.fromEntries(Object.entries(total).map(([k,v])=>[k,v/servings]));const score=Math.max(1,Math.min(10,round1(recipeDraft.reduce((sum,i)=>sum+n(i.score),0)/recipeDraft.length)));
-  const profile=recipeProfile({servings,ingredients:recipeDraft});const recipe={id:uid("recipe"),name,servings,notes:by("recipe-notes").value,ingredients:clone(recipeDraft),perServe:per,foodGroups:profile.foodGroups,waterMl:profile.waterMl,score,createdAt:new Date().toISOString()};ext.recipes.push(recipe);recipeDraft=[];recipeSelectedFoodId="";ext.ui.recipeDraft=[];ext.ui.recipeSelectedFoodId="";ext.ui.recipeName="";ext.ui.recipeServings=4;ext.ui.recipeNotes="";by("recipe-name").value="";by("recipe-servings").value=4;by("recipe-notes").value="";ext.ui.libraryTab="recipes";saveExt();openFeature("food-library");showActionToast(`${recipe.name} saved in My Meals & Recipes. Tap its star to also add it to Favourite Foods.`,null,2000);
+  const profile=recipeProfile({servings,ingredients:recipeDraft});const recipe={id:uid("recipe"),name,servings,notes:by("recipe-notes").value,ingredients:clone(recipeDraft),perServe:per,foodGroups:profile.foodGroups,waterMl:profile.waterMl,score,...recordTimestamps()};ext.recipes.push(recipe);recipeDraft=[];recipeSelectedFoodId="";ext.ui.recipeDraft=[];ext.ui.recipeSelectedFoodId="";ext.ui.recipeName="";ext.ui.recipeServings=4;ext.ui.recipeNotes="";by("recipe-name").value="";by("recipe-servings").value=4;by("recipe-notes").value="";ext.ui.libraryTab="recipes";saveExt();openFeature("food-library");showActionToast(`${recipe.name} saved in My Meals & Recipes. Tap its star to also add it to Favourite Foods.`,null,2000);
 });
 
 // Voice and text logging
@@ -1260,11 +1285,12 @@ document.addEventListener("click",event=>{const b=event.target.closest("[data-re
 by("cancel-voice-review")?.addEventListener("click",()=>by("voice-review").classList.add("hidden"));
 by("confirm-voice-log")?.addEventListener("click",()=>{
   if(!voiceParsed.items?.length)return;const date=by("voice-date").value||isoToday(),meal=by("voice-meal").value;if(!meal){showActionToast("Choose a Meal before adding this food.",null,5000);by("voice-meal")?.focus();return;}ext.diary[date] ||= [];
-  voiceParsed.items.forEach(item=>{const food=getFood(item.foodId);ext.diary[date].push({id:uid("entry"),foodId:food.id,name:food.name,brand:food.brand,date,meal,status:"eaten",amount:item.amount,unit:item.unit,unitLabel:unitLabel(food,item.unit),time:localClock(),notes:"Added after voice/text review",nutrients:scaledNutrients(food,item.amount,item.unit),foodGroups:scaledFoodGroups(food,item.amount,item.unit),waterMl:scaledWaterMl(food,item.amount,item.unit),hydrationType:food.hydrationType||"food",score:food.score,source:`Voice/Text Review · ${food.source}`,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()});});saveExt();ext.ui.diaryDate=date;openFeature("food-diary");showActionToast(`${voiceParsed.items.length} ${voiceParsed.items.length===1?"item":"items"} added after review.`,null,2000);voiceParsed=[];by("voice-transcript").value="";
+  voiceParsed.items.forEach(item=>{const food=getFood(item.foodId),values=scaledNutrients(food,item.amount,item.unit),label=unitLabel(food,item.unit);ext.diary[date].push({id:uid("entry"),foodId:food.id,name:food.name,brand:food.brand,date,meal,status:"eaten",amount:item.amount,unit:item.unit,unitLabel:label,time:localClock(),notes:"Added after voice/text review",nutrients:values,foodSnapshot:window.HECPackagedFoods?.diarySnapshot?.(food,{amount:item.amount,unit:item.unit,unitLabel:label,nutrients:values})||null,foodGroups:scaledFoodGroups(food,item.amount,item.unit),waterMl:scaledWaterMl(food,item.amount,item.unit),hydrationType:food.hydrationType||"food",score:food.score,source:`Voice/Text Review · ${food.source}`,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()});});saveExt();ext.ui.diaryDate=date;openFeature("food-diary");showActionToast(`${voiceParsed.items.length} ${voiceParsed.items.length===1?"item":"items"} added after review.`,null,2000);voiceParsed=[];by("voice-transcript").value="";
 });
 
 // Scan capture and review
-let scanFile=null,scanBarcodeControls=null,scanBarcodeStream=null,scanBarcodeTimer=null,barcodeDetectionLocked=false,scanBarcodeFood=null,ocrParsedPanel=null;
+const X8=window.HECCaptureFoundation;
+let scanFile=null,scanBarcodeControls=null,scanBarcodeStream=null,scanBarcodeTimer=null,barcodeDetectionLocked=false,scanBarcodeFood=null,ocrParsedPanel=null,ocrReviewedFood=null,captureActionLocked=false;
 function loadExternalScript(src,test){
   if(test())return Promise.resolve(true);
   return new Promise((resolve,reject)=>{const existing=[...document.scripts].find(x=>x.src===src);if(existing){const timer=setInterval(()=>{if(test()){clearInterval(timer);resolve(true);}},100);setTimeout(()=>{clearInterval(timer);test()?resolve(true):reject(new Error("Library unavailable"));},8000);return;}const script=document.createElement("script");script.src=src;script.crossOrigin="anonymous";script.onload=()=>test()?resolve(true):reject(new Error("Library did not initialise"));script.onerror=()=>reject(new Error("Library could not load"));document.head.appendChild(script);});
@@ -1277,7 +1303,22 @@ async function ensureOcrLibrary(){
   if(window.Tesseract)return true;
   try{await loadExternalScript("https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js",()=>!!window.Tesseract);return !!window.Tesseract;}catch{return false;}
 }
-function validBarcodeValue(value){const clean=String(value||"").replace(/\D/g,"");return clean.length>=8&&clean.length<=14?clean:"";}
+function validBarcodeValue(value){return X8?.validBarcode?X8.validBarcode(value):(String(value||"").replace(/\D/g,"").match(/^\d{8,14}$/)?.[0]||"");}
+function setCaptureActionState(source,actions={}){const root=source==="barcode"?by("scan-review-card"):by("ocr-review");if(!root)return;qa(`[data-capture-source="${source}"]`).forEach(button=>{button.disabled=!actions[button.dataset.captureAction];button.setAttribute("aria-disabled",String(button.disabled));});}
+function keepCapturedFoodAvailable(food,{save=false}={}){
+  if(!food)return false;const isPrivate=food.recordType==='private'||food.source==='User Created'||/nutrition panel/i.test(food.source||'');
+  if(isPrivate&&save){const index=ext.customFoods.findIndex(item=>item.id===food.id);if(index>=0)ext.customFoods[index]=food;else ext.customFoods.push(food);}
+  else if(!isPrivate){const index=ext.onlineFoods.findIndex(item=>item.id===food.id);if(index>=0)ext.onlineFoods[index]=food;else ext.onlineFoods.push(food);}
+  else if(!FOOD_BY_ID.has(food.id)){FOODS.push(food);FOOD_BY_ID.set(food.id,food);}
+  if(save&&!ext.savedFoodIds.includes(food.id))ext.savedFoodIds.push(food.id);
+  if(save){ext.foodVerification||={};ext.foodVerification[food.id]={...(ext.foodVerification[food.id]||{}),savedAt:new Date().toISOString(),method:/nutrition panel/i.test(food.source||'')?'nutrition-panel-confirmed':'barcode-online'};}
+  if(save||!isPrivate)saveExt();return true;
+}
+function openCapturedFoodForDiary(food,{save=false}={}){
+  if(!X8?.barcodeStatus?.(food)?.canAddToDiary){showActionToast("Complete And Confirm The Nutrition Details Before Adding This Food.",null,6000);return false;}
+  keepCapturedFoodAvailable(food,{save});const meal=ext.ui.pendingMeal||ext.ui?.mealEntrySession?.meal||'',date=ext.ui?.mealEntrySession?.date||ext.ui.diaryDate||isoToday();prepareEntry(food,{date,meal,source:food.source});if(!editorState)return false;
+  editorState.returnTo='scan-centre';editorState.pendingDiarySave=save;editorState.libraryOnly=false;by("entry-date")?.closest(".form-grid")?.classList.remove("hidden");if(by("entry-date"))by("entry-date").value=date;if(by("entry-meal"))by("entry-meal").value=meal;if(by("save-food-entry")){by("save-food-entry").classList.remove("hidden");by("save-food-entry").textContent=save?'Confirm Save & Add To Diary':'Confirm Add To Diary';}by("save-food-entry-and-food")?.classList.add("hidden");updateEntryPreview();if(!meal){showActionToast('Choose a Diary meal, then confirm. No default meal has been selected.',null,6000);by('entry-meal')?.focus();}return true;
+}
 function updateBarcodeLookupState(){const input=by("scan-barcode-input"),button=by("lookup-barcode");if(button)button.disabled=!validBarcodeValue(input?.value);}
 function updateScanModeUI(){
   const mode=ext.ui.scanMode||"food";qa("[data-scan-mode]").forEach(b=>b.classList.toggle("active",b.dataset.scanMode===mode));by("barcode-tools")?.classList.toggle("hidden",mode!=="barcode");by("label-tools")?.classList.toggle("hidden",mode!=="label");by("photo-tools")?.classList.toggle("hidden",mode!=="food");by("scan-photo-capture")?.classList.toggle("hidden",mode==="barcode");
@@ -1295,16 +1336,17 @@ by("scan-image")?.addEventListener("change",event=>{scanFile=event.target.files?
 by("take-scan-photo")?.addEventListener("click",()=>{const input=by("scan-image");if(!input)return;input.setAttribute("capture","environment");input.click();});
 by("choose-scan-photo")?.addEventListener("click",()=>{const input=by("scan-image");if(!input)return;input.removeAttribute("capture");input.click();});
 async function lookupBarcodeProduct(code){
-  const clean=validBarcodeValue(code);if(!clean){showActionToast("Enter Or Scan A Valid Barcode.",null,2000);return null;}by("scan-barcode-input")?.blur();updateBarcodeLookupState();by("barcode-status").textContent=`Looking Up ${clean}…`;by("scan-review-card")?.classList.add("hidden");scanBarcodeFood=null;
+  const clean=validBarcodeValue(code);if(!clean){showActionToast("Enter Or Scan A Valid Barcode.",null,2000);return null;}by("scan-barcode-input")?.blur();updateBarcodeLookupState();by("barcode-status").textContent=`Looking Up ${clean}…`;by("scan-review-card")?.classList.add("hidden");scanBarcodeFood=null;captureActionLocked=false;
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
     const fields="code,product_name,generic_name,brands,countries,countries_tags,nutriments,serving_size,serving_quantity,serving_quantity_unit,ingredients_text,allergens,image_front_small_url,image_front_url";
     const response=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(clean)}.json?fields=${encodeURIComponent(fields)}`,{headers:{Accept:"application/json"},signal:controller.signal});
-    if(!response.ok)throw new Error(`Lookup ${response.status}`);const data=await response.json();if(data.status===0||!data.product)throw new Error("Product not found");const food=makeOpenFoodFactsFood(data.product);if(!hasEnergyValue(food.nutrients?.calories))throw new Error("Nutrition unavailable");
-    upsertOnlineFoods([food]);scanBarcodeFood=food;const image=food.imageUrl?`<img class="scan-product-image" src="${esc(food.imageUrl)}" alt="${esc(food.name)} package image">`:"";
+    if(!response.ok)throw new Error(`Lookup ${response.status}`);const data=await response.json();if(data.status===0||!data.product)throw new Error("Product not found");const food=makeOpenFoodFactsFood(data.product),review=X8?.barcodeStatus?.(food)||{canAddToDiary:hasEnergyValue(food.nutrients?.calories),canSaveToMyFoods:true,missing:[]};
+    if(review.canAddToDiary)upsertOnlineFoods([food]);scanBarcodeFood=food;const image=food.imageUrl?`<img class="scan-product-image" src="${esc(food.imageUrl)}" alt="${esc(food.name)} package image">`:"";
     by("scan-food-preview").innerHTML=`<div class="food-detail-title">${image}<div><h3>${esc(food.name)}</h3><p>${esc(food.brand||"Brand Not Listed")} · Barcode ${esc(clean)} · ${esc(food.serving)}</p></div></div>${nutritionCards(food.nutrients)}<div class="status-box scan-review-warning"><strong>Package Check Required</strong><p>Online barcode data can be incomplete or outdated. Compare the serving size and every nutrition value with the package. If they differ, read the Nutrition Panel instead.</p></div>`;
-    by("scan-review-card").classList.remove("hidden");by("barcode-status").textContent=`Found ${food.name}. Check It Against The Package Before Continuing.`;setTimeout(()=>by("scan-review-card")?.scrollIntoView({behavior:"smooth",block:"start"}),80);return food;
-  }catch(error){by("barcode-status").innerHTML=`No Usable Barcode Record Was Found For <strong>${esc(clean)}</strong>. Switch To <strong>Nutrition Panel</strong> to read the package directly, or create a custom food.`;showActionToast("Barcode Lookup Did Not Find A Usable Product.",null,5000);return null;}finally{clearTimeout(timer);}
+    const status=by("scan-review-status");if(status)status.innerHTML=review.canAddToDiary?'<strong>Recognised — Review Before Choosing</strong><p>This record has usable energy and serving data. Choose one explicit action below after checking the package.</p>':`<strong>Recognised, But Nutrition Is Incomplete</strong><p>${esc((review.missing||[]).join(', ')||'Required nutrition')} is missing. Diary actions are blocked. You may save the identity to My Foods, then use Nutrition Panel to complete it.</p>`;setCaptureActionState('barcode',X8?.actionsFor?.(food)||{save:true,add:review.canAddToDiary,both:review.canAddToDiary});
+    by("scan-review-card").classList.remove("hidden");by("barcode-status").textContent=review.canAddToDiary?`Found ${food.name}. Check It Against The Package Before Choosing An Action.`:`Found ${food.name}, But The Online Nutrition Is Incomplete.`;setTimeout(()=>by("scan-review-card")?.scrollIntoView({behavior:"smooth",block:"start"}),80);return food;
+  }catch(error){by("barcode-status").innerHTML=`No Barcode Record Was Found For <strong>${esc(clean)}</strong>. Switch To <strong>Nutrition Panel</strong> to read the package directly, or create a custom food.`;showActionToast("Barcode Lookup Did Not Find This Product.",null,5000);return null;}finally{clearTimeout(timer);}
 }
 by("lookup-barcode")?.addEventListener("click",()=>lookupBarcodeProduct(by("scan-barcode-input").value));by("scan-barcode-input")?.addEventListener("input",updateBarcodeLookupState);by("scan-barcode-input")?.addEventListener("keydown",event=>{if(event.key==="Enter"&&validBarcodeValue(event.currentTarget.value)){event.preventDefault();lookupBarcodeProduct(event.currentTarget.value);}});
 async function decodeBarcodeFromPreview(){
@@ -1339,7 +1381,7 @@ async function startNativeBarcodeCamera(video){
 }
 async function startBarcodeCamera(){
   const video=by("barcode-video"),shell=by("barcode-camera-shell");if(!video||!shell)return;
-  stopBarcodeCamera();ext.ui.scanMode="barcode";saveExt();updateScanModeUI();shell.classList.remove("hidden");by("stop-barcode-camera")?.classList.remove("hidden");by("barcode-status").textContent="Opening Camera… Hold The Barcode Steady Inside The Box.";shell.scrollIntoView({behavior:"smooth",block:"center"});
+  stopBarcodeCamera();captureActionLocked=false;scanBarcodeFood=null;by('scan-review-card')?.classList.add('hidden');ext.ui.scanMode="barcode";saveExt();updateScanModeUI();shell.classList.remove("hidden");by("stop-barcode-camera")?.classList.remove("hidden");by("barcode-status").textContent="Opening Camera… Hold The Barcode Steady Inside The Box.";shell.scrollIntoView({behavior:"smooth",block:"center"});
   try{
     if(await startNativeBarcodeCamera(video)){by("barcode-status").textContent="Camera Ready. Hold A Retail Barcode Steady Inside The Box — No Photo Is Needed.";return;}
     const ok=await ensureBarcodeLibrary();if(!ok)throw new Error("Scanner unavailable");
@@ -1361,50 +1403,40 @@ function rowValues(lines,tests,unit="g"){
   return ocrNumbersWithUnit(line,unit).map(x=>x.value);
 }
 function parseNutritionPanel(text){
-  const clean=String(text||"").replace(/\r/g,"\n").replace(/[|]/g," ");const lines=clean.split(/\n+/).map(x=>x.replace(/\s+/g," ").trim()).filter(Boolean);
-  const servingMatch=clean.match(/serv(?:ing|e|lng)?\s*(?:size|slze)[^\d]{0,28}(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i)||clean.match(/serve\s*(?:size|slze)[^\d]{0,28}(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i)||clean.match(/per\s*serve[^\d]{0,20}(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
-  const servingAmount=servingMatch?n(String(servingMatch[1]).replace(",",".")):0,servingUnit=servingMatch&&/ml/i.test(servingMatch[2])?"mL":"g";
-  const bothColumns=/per\s*(serv(?:ing|e)|100\s*(g|ml))/i.test(clean)&&/per\s*100\s*(g|ml)/i.test(clean);
-  const raw={
-    calories:rowValues(lines,[/^energy\b/i,/^calories?\b/i],"energy"),
-    protein:rowValues(lines,[/^protein\b/i],"g"),
-    fat:rowValues(lines,[/^total\s+fat\b/i,/^fat\b/i],"g"),
-    satFat:rowValues(lines,[/saturat/i],"g"),
-    carbs:rowValues(lines,[/^carbohydrate\b/i,/^carbs?\b/i],"g"),
-    sugar:rowValues(lines,[/^\s*(?:-|of which\s+)?sugars?\b/i,/sugars?\b/i],"g"),
-    fibre:rowValues(lines,[/^fibre\b/i,/^fiber\b/i],"g"),
-    sodium:rowValues(lines,[/^sodium\b/i],"mg")
-  };
-  const perServing={},per100={};
-  Object.entries(raw).forEach(([key,values])=>{if(!values.length){perServing[key]=0;per100[key]=0;return;}if(values.length>=2&&bothColumns){perServing[key]=values[0];per100[key]=values[values.length-1];}else if(servingAmount){perServing[key]=values[0];per100[key]=values.length>1?values[values.length-1]:0;}else{per100[key]=values[values.length-1];perServing[key]=0;}});
-  return {servingAmount,servingUnit,perServing,per100,basis:(servingAmount&&Object.values(perServing).some(Boolean))?"serving":"100",text:clean};
+  return X8?.parseNutritionPanel?X8.parseNutritionPanel(text):{servingAmount:null,servingUnit:'g',perServing:{},per100:{},detected:{},issues:['capture-foundation-unavailable'],questionable:true,text:String(text||'')};
 }
 const ALPHA0631_OCR_FIELDS={calories:"ocr-calories",protein:"ocr-protein",carbs:"ocr-carbs",fat:"ocr-fat",satFat:"ocr-sat-fat",fibre:"ocr-fibre",sugar:"ocr-sugar",sodium:"ocr-sodium"};
+const ALPHA08_OCR100_FIELDS={calories:"ocr100-calories",protein:"ocr100-protein",carbs:"ocr100-carbs",fat:"ocr100-fat",satFat:"ocr100-sat-fat",fibre:"ocr100-fibre",sugar:"ocr100-sugar",sodium:"ocr100-sodium"};
+function alpha08SetOcrValues(fields,values={}){Object.entries(fields).forEach(([key,id])=>{if(by(id))by(id).value=values[key]===null||values[key]===undefined?'':round1(values[key]);});}
+function alpha08ReadOcrValues(fields){return Object.fromEntries(Object.entries(fields).map(([key,id])=>{const value=by(id)?.value;return [key,value===undefined||value===''?null:Number(value)];}));}
+function alpha08OcrModel(){return P8?.basisModel?.({perServing:alpha08ReadOcrValues(ALPHA0631_OCR_FIELDS),per100:alpha08ReadOcrValues(ALPHA08_OCR100_FIELDS),servingAmount:by('ocr-serving-amount')?.value||null,servingUnit:by('ocr-serving-unit')?.value||'g',servingText:'Current manufacturer serving',manufacturerServing:!!by('ocr-serving-amount')?.value})||null;}
+function alpha08UpdateOcrReview(){
+  const model=alpha08OcrModel(),status=X8?.reviewStatus?.({name:by('ocr-food-name')?.value||'',model,confirmed:!!by('ocr-package-confirmed')?.checked,discrepancyConfirmed:!!by('ocr-discrepancy-confirmed')?.checked})||{ready:false,missing:['review']},packageReady=status.ready,comparisonPending=!!ext.ui.compareBarcodeFoodId,box=by('ocr-review-status'),discrepancyRow=by('ocr-discrepancy-confirm-row');
+  if(comparisonPending){status.ready=false;if(!status.missing.includes('barcode-panel-choice'))status.missing.push('barcode-panel-choice');}
+  discrepancyRow?.classList.toggle('hidden',!status.discrepancies?.length);if(box){const labels={name:'food name',energy:'Calories / energy',"serving-size":'manufacturer serving size',"package-confirmation":'package confirmation',"discrepancy-confirmation":'discrepancy confirmation',"barcode-panel-choice":'the barcode versus current-package choice'};box.innerHTML=status.ready?'<strong>Ready For Your Chosen Action</strong><p>The current package values are complete and confirmed. Nothing is saved or logged until you choose below.</p>':`<strong>Review Still Required</strong><p>Check ${esc(status.missing.map(x=>labels[x]||x).join(', '))} before saving or adding.</p>`;}
+  const usePackage=by('ocr-review')?.querySelector('[data-use-package-values]');if(usePackage)usePackage.disabled=!packageReady;
+  setCaptureActionState('ocr',{save:status.ready,add:status.ready,both:status.ready});return {model,status};
+}
 function alpha0631ScaleOcrReview(){
-  if(!ocrParsedPanel)return;const basis=by("ocr-basis")?.value||ocrParsedPanel.basis||'serving',amount=n(by("ocr-serving-amount")?.value),unit=by("ocr-serving-unit")?.value||'g';
-  const base=basis==='100'?ocrParsedPanel.per100:ocrParsedPanel.perServing;
-  let factor=1;if(basis==='100')factor=(unit==='serving'?amount:(amount||100)/100);else if(ocrParsedPanel.servingAmount&&unit!=='serving')factor=(amount||ocrParsedPanel.servingAmount)/ocrParsedPanel.servingAmount;else factor=amount||1;
-  Object.entries(ALPHA0631_OCR_FIELDS).forEach(([k,id])=>{if(!by(id))return;const v=base?.[k];by(id).value=(v===undefined||v===null||v==='')?'':round1(n(v)*factor);});
-  const status=by('ocr-scale-status');if(status){const baseText=basis==='100'?'per 100 g / 100 mL':(ocrParsedPanel.servingAmount?`per package serving (${formatNumber(ocrParsedPanel.servingAmount,true)} ${ocrParsedPanel.servingUnit})`:'per serving');status.textContent=`Nutrition recalculates from the recognised ${baseText} values as you change the amount.`;}
+  if(!ocrParsedPanel)return;const status=by('ocr-scale-status');if(status)status.textContent='Printed per-serving and per-100 values stay separate. HEC does not create a missing column.';alpha08UpdateOcrReview();
 }
-function fillOcrReview(parsed,basis=parsed?.basis||"serving"){
-  if(!parsed)return;ocrParsedPanel=parsed;if(by("ocr-basis"))by("ocr-basis").value=basis;if(basis==="serving"){by("ocr-serving-amount").value=parsed.servingAmount||1;by("ocr-serving-unit").value=parsed.servingAmount?parsed.servingUnit:"serving";}else{by("ocr-serving-amount").value=100;by("ocr-serving-unit").value=parsed.servingUnit||"g";}alpha0631ScaleOcrReview();by("ocr-review").classList.remove("hidden");
+function fillOcrReview(parsed){
+  if(!parsed)return;ocrParsedPanel=parsed;ocrReviewedFood=null;captureActionLocked=false;if(by("ocr-serving-amount"))by("ocr-serving-amount").value=parsed.servingAmount||'';if(by("ocr-serving-unit"))by("ocr-serving-unit").value=parsed.servingUnit||"g";alpha08SetOcrValues(ALPHA0631_OCR_FIELDS,parsed.perServing);alpha08SetOcrValues(ALPHA08_OCR100_FIELDS,parsed.per100);const noColumns=!parsed.detected?.perServing&&!parsed.detected?.per100;by('ocr-serving-column')?.classList.toggle('hidden',!noColumns&&!parsed.detected?.perServing);by('ocr-100-column')?.classList.toggle('hidden',!noColumns&&!parsed.detected?.per100);if(by('ocr-package-confirmed'))by('ocr-package-confirmed').checked=false;if(by('ocr-discrepancy-confirmed'))by('ocr-discrepancy-confirmed').checked=false;by("ocr-review")?.classList.remove("hidden");alpha0631ScaleOcrReview();
 }
-by("ocr-basis")?.addEventListener("change",()=>ocrParsedPanel&&fillOcrReview(ocrParsedPanel,by("ocr-basis").value));
-by("ocr-serving-amount")?.addEventListener("input",alpha0631ScaleOcrReview);
-by("ocr-serving-unit")?.addEventListener("change",alpha0631ScaleOcrReview);
+const alpha08FillOcrReview=fillOcrReview;
+['ocr-food-name','ocr-food-brand','ocr-serving-amount','ocr-serving-unit','ocr-package-confirmed','ocr-discrepancy-confirmed',...Object.values(ALPHA0631_OCR_FIELDS),...Object.values(ALPHA08_OCR100_FIELDS)].forEach(id=>by(id)?.addEventListener(id.includes('confirmed')||id==='ocr-serving-unit'?'change':'input',()=>{ocrReviewedFood=null;captureActionLocked=false;alpha08UpdateOcrReview();}));
 async function prepareOcrImage(file){
   try{const bitmap=await createImageBitmap(file),max=3000,scale=Math.min(3,max/Math.max(bitmap.width,bitmap.height)),w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale)),canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";ctx.drawImage(bitmap,0,0,w,h);const image=ctx.getImageData(0,0,w,h),d=image.data,hist=new Array(256).fill(0);let sum=0,count=0;for(let i=0;i<d.length;i+=4){const g=Math.max(0,Math.min(255,Math.round(.299*d[i]+.587*d[i+1]+.114*d[i+2])));hist[g]++;sum+=g;count++;d[i]=d[i+1]=d[i+2]=g;}let total=count,sumB=0,wB=0,maxVar=0,threshold=140,sumAll=0;for(let i=0;i<256;i++)sumAll+=i*hist[i];for(let t=0;t<256;t++){wB+=hist[t];if(!wB)continue;const wF=total-wB;if(!wF)break;sumB+=t*hist[t];const mB=sumB/wB,mF=(sumAll-sumB)/wF,between=wB*wF*(mB-mF)*(mB-mF);if(between>maxVar){maxVar=between;threshold=t;}}const darkBackground=(sum/Math.max(count,1))<150;for(let i=0;i<d.length;i+=4){const g=d[i];const bw=darkBackground?(g>threshold?0:255):(g<threshold?0:255);d[i]=d[i+1]=d[i+2]=bw;d[i+3]=255;}ctx.putImageData(image,0,0);bitmap.close?.();return canvas;}catch{return file;}
 }
 by("run-label-ocr")?.addEventListener("click",async()=>{
   if(!scanFile)return;const box=by("ocr-progress");box.classList.remove("hidden");box.textContent="Preparing The Photo For Nutrition Panel Reading…";
-  try{const ok=await ensureOcrLibrary();if(!ok)throw new Error("OCR library unavailable");const image=await prepareOcrImage(scanFile);const worker=await Tesseract.createWorker("eng",1,{logger:m=>{if(m.progress)box.textContent=`${String(m.status||"Reading").replace(/\b\w/g,c=>c.toUpperCase())} · ${Math.round(m.progress*100)}%`;}});try{await worker.setParameters({tessedit_pageseg_mode:"6",preserve_interword_spaces:"1",user_defined_dpi:"300"});}catch{}const result=await worker.recognize(image);await worker.terminate();const text=result.data?.text||"";by("ocr-text").value=text;const parsed=parseNutritionPanel(text);fillOcrReview(parsed);const found=Object.values(parsed[parsed.basis==="100"?"per100":"perServing"]||{}).filter(v=>n(v)>0).length;box.textContent=found?`Recognition Complete · ${found} Nutrition Values Detected. Check Every Value Against The Package.`:"Text Was Read, But The Nutrition Columns Need Manual Review. Enter The Values From The Package Below.";
-  }catch(error){box.textContent="OCR Could Not Reliably Read This Image. Try A Closer, Square-On Photo In Brighter Light, Or Enter The Values Manually.";by("ocr-review").classList.remove("hidden");}
+  try{const ok=await ensureOcrLibrary();if(!ok)throw new Error("OCR library unavailable");const image=await prepareOcrImage(scanFile);const worker=await Tesseract.createWorker("eng",1,{logger:m=>{if(m.progress)box.textContent=`${String(m.status||"Reading").replace(/\b\w/g,c=>c.toUpperCase())} · ${Math.round(m.progress*100)}%`;}});try{await worker.setParameters({tessedit_pageseg_mode:"6",preserve_interword_spaces:"1",user_defined_dpi:"300"});}catch{}const result=await worker.recognize(image);await worker.terminate();const text=result.data?.text||"";by("ocr-text").value=text;const parsed=parseNutritionPanel(text);fillOcrReview(parsed);const found=[...Object.values(parsed.perServing||{}),...Object.values(parsed.per100||{})].filter(v=>v!==null&&v!==undefined).length;box.textContent=found?`Recognition Complete · ${found} Printed Nutrition Values Detected. Check Every Value Against The Package.`:"Text Was Read, But The Nutrition Columns Need Manual Review. Enter The Values From The Package Below.";
+  }catch(error){box.textContent="OCR Could Not Reliably Read This Image. Try A Closer, Square-On Photo In Brighter Light, Or Enter The Values Manually.";fillOcrReview(parseNutritionPanel(''));}
 });
-by("use-ocr-values")?.addEventListener("click",()=>{const pairs=[["custom-food-name","ocr-food-name"],["custom-serving-amount","ocr-serving-amount"],["custom-serving-unit","ocr-serving-unit"],["custom-cal","ocr-calories"],["custom-protein","ocr-protein"],["custom-carbs","ocr-carbs"],["custom-fat","ocr-fat"],["custom-sat-fat","ocr-sat-fat"],["custom-fibre","ocr-fibre"],["custom-sugar","ocr-sugar"],["custom-sodium","ocr-sodium"]];pairs.forEach(([to,from])=>{if(by(to)&&by(from))by(to).value=by(from).value;});openFeature("custom-food");showActionToast("Recognised Values Copied For Review.",null,2000);});
+function alpha08PanelFood(){const review=alpha08UpdateOcrReview();if(!review.status.ready)return null;const result=X8?.buildPanelFood?.({id:ocrReviewedFood?.id||uid('panel'),name:by('ocr-food-name')?.value||'',brand:by('ocr-food-brand')?.value||'',barcode:validBarcodeValue(by('scan-barcode-input')?.value),model:review.model,confirmed:!!by('ocr-package-confirmed')?.checked,discrepancyConfirmed:!!by('ocr-discrepancy-confirmed')?.checked});ocrReviewedFood=result?.food||null;return ocrReviewedFood;}
+document.addEventListener('click',event=>{const button=event.target.closest('[data-capture-action][data-capture-source]');if(!button||button.disabled||captureActionLocked)return;const source=button.dataset.captureSource,action=button.dataset.captureAction,food=source==='barcode'?scanBarcodeFood:alpha08PanelFood();if(!food){showActionToast('Complete And Confirm The Review Before Choosing That Action.',null,6000);return;}const allowed=X8?.actionsFor?.(food)||{save:true,add:hasEnergyValue(food.nutrients?.calories),both:hasEnergyValue(food.nutrients?.calories)};if(!allowed[action]){showActionToast('This Food Is Not Complete Enough For That Action.',null,6000);return;}captureActionLocked=true;setCaptureActionState(source,{});if(action==='save'){keepCapturedFoodAvailable(food,{save:true});ext.ui.libraryTab='saved';ext.ui.foodSearch='';saveExt();openFeature('food-library');showActionToast(`${food.name} saved to My Foods. Nothing was added to the Diary.`,null,5000);return;}openCapturedFoodForDiary(food,{save:action==='both'});},true);
 by("photo-find-food")?.addEventListener("click",()=>{ext.ui.libraryTab="all";ext.ui.pendingMeal=ext.ui.pendingMeal||"";saveExt();openFeature("food-library");showActionToast("Search And Add Each Food Visible In The Photo.",null,2000);});
-by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal Photos Stay In This Browser Session Only In Alpha 0.6.16.",null,5000));
-by("review-scan-food")?.addEventListener("click",()=>{if(scanBarcodeFood){ext.ui.replacingEntryId="";const meal=ext.ui.pendingMeal||"";const date=meal?(ext.ui?.mealEntrySession?.date||ext.ui.diaryDate||isoToday()):isoToday();prepareEntry(scanBarcodeFood,{date,meal,source:scanBarcodeFood.source});}});
+by("photo-add-note")?.addEventListener("click",()=>showActionToast("Meal Photos Stay In This Browser Session Only In This Founder Trial.",null,5000));
 
 // Meal planner
 const PLANNER_WEIGHTS={Breakfast:.24,Lunch:.28,Dinner:.34,Snacks:.09,Other:.05};
@@ -1494,7 +1526,7 @@ function renderMealSuggestions(){
 }
 function generatePlannerResults(retryAll=false){const meals=selectedPlannerMeals();if(!meals.length){showActionToast("Choose at least one meal to plan.",null,5000);return;}ext.ui.plannerResults||={};ext.ui.plannerRejected||={};ext.ui.plannerAccepted||={};meals.forEach(meal=>plannerChoice(meal,retryAll));Object.keys(ext.ui.plannerResults).forEach(meal=>{if(!meals.includes(meal))delete ext.ui.plannerResults[meal];});saveExt();renderPlannerEnergySummary();renderMealSuggestions();}
 function addPlannedSuggestion(meal,mode="add"){
-  const suggestion=MEAL_SUGGESTIONS.find(s=>s.id===ext.ui.plannerResults?.[meal]);if(!suggestion)return;const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday();ext.diary[date]||=[];const uniqueRef=`${date}|${meal}|${suggestion.id}`;if(ext.diary[date].some(e=>e.plannerRef===uniqueRef)){ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();showActionToast(`${suggestion.name} is already in the Diary.`,null,6000);return;}if(mode==="replace")ext.diary[date]=ext.diary[date].filter(e=>e.meal!==meal);suggestion.items.forEach(i=>{const f=getFood(i.foodId);ext.diary[date].push({id:uid("entry"),foodId:f.id,name:f.name,brand:f.brand,date,meal,status:"eaten",amount:i.amount,unit:i.unit,unitLabel:unitLabel(f,i.unit),time:"",notes:`Meal Planner · ${suggestion.name}`,nutrients:scaledNutrients(f,i.amount,i.unit),foodGroups:scaledFoodGroups(f,i.amount,i.unit),waterMl:scaledWaterMl(f,i.amount,i.unit),hydrationType:f.hydrationType||"food",score:f.score,source:`Meal Planner · ${f.source}`,plannerRef:uniqueRef,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()});});ext.ui.diaryDate=date;ext.ui.progressDate=date;ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();renderPlannerEnergySummary();if(q("#food-diary.active"))renderDiary();showActionToast(`${suggestion.name} added to ${meal}.`,()=>{ext.diary[date]=ext.diary[date].filter(e=>e.plannerRef!==uniqueRef);delete ext.ui.plannerAccepted[meal];saveExt();renderMealSuggestions();renderPlannerEnergySummary();if(q("#food-diary.active"))renderDiary();},2000);
+  const suggestion=MEAL_SUGGESTIONS.find(s=>s.id===ext.ui.plannerResults?.[meal]);if(!suggestion)return;const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday();ext.diary[date]||=[];const uniqueRef=`${date}|${meal}|${suggestion.id}`;if(ext.diary[date].some(e=>e.plannerRef===uniqueRef)){ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();showActionToast(`${suggestion.name} is already in the Diary.`,null,6000);return;}if(mode==="replace")ext.diary[date]=ext.diary[date].filter(e=>e.meal!==meal);suggestion.items.forEach(i=>{const f=getFood(i.foodId),values=scaledNutrients(f,i.amount,i.unit),label=unitLabel(f,i.unit);ext.diary[date].push({id:uid("entry"),foodId:f.id,name:f.name,brand:f.brand,date,meal,status:"eaten",amount:i.amount,unit:i.unit,unitLabel:label,time:"",notes:`Meal Planner · ${suggestion.name}`,nutrients:values,foodSnapshot:P8?.diarySnapshot?.(f,{amount:i.amount,unit:i.unit,unitLabel:label,nutrients:values})||null,foodGroups:scaledFoodGroups(f,i.amount,i.unit),waterMl:scaledWaterMl(f,i.amount,i.unit),hydrationType:f.hydrationType||"food",score:f.score,source:`Meal Planner · ${f.source}`,plannerRef:uniqueRef,localDate:date,timeZone:activeTimeZone(),createdAt:new Date().toISOString()});});ext.ui.diaryDate=date;ext.ui.progressDate=date;ext.ui.plannerAccepted[meal]=suggestion.id;saveExt();renderMealSuggestions();renderPlannerEnergySummary();if(q("#food-diary.active"))renderDiary();showActionToast(`${suggestion.name} added to ${meal}.`,()=>{ext.diary[date]=ext.diary[date].filter(e=>e.plannerRef!==uniqueRef);delete ext.ui.plannerAccepted[meal];saveExt();renderMealSuggestions();renderPlannerEnergySummary();if(q("#food-diary.active"))renderDiary();},2000);
 }
 function acceptPlannedSuggestion(meal){const date=ext.ui.plannerDate||by("planner-date")?.value||isoToday(),existing=entriesForDate(date).filter(e=>e.meal===meal&&e.status!=="skipped");if(!existing.length){addPlannedSuggestion(meal);return;}openModal(`${meal} already has entries`,`The companion has calculated around what you already recorded. Choose whether to add the suggestion alongside those entries or replace the existing meal entries.`,`Add Alongside Existing`,()=>addPlannedSuggestion(meal,"add"),`<button id="replace-planned-meal" class="secondary wide" type="button">Replace Existing Meal</button>`);by("replace-planned-meal")?.addEventListener("click",()=>{closeModal();addPlannedSuggestion(meal,"replace");},{once:true});}
 by("planner-select-all")?.addEventListener("change",event=>{qa('input[name="planner-meal"]').forEach(x=>x.checked=x.value==="Other"?false:event.target.checked);updatePlannerSelectAll();});qa('input[name="planner-meal"]').forEach(input=>input.addEventListener("change",()=>{clearPlannerResults();updatePlannerSelectAll();}));by("planner-min-score")?.addEventListener("change",()=>{clearPlannerResults();renderPlannerEnergySummary();});by("cancel-meal-planning")?.addEventListener("click",()=>{resetPlannerSelections();saveExt();openFeature("food-diary");showActionToast("Meal planning cancelled. No unaccepted suggestions were added.",null,3000);});by("generate-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(false));by("try-all-meal-suggestions")?.addEventListener("click",()=>generatePlannerResults(true));document.addEventListener("click",event=>{const retry=event.target.closest("[data-plan-retry]");if(retry){plannerChoice(retry.dataset.planRetry,true);saveExt();renderMealSuggestions();return;}const skip=event.target.closest("[data-plan-skip]");if(skip){const meal=skip.dataset.planSkip;delete ext.ui.plannerResults[meal];delete ext.ui.plannerRejected[meal];qa(`input[name="planner-meal"][value="${CSS.escape(meal)}"]`).forEach(x=>x.checked=false);saveExt();renderMealSuggestions();updatePlannerSelectAll();showActionToast(`${meal} left unplanned.`,null,2500);return;}const accept=event.target.closest("[data-plan-accept]");if(accept){acceptPlannedSuggestion(accept.dataset.planAccept);return;}const more=event.target.closest("#planner-plan-more");if(more){resetPlannerSelections();saveExt();renderMealSuggestions();renderPlannerEnergySummary();window.scrollTo({top:0,behavior:"smooth"});return;}const undo=event.target.closest("[data-plan-undo]");if(undo){const meal=undo.dataset.planUndo,date=ext.ui.plannerDate||isoToday(),id=ext.ui.plannerAccepted?.[meal];ext.diary[date]=(ext.diary[date]||[]).filter(e=>!(e.meal===meal&&e.plannerRef?.endsWith(`|${id}`)));delete ext.ui.plannerAccepted[meal];saveExt();renderMealSuggestions();renderPlannerEnergySummary();showActionToast(`${meal} suggestion removed from the Diary.`,null,5000);}});
@@ -1633,15 +1665,65 @@ document.addEventListener("click",event=>{const edit=event.target.closest("[data
 document.addEventListener("click",event=>{const open=event.target.closest("[data-progress-open-meal]");if(!open)return;ext.ui.diaryDate=ext.ui.progressDate||isoToday();ext.ui.focusMeal=open.dataset.progressOpenMeal;saveExt();openFeature("food-diary");setTimeout(()=>{q(`[data-meal-name="${CSS.escape(open.dataset.progressOpenMeal)}"]`)?.scrollIntoView({block:"start",behavior:"smooth"});},80);});
 
 // Exercise and activity
+let activityEditingId="",activitySavePending=false,activitySavedTimer=0;
+function activityProfileStart(){const main=mainData();return main.profileStartedDate||main.health?.startingWeightDate||isoToday();}
+function activityWeightContext(){const existing=activityFormRecord(),savedWeight=n(existing?.estimateProvenance?.weightKg);if(savedWeight)return {weightKg:savedWeight,weightSource:existing.estimateProvenance.weightSource||"profile"};const main=mainData(),profileWeight=n(main.health?.currentWeightKg||main.recommendations?.basedOnWeightKg||main.health?.startingWeightKg||main.health?.weightKg);return {weightKg:profileWeight||70,weightSource:profileWeight?"profile":"fallback"};}
+function activityPolicyForDate(date){ensureActivityCreditPolicy();return ACTIVITY.policyAtDate(activityPolicies(),date)||{id:"",effectiveDate:date,percent:ACTIVITY.normalisePolicyPercent(mainData().health?.exerciseCredit)};}
+function activityRecordPolicy(record,date){
+  if(record&&!record.creditPolicyManaged&&!record.creditPolicyId&&(ACTIVITY.localDateOf(record)===date||!ACTIVITY.policyAtDate(activityPolicies(),date)))return {id:"",effectiveDate:date,percent:ACTIVITY.inferredLegacyPercent(record)};
+  return activityPolicyForDate(date);
+}
+function setActivitySaved(message=""){
+  const box=by("exercise-saved-state");if(!box)return;clearTimeout(activitySavedTimer);box.textContent=message;box.classList.toggle("hidden",!message);if(message)activitySavedTimer=setTimeout(()=>box.classList.add("hidden"),4500);
+}
+function activityFormRecord(){return activityEditingId?ext.exercise.find(record=>record.id===activityEditingId)||null:null;}
+function activityFormCredit(){
+  const existing=activityFormRecord(),date=by("exercise-date")?.value||isoToday(),raw=n(by("exercise-calories")?.value),policy=activityRecordPolicy(existing,date),credit=whole(raw*n(policy.percent)/100);
+  return {policy,credit};
+}
+function refreshActivityPolicySummary(){
+  const box=by("exercise-policy-summary");if(!box)return;const {policy,credit}=activityFormCredit(),percent=n(policy.percent),date=by("exercise-date")?.value||isoToday();
+  const label=ACTIVITY.POLICY_PERCENTAGES.includes(percent)?ACTIVITY.policyLabel(percent):"Saved historical allowance policy";box.innerHTML=`<strong>${esc(label)} · ${formatNumber(percent)}%</strong><small>For ${esc(formatDate(date))}, ${formatNumber(credit)} Cal would be added to the food allowance. Raw exercise energy remains separate.</small>`;
+}
+function refreshActivityEstimate(){
+  const type=by("exercise-type")?.value||"walking",preset=ACTIVITY.presetById(type),source=by("exercise-energy-source"),calories=by("exercise-calories"),provenance=by("exercise-provenance");if(!source||!calories)return;
+  if(!preset.estimate){source.value="manual";source.querySelector('option[value="estimate"]').disabled=true;}else source.querySelector('option[value="estimate"]').disabled=false;
+  const estimated=preset.estimate&&source.value==="estimate";calories.readOnly=estimated;calories.setAttribute("aria-readonly",estimated?"true":"false");
+  if(estimated){const weight=activityWeightContext(),result=ACTIVITY.estimateEnergy({presetId:type,intensity:by("exercise-intensity")?.value,minutes:by("exercise-minutes")?.value,...weight});calories.value=result.calories||"";provenance.innerHTML=`<strong>HEC estimate${result.calories?`: ${formatNumber(result.calories)} Cal`:""}</strong><small>${esc(result.method)}. This is an estimate and can be changed by choosing Enter Manually.</small>`;}
+  else provenance.innerHTML=`<strong>Manual exercise energy</strong><small>Enter the raw energy from a source you trust. HEC keeps it separate from the amount added to your food allowance.</small>`;
+  refreshActivityPolicySummary();
+}
+function refreshActivityForm(){
+  const type=by("exercise-type")?.value||"walking",preset=ACTIVITY.presetById(type),manual=type==="manual-other";
+  qa("[data-activity-preset]").forEach(button=>{const selected=button.dataset.activityPreset===type;button.classList.toggle("active",selected);button.setAttribute("aria-pressed",selected?"true":"false");});
+  by("exercise-name-field")?.classList.toggle("hidden",!manual);by("exercise-distance-field")?.classList.toggle("hidden",!preset.distance);if(by("exercise-distance"))by("exercise-distance").disabled=!preset.distance;
+  by("exercise-intensity-field")?.classList.toggle("hidden",!preset.estimate);if(by("exercise-intensity"))by("exercise-intensity").disabled=!preset.estimate;
+  refreshActivityEstimate();
+}
+function resetActivityForm(){
+  activityEditingId="";if(!by("exercise-type"))return;by("activity-form-title").textContent="Add Activity";by("cancel-exercise-edit").classList.add("hidden");by("add-exercise").textContent="Save Activity";
+  by("exercise-type").value="walking";by("exercise-name").value="";by("exercise-date").value=isoToday();by("exercise-date").min=activityProfileStart();by("exercise-date").max=isoToday();by("exercise-minutes").value="";by("exercise-distance").value="";by("exercise-intensity").value="Moderate";by("exercise-energy-source").value="estimate";by("exercise-calories").value="";by("exercise-notes").value="";by("exercise-error").textContent="";refreshActivityForm();
+}
+function editActivity(id){
+  const record=ext.exercise.find(item=>item.id===id);if(!record)return;activityEditingId=id;const type=ACTIVITY.activityTypeForRecord(record),date=ACTIVITY.localDateOf(record);
+  by("activity-form-title").textContent=`Edit ${record.name||"Activity"}`;by("cancel-exercise-edit").classList.remove("hidden");by("add-exercise").textContent="Update Activity";by("exercise-type").value=type;by("exercise-name").value=type==="manual-other"?(record.name||""):"";by("exercise-date").value=date;by("exercise-date").min=date<activityProfileStart()?date:activityProfileStart();by("exercise-date").max=isoToday();by("exercise-minutes").value=record.durationMinutes??record.minutes??"";by("exercise-distance").value=n(record.distanceKm)||"";by("exercise-intensity").value=ACTIVITY.INTENSITIES.includes(record.intensity)?record.intensity:"Moderate";by("exercise-energy-source").value=record.energySource==="hec-estimate"?"estimate":"manual";by("exercise-calories").value=activityRawEnergy(record)||"";by("exercise-notes").value=record.notes||"";by("exercise-error").textContent="";setActivitySaved("");refreshActivityForm();by("activity-form-title").scrollIntoView({behavior:"smooth",block:"center"});
+}
 function renderExercise(){
   if(!by("exercise-history"))return;
-  by("exercise-history").innerHTML=ext.exercise.length?ext.exercise.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>`<div class="list-row"><span>🏃</span><div><strong>${esc(x.name)}</strong><small>${formatDate(x.localDate||x.date.slice(0,10))} · ${x.minutes} min · ${esc(x.intensity)} · ${formatNumber(x.calories)} Cal burned · ${formatNumber(x.credit)} Cal credited</small><p>${esc(x.notes||"")}</p></div><button data-activity-delete="${esc(x.id)}" class="delete-action">Delete</button></div>`).join(""):`<p class="empty-state">No extra activity logged yet.</p>`;
+  const recent=ext.exercise.slice().sort((a,b)=>ACTIVITY.localDateOf(b).localeCompare(ACTIVITY.localDateOf(a))||String(b.updatedAt||b.date||"").localeCompare(String(a.updatedAt||a.date||"")));
+  by("exercise-history").innerHTML=recent.length?recent.map(record=>{const type=ACTIVITY.activityTypeForRecord(record),preset=ACTIVITY.presetById(type),raw=activityRawEnergy(record),credit=activityAllowanceCredit(record),details=[`${formatNumber(record.durationMinutes??record.minutes)} min`,n(record.distanceKm)?`${formatNumber(record.distanceKm,true)} km`:"",record.intensity||""].filter(Boolean).join(" · "),source=record.energySource==="hec-estimate"?"HEC estimate":record.energySource==="manual"?"Manual energy":"Saved legacy energy";return `<div class="activity-history-row"><span class="activity-history-icon">${preset.icon}</span><div class="activity-history-copy"><strong>${esc(record.name||preset.label)}</strong><small>${formatDate(ACTIVITY.localDateOf(record))} · ${details}</small><small>${formatNumber(raw)} Cal raw exercise energy · ${formatNumber(credit)} Cal added to food allowance · ${source}</small>${record.notes?`<p>${esc(record.notes)}</p>`:""}</div><div class="activity-history-actions"><button type="button" class="secondary" data-activity-edit="${esc(record.id)}">Edit</button><button type="button" class="delete-action" data-activity-delete="${esc(record.id)}">Delete</button></div></div>`;}).join(""):`<p class="empty-state">No extra activity logged yet.</p>`;
+  refreshActivityPolicySummary();
 }
 by("add-exercise")?.addEventListener("click",()=>{
-  const name=by("exercise-name").value.trim();if(!name)return;const calories=n(by("exercise-calories").value),choice=by("exercise-credit-choice").value,credit=choice==="custom"?n(by("exercise-custom-credit").value):calories*n(choice)/100;
-  ext.exercise.push({id:uid("activity"),date:new Date().toISOString(),localDate:isoToday(),timeZone:activeTimeZone(),name,minutes:n(by("exercise-minutes").value),intensity:by("exercise-intensity").value,calories,credit:whole(credit),notes:by("exercise-notes").value});saveExt();renderExercise();showActionToast(`${name} added. ${whole(credit)} Cal credited to today’s allowance.`,null,2000);["exercise-name","exercise-minutes","exercise-calories","exercise-custom-credit","exercise-notes"].forEach(id=>by(id).value="");
+  if(activitySavePending)return;const button=by("add-exercise"),type=by("exercise-type").value,preset=ACTIVITY.presetById(type),date=by("exercise-date").value,minutes=n(by("exercise-minutes").value),manualName=by("exercise-name").value.trim(),raw=n(by("exercise-calories").value),distance=n(by("exercise-distance").value),error=by("exercise-error"),existing=activityFormRecord(),earliestAllowed=existing&&ACTIVITY.localDateOf(existing)<activityProfileStart()?ACTIVITY.localDateOf(existing):activityProfileStart();
+  if(!date||date>isoToday()||date<earliestAllowed){error.textContent=`Choose a date from ${formatDate(earliestAllowed)} through today.`;return;}if(!minutes||minutes>1440){error.textContent="Enter a duration from 1 to 1,440 minutes.";return;}if(type==="manual-other"&&!manualName){error.textContent="Give the manual activity a short name.";return;}if(raw<0||raw>10000||!String(by("exercise-calories").value).trim()){error.textContent="Review the raw exercise energy before saving.";return;}if(preset.distance&&distance<0){error.textContent="Distance cannot be negative.";return;}
+  activitySavePending=true;button.disabled=true;error.textContent="";const policy=activityRecordPolicy(existing,date),record=ACTIVITY.buildRecord({activityType:type,name:manualName,localDate:date,minutes,distanceKm:distance,intensity:by("exercise-intensity").value,energyMode:by("exercise-energy-source").value==="estimate"?"hec-estimate":"manual",caloriesBurned:raw,notes:by("exercise-notes").value},{existing,policy,id:uid("activity"),now:new Date().toISOString(),timeZone:activeTimeZone(),...activityWeightContext(),preserveLegacyPolicy:true});
+  ext.exercise=ACTIVITY.upsertRecord(ext.exercise,record);saveExt();const wasEdit=!!existing,credit=activityAllowanceCredit(record),name=record.name;resetActivityForm();renderExercise();setActivitySaved(`${name} ${wasEdit?"updated":"saved"}. ${formatNumber(record.caloriesBurned)} Cal raw energy; ${formatNumber(credit)} Cal added to the food allowance.`);showActionToast(`${name} ${wasEdit?"updated":"saved"}.`,null,2000);setTimeout(()=>{activitySavePending=false;button.disabled=false;},500);
 });
-document.addEventListener("click",event=>{const b=event.target.closest("[data-activity-delete]");if(!b)return;const idx=ext.exercise.findIndex(x=>x.id===b.dataset.activityDelete);if(idx<0)return;const item=ext.exercise[idx];openModal(`Delete ${item.name}?`,`This removes the activity and its credited Calories.`,`Delete`,()=>{const removed=ext.exercise.splice(idx,1)[0];saveExt();renderExercise();showActionToast(`${removed.name} deleted.`,()=>{ext.exercise.splice(idx,0,removed);saveExt();renderExercise();},8000);});});
+by("cancel-exercise-edit")?.addEventListener("click",resetActivityForm);
+by("exercise-type")?.addEventListener("change",refreshActivityForm);by("exercise-energy-source")?.addEventListener("change",refreshActivityEstimate);by("exercise-intensity")?.addEventListener("change",refreshActivityEstimate);by("exercise-minutes")?.addEventListener("input",refreshActivityEstimate);by("exercise-date")?.addEventListener("change",refreshActivityPolicySummary);by("exercise-calories")?.addEventListener("input",refreshActivityPolicySummary);
+by("activity-preset-grid")?.addEventListener("click",event=>{const button=event.target.closest("[data-activity-preset]");if(!button)return;by("exercise-type").value=button.dataset.activityPreset;refreshActivityForm();});
+document.addEventListener("click",event=>{const edit=event.target.closest("[data-activity-edit]");if(edit){editActivity(edit.dataset.activityEdit);return;}const button=event.target.closest("[data-activity-delete]");if(!button)return;const item=ext.exercise.find(record=>record.id===button.dataset.activityDelete);if(!item)return;openModal(`Delete ${item.name}?`,`This removes ${formatDate(ACTIVITY.localDateOf(item))}, ${formatNumber(item.durationMinutes??item.minutes)} minutes. Its exercise energy and allowance credit will be removed once.`,`Delete`,()=>{const result=ACTIVITY.deleteRecord(ext.exercise,item.id);if(!result.removed)return;ext.exercise=result.records;saveExt();if(activityEditingId===item.id)resetActivityForm();renderExercise();showActionToast(`${result.removed.name} deleted.`,()=>{ext.exercise=ACTIVITY.upsertRecord(ext.exercise,result.removed);saveExt();renderExercise();},8000);});});
 
 // Shopping list
 const SHOPPING_CATEGORIES=["Fruit & Vegetables","Meat & Seafood","Dairy & Eggs","Bread & Bakery","Breakfast & Cereals","Pantry","Snacks","Frozen","Drinks","Household","Cleaning","Personal Care","Pet Supplies","Other"];
@@ -1669,22 +1751,22 @@ function inferShoppingCategory(name){const match=catalogueMatch(name);return mat
 function parseQuantityText(value){const text=String(value||"").trim();const m=text.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);return m?{number:Number(m[1]),unit:m[2].trim().toLowerCase()}:null;}
 function combineQuantities(a,b){const pa=parseQuantityText(a),pb=parseQuantityText(b);if(pa&&pb&&pa.unit===pb.unit){const total=round1(pa.number+pb.number);return `${formatNumber(total,true)}${pa.unit?` ${pa.unit}`:""}`;}return [a,b].filter(Boolean).join(" + ");}
 function normaliseShoppingCategories(){const map={"Fruit & vegetables":"Fruit & Vegetables","Meat & seafood":"Meat & Seafood","Dairy & eggs":"Dairy & Eggs","Bakery":"Bread & Bakery"};ext.shopping.forEach(x=>{x.category=map[x.category]||x.category||inferShoppingCategory(x.item);if(x.category==="Other"){const inferred=inferShoppingCategory(x.item);if(inferred!=="Other")x.category=inferred;}});}
-function renderShopping(){normaliseShoppingCategories();const groups={};ext.shopping.forEach((x,i)=>(groups[x.category||"Other"]??=[]).push({...x,index:i}));by("shopping-items").innerHTML=ext.shopping.length?Object.entries(groups).sort((a,b)=>SHOPPING_CATEGORIES.indexOf(a[0])-SHOPPING_CATEGORIES.indexOf(b[0])).map(([category,items])=>`<section class="shopping-category"><h4>${esc(category)}</h4>${items.map(item=>`<div class="shopping-row ${item.done?"done":""}"><input type="checkbox" data-shop-check="${item.index}" ${item.done?"checked":""} aria-label="Mark ${esc(item.item)} collected"><button class="shopping-item-main" data-shop-edit="${item.index}"><strong>${esc(item.item)}</strong><small>${esc(item.quantity||"")}${item.brand?` · ${esc(item.brand)}`:""}${item.notes?` · ${esc(item.notes)}`:""}</small></button><button data-shop-menu="${item.index}" class="shopping-more" aria-label="More options">•••</button></div>`).join("")}</section>`).join(""):`<p class="empty-state">Your shopping list is empty. Add an item below or import ingredients from a meal plan.</p>`;by("shopping-suggestions").innerHTML=GROCERY_CATALOG.map(x=>`<option value="${esc(x.name)}">${esc(x.category)}</option>`).join("");const allDone=ext.shopping.length&&ext.shopping.every(x=>x.done);if(by("toggle-all-shopping"))by("toggle-all-shopping").textContent=allDone?"Deselect All":"Select All";renderShoppingPrint();saveExt();}
+function renderShopping(){normaliseShoppingCategories();const groups={};ext.shopping.forEach((x,i)=>(groups[x.category||"Other"]??=[]).push({...x,index:i}));by("shopping-items").innerHTML=ext.shopping.length?Object.entries(groups).sort((a,b)=>SHOPPING_CATEGORIES.indexOf(a[0])-SHOPPING_CATEGORIES.indexOf(b[0])).map(([category,items])=>`<section class="shopping-category" aria-label="${esc(category)}"><header class="shopping-category-heading"><h4>${esc(category)}</h4><span>${items.length} ${items.length===1?"item":"items"}</span></header>${items.map(item=>{const details=[item.quantity,item.brand,item.notes].filter(Boolean).map(esc).join(" · ");return `<div class="shopping-row ${item.done?"done":""}"><label class="shopping-check-target"><input class="shopping-check" type="checkbox" data-shop-check="${item.index}" ${item.done?"checked":""} aria-label="Mark ${esc(item.item)} collected"></label><button type="button" class="shopping-item-main" data-shop-edit="${item.index}"><strong>${esc(item.item)}</strong>${details?`<small>${details}</small>`:""}</button><button type="button" data-shop-menu="${item.index}" class="shopping-more" aria-label="More options for ${esc(item.item)}">•••</button></div>`;}).join("")}</section>`).join(""):`<p class="empty-state">Your shopping list is empty. Add an item below or import ingredients from a meal plan.</p>`;by("shopping-suggestions").innerHTML=GROCERY_CATALOG.map(x=>`<option value="${esc(x.name)}">${esc(x.category)}</option>`).join("");const allDone=ext.shopping.length&&ext.shopping.every(x=>x.done);if(by("toggle-all-shopping"))by("toggle-all-shopping").textContent=allDone?"Deselect All":"Select All";renderShoppingPrint();saveExt();}
 function shoppingShareText(){normaliseShoppingCategories();const active=ext.shopping.filter(x=>!x.done),groups={};active.forEach(x=>(groups[x.category||"Other"]??=[]).push(x));const sections=Object.entries(groups).sort((a,b)=>SHOPPING_CATEGORIES.indexOf(a[0])-SHOPPING_CATEGORIES.indexOf(b[0])).map(([cat,items])=>`${cat}\n${items.map(x=>`• ${x.item}${x.quantity?` — ${x.quantity}`:""}${x.brand?` · ${x.brand}`:""}`).join("\n")}`).join("\n\n");return `Healthy Eating Companion — Shopping List\n${formatDate(isoToday())}\n\n${sections||"No unchecked items."}`;}
 function renderShoppingPrint(){const textGroups={};ext.shopping.filter(x=>!x.done).forEach(x=>(textGroups[x.category||"Other"]??=[]).push(x));by("shopping-print-area").innerHTML=`<h1>Healthy Eating Companion Shopping List</h1><p>${formatDate(isoToday())}</p>${Object.entries(textGroups).sort((a,b)=>SHOPPING_CATEGORIES.indexOf(a[0])-SHOPPING_CATEGORIES.indexOf(b[0])).map(([category,items])=>`<h2>${esc(category)}</h2><ul>${items.map(x=>`<li>☐ <strong>${esc(x.item)}</strong>${x.quantity?` — ${esc(x.quantity)}`:""}${x.brand?` · ${esc(x.brand)}`:""}${x.notes?` · ${esc(x.notes)}`:""}</li>`).join("")}</ul>`).join("")||"<p>No unchecked items.</p>"}`;}
-function addShoppingRecord(record){ext.shopping.push({id:uid("shop"),done:false,notes:"",brand:"",...record});saveExt();renderShopping();showActionToast(`${record.item} added to ${record.category}.`,null,2000);}
-function requestAddShopping(){const raw=by("shopping-item").value.trim();if(!raw)return;const match=catalogueMatch(raw),quantity=by("shopping-quantity").value.trim(),brand=by("shopping-brand").value.trim(),notes=by("shopping-notes").value.trim(),selected=by("shopping-category").value,itemName=match?.name||raw,category=selected==="auto"?(match?.category||inferShoppingCategory(raw)):selected,exact=ext.shopping.find(x=>!x.done&&normalise(x.item)===normalise(itemName));const doAdd=()=>{const heard=ext.ui.lastShoppingVoiceHeard?parseShoppingSpeech(ext.ui.lastShoppingVoiceHeard).item:"";if(heard&&normalise(heard)!==normalise(itemName)){ext.shoppingVoiceAliases||={};ext.shoppingVoiceAliases[normalise(heard)]=itemName;}addShoppingRecord({item:itemName,quantity,category,brand,notes});ext.ui.lastShoppingVoiceHeard="";["shopping-item","shopping-quantity","shopping-brand","shopping-notes"].forEach(id=>by(id).value="");by("shopping-category").value="auto";};if(match?.confidence==="typo"&&normalise(match.name)!==normalise(raw)){openModal(`Did you mean ${match.name}?`,`We found a close grocery/food match in ${match.category}.`,`Use ${match.name}`,()=>{by("shopping-item").value=match.name;requestAddShopping();},`<button id="keep-shopping-spelling" class="secondary wide">Keep “${esc(raw)}”</button>`);by("keep-shopping-spelling")?.addEventListener("click",()=>{closeModal();addShoppingRecord({item:raw,quantity,category:inferShoppingCategory(raw),brand,notes});},{once:true});return;}if(exact){openModal(`${exact.item} is already on your list`,`Current quantity: ${exact.quantity||"not specified"}. Choose the new combined quantity.`,`Update Quantity`,()=>{exact.quantity=by("duplicate-shopping-quantity").value.trim();if(brand)exact.brand=brand;if(notes)exact.notes=notes;saveExt();renderShopping();showActionToast(`${exact.item} quantity updated.`,null,2000);},`<label>New Quantity<input id="duplicate-shopping-quantity" value="${esc(combineQuantities(exact.quantity,quantity))}"></label><button id="add-shopping-separately" class="secondary wide">Add as a Separate Item</button>`);by("add-shopping-separately")?.addEventListener("click",()=>{closeModal();doAdd();},{once:true});return;}doAdd();}
+function addShoppingRecord(record){ext.shopping.push({id:uid("shop"),done:false,notes:"",brand:"",...record,...recordTimestamps(record.createdAt)});saveExt();renderShopping();showActionToast(`${record.item} added to ${record.category}.`,null,2000);}
+function requestAddShopping(){const raw=by("shopping-item").value.trim();if(!raw)return;const match=catalogueMatch(raw),quantity=by("shopping-quantity").value.trim(),brand=by("shopping-brand").value.trim(),notes=by("shopping-notes").value.trim(),selected=by("shopping-category").value,itemName=match?.name||raw,category=selected==="auto"?(match?.category||inferShoppingCategory(raw)):selected,exact=ext.shopping.find(x=>!x.done&&normalise(x.item)===normalise(itemName));const doAdd=()=>{const heard=ext.ui.lastShoppingVoiceHeard?parseShoppingSpeech(ext.ui.lastShoppingVoiceHeard).item:"";if(heard&&normalise(heard)!==normalise(itemName)){ext.shoppingVoiceAliases||={};ext.shoppingVoiceAliases[normalise(heard)]=itemName;}addShoppingRecord({item:itemName,quantity,category,brand,notes});ext.ui.lastShoppingVoiceHeard="";["shopping-item","shopping-quantity","shopping-brand","shopping-notes"].forEach(id=>by(id).value="");by("shopping-category").value="auto";};if(match?.confidence==="typo"&&normalise(match.name)!==normalise(raw)){openModal(`Did you mean ${match.name}?`,`We found a close grocery/food match in ${match.category}.`,`Use ${match.name}`,()=>{by("shopping-item").value=match.name;requestAddShopping();},`<button id="keep-shopping-spelling" class="secondary wide">Keep “${esc(raw)}”</button>`);by("keep-shopping-spelling")?.addEventListener("click",()=>{closeModal();addShoppingRecord({item:raw,quantity,category:inferShoppingCategory(raw),brand,notes});},{once:true});return;}if(exact){openModal(`${exact.item} is already on your list`,`Current quantity: ${exact.quantity||"not specified"}. Choose the new combined quantity.`,`Update Quantity`,()=>{exact.quantity=by("duplicate-shopping-quantity").value.trim();if(brand)exact.brand=brand;if(notes)exact.notes=notes;exact.updatedAt=new Date().toISOString();saveExt();renderShopping();showActionToast(`${exact.item} quantity updated.`,null,2000);},`<label>New Quantity<input id="duplicate-shopping-quantity" value="${esc(combineQuantities(exact.quantity,quantity))}"></label><button id="add-shopping-separately" class="secondary wide">Add as a Separate Item</button>`);by("add-shopping-separately")?.addEventListener("click",()=>{closeModal();doAdd();},{once:true});return;}doAdd();}
 by("add-shopping-item")?.addEventListener("click",requestAddShopping);by("shopping-item")?.addEventListener("change",()=>{const match=catalogueMatch(by("shopping-item").value);by("shopping-add-status").textContent=match?`${match.name} will be filed under ${match.category}.`:"No confident category match yet. Review the category before adding.";});
-function editShoppingItem(index){const item=ext.shopping[index];if(!item)return;openModal(`Edit ${item.item}`,"Change any detail without deleting and re-entering the item.","Save Changes",()=>{item.item=by("edit-shop-name").value.trim()||item.item;item.quantity=by("edit-shop-quantity").value.trim();item.category=by("edit-shop-category").value;item.brand=by("edit-shop-brand").value.trim();item.notes=by("edit-shop-notes").value.trim();saveExt();renderShopping();showActionToast(`${item.item} updated.`,null,2000);},`<div class="form-grid"><label>Item<input id="edit-shop-name" value="${esc(item.item)}"></label><label>Quantity<input id="edit-shop-quantity" value="${esc(item.quantity||"")}"></label><label>Category<select id="edit-shop-category">${SHOPPING_CATEGORIES.map(c=>`<option ${c===item.category?"selected":""}>${esc(c)}</option>`).join("")}</select></label><label>Brand / Substitute<input id="edit-shop-brand" value="${esc(item.brand||"")}"></label><label class="full">Notes<input id="edit-shop-notes" value="${esc(item.notes||"")}"></label></div><button id="delete-shop-from-edit" class="danger-button wide">Delete Item</button>`);by("delete-shop-from-edit")?.addEventListener("click",()=>{closeModal();const removed=ext.shopping.splice(index,1)[0];saveExt();renderShopping();showActionToast(`${removed.item} deleted.`,()=>{ext.shopping.splice(index,0,removed);saveExt();renderShopping();},8000);},{once:true});}
-document.addEventListener("change",event=>{if(event.target.dataset.shopCheck!==undefined){ext.shopping[Number(event.target.dataset.shopCheck)].done=event.target.checked;saveExt();renderShopping();}});document.addEventListener("click",event=>{const edit=event.target.closest("[data-shop-edit],[data-shop-menu]");if(edit){editShoppingItem(Number(edit.dataset.shopEdit??edit.dataset.shopMenu));return;}});
-by("toggle-all-shopping")?.addEventListener("click",()=>{const makeDone=!(ext.shopping.length&&ext.shopping.every(x=>x.done));ext.shopping.forEach(x=>x.done=makeDone);saveExt();renderShopping();});
+function editShoppingItem(index){const item=ext.shopping[index];if(!item)return;openModal(`Edit ${item.item}`,"Change any detail without deleting and re-entering the item.","Save Changes",()=>{item.item=by("edit-shop-name").value.trim()||item.item;item.quantity=by("edit-shop-quantity").value.trim();item.category=by("edit-shop-category").value;item.brand=by("edit-shop-brand").value.trim();item.notes=by("edit-shop-notes").value.trim();item.updatedAt=new Date().toISOString();saveExt();renderShopping();showActionToast(`${item.item} updated.`,null,2000);},`<div class="form-grid"><label>Item<input id="edit-shop-name" value="${esc(item.item)}"></label><label>Quantity<input id="edit-shop-quantity" value="${esc(item.quantity||"")}"></label><label>Category<select id="edit-shop-category">${SHOPPING_CATEGORIES.map(c=>`<option ${c===item.category?"selected":""}>${esc(c)}</option>`).join("")}</select></label><label>Brand / Substitute<input id="edit-shop-brand" value="${esc(item.brand||"")}"></label><label class="full">Notes<input id="edit-shop-notes" value="${esc(item.notes||"")}"></label></div><button id="delete-shop-from-edit" class="danger-button wide">Delete Item</button>`);by("delete-shop-from-edit")?.addEventListener("click",()=>{closeModal();const removed=ext.shopping.splice(index,1)[0];saveExt();renderShopping();showActionToast(`${removed.item} deleted.`,()=>{ext.shopping.splice(index,0,removed);saveExt();renderShopping();},8000);},{once:true});}
+document.addEventListener("change",event=>{if(event.target.dataset.shopCheck!==undefined){const item=ext.shopping[Number(event.target.dataset.shopCheck)];item.done=event.target.checked;item.updatedAt=new Date().toISOString();saveExt();renderShopping();}});document.addEventListener("click",event=>{const edit=event.target.closest("[data-shop-edit],[data-shop-menu]");if(edit){editShoppingItem(Number(edit.dataset.shopEdit??edit.dataset.shopMenu));return;}});
+by("toggle-all-shopping")?.addEventListener("click",()=>{const makeDone=!(ext.shopping.length&&ext.shopping.every(x=>x.done)),updatedAt=new Date().toISOString();ext.shopping.forEach(x=>{x.done=makeDone;x.updatedAt=updatedAt;});saveExt();renderShopping();});
 by("clear-checked-shopping")?.addEventListener("click",()=>{const removed=ext.shopping.filter(x=>x.done);if(!removed.length){showActionToast("No checked items to clear.",null,4000);return;}openModal("Clear Checked Items?",`Remove ${removed.length} checked item${removed.length===1?"":"s"}.`,`Clear Checked`,()=>{ext.shopping=ext.shopping.filter(x=>!x.done);saveExt();renderShopping();showActionToast("Checked items cleared.",()=>{ext.shopping.push(...removed);saveExt();renderShopping();},8000);});});
 by("clear-all-shopping")?.addEventListener("click",()=>{if(!ext.shopping.length)return;openModal("Clear the Entire Shopping List?","This will remove every item from the current list.","Clear All",()=>{const removed=clone(ext.shopping);ext.shopping=[];saveExt();renderShopping();showActionToast("Shopping list cleared.",()=>{ext.shopping=removed;saveExt();renderShopping();},8000);});});
 by("print-shopping-list")?.addEventListener("click",()=>{renderShoppingPrint();document.body.classList.add("printing-shopping");setTimeout(()=>{window.print();document.body.classList.remove("printing-shopping");},80);});by("share-shopping-list")?.addEventListener("click",async()=>{const text=shoppingShareText();if(navigator.share)try{await navigator.share({title:"Shopping List",text});}catch{}else{await navigator.clipboard?.writeText(text);showActionToast("Shopping list copied to the clipboard.",null,2000);}});
 function speakShopping(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showActionToast("Speech entry is unavailable in this browser.",null,5000);return;}const r=new SR();r.lang="en-AU";r.interimResults=false;r.maxAlternatives=3;r.onresult=e=>{const alternatives=[...e.results[0]].map(x=>x.transcript),matches=alternatives.map(text=>{const parsed=parseShoppingSpeech(text);return {text,parsed,match:catalogueMatch(parsed.item)}}),best=matches.find(x=>x.match?.confidence==="exact"||x.match?.confidence==="learned")||matches.find(x=>x.match)||matches[0];ext.ui.lastShoppingVoiceHeard=best.text;by("shopping-item").value=best.match?.name||best.parsed.item;if(best.parsed.quantity)by("shopping-quantity").value=best.parsed.quantity;saveExt();by("shopping-item").dispatchEvent(new Event("change"));const interpreted=best.match?.name||best.parsed.item;if(normalise(interpreted)!==normalise(best.text)||best.parsed.quantity)showActionToast(`Heard “${best.text}”. Interpreted as ${best.parsed.quantity?best.parsed.quantity+" ":""}${interpreted}. Review before adding.`,null,7000);};r.start();}
 by("speak-shopping-item")?.addEventListener("click",speakShopping);by("shopping-quick-speak")?.addEventListener("click",speakShopping);by("shopping-quick-add")?.addEventListener("click",()=>{by("shopping-add-card")?.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>by("shopping-item")?.focus(),350);});
 
-by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,2000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database Release 3</strong> is now built into Alpha 0.6.16 for local searching of 1,588 Australian foods. Values come from Food Standards Australia New Zealand and are shown per the selected quantity.</p><p class="fine">AFCD values are reference averages and can vary by brand, batch, season, processing and ingredient source. Australian data may not be appropriate in other countries. See the AFCD data notice supplied with this build for attribution and licence information.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to use the low-limit DEMO_KEY"></label><p class="fine">Do not publish a private API key in a public web build. A production server should protect it.</p>`);});
+by("food-data-settings")?.addEventListener("click",()=>{const settings=ext.foodDataSettings||{};openModal("Food Data Sources","Australian verified records are prioritised. Online sources broaden coverage but must be reviewed.","Save",()=>{ext.foodDataSettings={usdaKey:by("usda-api-key")?.value.trim()||""};saveExt();showActionToast("Food data settings saved.",null,2000);},`<p><strong>Open Food Facts</strong> supplies a large international packaged-product database and barcode lookup. Records are community supplied.</p><p><strong>Australian Food Composition Database Release 3</strong> is built in for local searching of 1,588 Australian foods. Values come from Food Standards Australia New Zealand and are shown per the selected quantity.</p><p class="fine">AFCD values are reference averages and can vary by brand, batch, season, processing and ingredient source. Australian data may not be appropriate in other countries. See the AFCD data notice supplied with this build for attribution and licence information.</p><label>USDA FoodData Central API key (optional)<input id="usda-api-key" value="${esc(settings.usdaKey||"")}" placeholder="Leave blank to skip this optional source"></label><p class="fine">HEC does not publish a USDA credential. When this field is blank, local Australian foods and other available sources continue without USDA.</p>`);});
 
 // Food preferences and family readiness
 function renderFoodPreferences(){
@@ -1712,15 +1794,48 @@ document.addEventListener("change",event=>{if(event.target.dataset.connection){e
 
 // Progress history
 function currentPeriod(){return q(".history-period button.active")?.dataset.period||"30";}
+function setProgressView(view,render=true){
+  const selected=view==="nutrition"?"nutrition":"weight";ext.ui.progressView=selected;
+  qa("[data-progress-view]").forEach(button=>{const active=button.dataset.progressView===selected;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));});
+  by("progress-weight-panel")?.classList.toggle("hidden",selected!=="weight");by("progress-nutrition-panel")?.classList.toggle("hidden",selected!=="nutrition");
+  if(render)renderHistory(currentPeriod());
+}
+function weightChangeText(value){const amount=round1(value);return `${amount>0?"+":""}${amount.toFixed(1)} kg`;}
+function renderWeightJourney(main,model,period){
+  const today=isoToday(),journey=WEIGHT_PROGRESS.journeySummary(main.weightHistory||[],{today,goalWeight:main.health?.selectedGoalWeight,goal:main.health?.goal,selectedId:ext.ui.selectedWeightPointId||"",period,profileStart:main.profileStartedDate||"",startingWeightDate:main.health?.startingWeightDate||""});
+  const start=journey.start,current=journey.current,goal=journey.goalWeight,change=journey.change;
+  by("weight-journey-summary").innerHTML=`<div class="stage6-summary-card"><span>Start</span><strong>${start?`${n(start.weightKg).toFixed(1)} kg`:"—"}</strong><small>${start?formatDate(start.date):"No check-in yet"}</small></div><div class="stage6-summary-card"><span>Current</span><strong>${current?`${n(current.weightKg).toFixed(1)} kg`:"—"}</strong><small>${current?formatDate(current.date):"No check-in yet"}</small></div><div class="stage6-summary-card"><span>Goal</span><strong>${goal?`${goal.toFixed(1)} kg`:"—"}</strong><small>${goal?"Your selected goal":"No goal selected"}</small></div><div class="stage6-summary-card"><span>${esc(change.label)}</span><strong>${start&&current?`${change.value>0&&change.label==="Change since start"?"+":""}${n(change.value).toFixed(1)} kg`:"—"}</strong><small>${start&&current?`Since ${formatDate(start.date)}`:"Add a check-in to begin"}</small></div>`;
+  return journey;
+}
+function weightChartMarkup(model){
+  if(model.state==="empty")return `<div class="stage6-chart-empty"><span aria-hidden="true">📈</span><h4>Your weight graph will appear here</h4><p>Add a Weight Check-In to begin. The graph only uses dates and weights you deliberately save.</p><button class="primary" data-open-weight-checkin type="button">Add Weight Check-In</button></div>`;
+  const W=760,H=330,L=64,R=24,T=24,B=50,plotW=W-L-R,plotH=H-T-B,x=point=>L+point.x*plotW,y=point=>T+point.y*plotH;
+  let grid="";for(let index=0;index<=4;index++){const value=model.domain.max-model.domain.span*index/4,yy=T+plotH*index/4;grid+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" class="stage6-weight-grid"/><text x="${L-9}" y="${yy+4}" text-anchor="end" class="stage6-axis-label">${value.toFixed(1)}</text>`;}
+  const polyline=model.points.length>1?`<polyline points="${model.points.map(point=>`${x(point).toFixed(1)},${y(point).toFixed(1)}`).join(" ")}" class="stage6-weight-line"/>`:"";
+  const points=model.points.map(point=>`<g class="stage6-weight-point ${point.selected?"selected":""}" data-weight-point-id="${esc(point.record.id||point.record.date)}" role="button" tabindex="0" aria-label="${esc(formatDate(point.record.date))}, ${n(point.record.weightKg).toFixed(1)} kilograms"><circle cx="${x(point).toFixed(1)}" cy="${y(point).toFixed(1)}" r="${point.selected?8:6}"/><title>${esc(formatDate(point.record.date))}: ${n(point.record.weightKg).toFixed(1)} kg</title></g>`).join("");
+  const labels=model.points.filter(point=>point.labelled).map(point=>`<text x="${x(point).toFixed(1)}" y="${H-18}" text-anchor="middle" class="stage6-date-label">${esc(new Intl.DateTimeFormat("en-AU",{day:"numeric",month:"short"}).format(new Date(`${point.record.date}T12:00:00`)))}</text>`).join("");
+  const lineLabel=model.state==="single"?`<text x="${W/2}" y="${T+16}" text-anchor="middle" class="stage6-single-label">First recorded point</text>`:"";
+  return `<div class="stage6-weight-chart" role="group" aria-label="Weight trend. Select any point to review its date and weight."><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" aria-label="Interactive weight trend plot">${grid}${polyline}${points}${labels}${lineLabel}<text x="17" y="${T+plotH/2}" class="stage6-axis-title" transform="rotate(-90 17 ${T+plotH/2})">Weight (kg)</text></svg></div>`;
+}
+function renderSelectedWeightPoint(model,journey){
+  const selected=model.selected,target=by("weight-point-summary");if(!target)return;
+  if(!selected){target.innerHTML=`<strong>No point selected</strong><p>Your saved date and weight will appear here.</p>`;return;}
+  const total=journey.start?round1(n(selected.weightKg)-n(journey.start.weightKg)):0;
+  target.innerHTML=`<div><span>Selected Point</span><strong>${n(selected.weightKg).toFixed(1)} kg</strong><small>${esc(formatDate(selected.date))}</small></div><div><span>Change In This Range</span><strong>${model.records.length>1?weightChangeText(model.rangeChange):"First point"}</strong><small>${model.records.length>1?`From ${esc(formatDate(model.records[0].date))}`:"One record in view"}</small></div><div><span>Total Change Since Start</span><strong>${journey.start?weightChangeText(total):"—"}</strong><small>${journey.start?`From ${n(journey.start.weightKg).toFixed(1)} kg`:"No starting record"}</small></div><button class="secondary" data-edit-weight-date="${esc(selected.date)}" type="button">Edit This Weight</button>`;
+}
 function renderHistory(period){
   const days=period==="all"?null:n(period),today=isoToday(),cutoff=days?shiftISO(today,-(days-1)):null,within=date=>!!date&&date<=today&&(!cutoff||date>=cutoff);
-  const main=mainData(),weights=(main.weightHistory||[]).filter(x=>x?.date&&within(x.date)).sort((a,b)=>a.date.localeCompare(b.date)),dates=Object.keys(ext.diary).filter(within).sort(),recorded=dates.filter(date=>recordedEntriesForDate(date).length>0),totals=recorded.map(date=>({date,...daySummary(date)})),average=key=>recorded.length?totals.reduce((sum,x)=>sum+n(x.nutrients[key]),0)/recorded.length:0,activities=ext.exercise.filter(x=>within(x.localDate||x.date.slice(0,10)));
-  by("history-summary").innerHTML=`<strong>Food Diary Days: ${recorded.length} · Weight Check-Ins: ${weights.length} · Activities: ${activities.length}</strong><p>Food averages use days with Diary entries only. Weight Check-Ins are counted separately.</p>`;
-  if(weights.length){const values=weights.map(x=>n(x.weightKg)),rawMin=Math.min(...values),rawMax=Math.max(...values),spread=Math.max(.4,rawMax-rawMin),min=rawMin-Math.max(.2,spread*.15),max=rawMax+Math.max(.2,spread*.15),span=Math.max(.4,max-min),last=weights[weights.length-1];by("history-bars").innerHTML=`<div class="weight-bar-scroll" role="img" aria-label="Weight trend from ${formatDate(weights[0].date)} to ${formatDate(last.date)}"><div class="weight-bar-chart" style="--weight-count:${weights.length}">${weights.map(item=>{const value=n(item.weightKg),height=28+((value-min)/span)*64;return `<div class="weight-bar-item"><strong>${Number(value).toFixed(1)} kg</strong><div class="weight-bar-track"><i style="height:${Math.max(12,Math.min(96,height)).toFixed(1)}%"></i></div><span>${esc(new Intl.DateTimeFormat("en-AU",{weekday:"short",day:"numeric",month:"short"}).format(new Date(item.date+"T12:00:00")).replace(",",""))}</span></div>`;}).join("")}</div></div><div class="weight-trend-fallback" aria-label="Weight trend values">${weights.map(item=>`<span><strong>${Number(n(item.weightKg)).toFixed(1)} kg</strong><small>${esc(relativeDateLabel(item.date))}</small></span>`).join("")}</div>`;}else by("history-bars").innerHTML=`<p class="empty-state">Add Weight Check-Ins to build your weight trend.</p>`;
-  by("nutrition-history").innerHTML=recorded.length?`<div class="summary-grid"><div class="summary-item"><span>Average Energy On Recorded Days</span><strong>${formatNumber(average("calories"))} Cal</strong></div><div class="summary-item"><span>Average Protein</span><strong>${formatNumber(average("protein"))} g</strong></div><div class="summary-item"><span>Average Fibre</span><strong>${formatNumber(average("fibre"))} g</strong></div><div class="summary-item"><span>Average Sodium</span><strong>${formatNumber(average("sodium"))} mg</strong></div></div><div class="history-list">${totals.map(x=>`<div><span>${formatDate(x.date)}</span><strong>${formatNumber(x.nutrients.calories)} Cal · ${recordedEntriesForDate(x.date).length} entries</strong></div>`).join("")}</div>`:`<p class="empty-state">No recorded food days in this period.</p>`;
-  const totalActivity=activities.reduce((sum,x)=>sum+n(x.calories),0),waterDates=Object.keys(ext.water).filter(within),avgWater=waterDates.length?waterDates.reduce((sum,d)=>sum+n(ext.water[d]),0)/waterDates.length:0;by("activity-history-summary").innerHTML=`<div class="summary-grid"><div class="summary-item"><span>Activity Recorded</span><strong>${formatNumber(totalActivity)} Cal Estimated</strong></div><div class="summary-item"><span>Average Quick-Added Zero-Calorie Drinks</span><strong>${formatNumber(avgWater)} mL</strong></div></div>`;
+  qa(".history-period button").forEach(button=>button.classList.toggle("active",button.dataset.period===String(period)));
+  const main=mainData(),model=WEIGHT_PROGRESS.chartModel(main.weightHistory||[],{period,today,selectedId:ext.ui.selectedWeightPointId||""}),dates=Object.keys(ext.diary).filter(within).sort(),recorded=dates.filter(date=>recordedEntriesForDate(date).length>0),totals=recorded.map(date=>({date,...daySummary(date)})),average=key=>recorded.length?totals.reduce((sum,x)=>sum+n(x.nutrients[key]),0)/recorded.length:0,activities=ext.exercise.filter(x=>within(x.localDate||x.date.slice(0,10)));
+  const journey=renderWeightJourney(main,model,period);if(model.selected)ext.ui.selectedWeightPointId=model.selected.id||model.selected.date;
+  by("history-bars").innerHTML=weightChartMarkup(model);renderSelectedWeightPoint(model,journey);
+  if(by("nutrition-history"))by("nutrition-history").innerHTML=recorded.length?`<div class="summary-grid"><div class="summary-item"><span>Average Energy On Recorded Days</span><strong>${formatNumber(average("calories"))} Cal</strong></div><div class="summary-item"><span>Average Protein</span><strong>${formatNumber(average("protein"))} g</strong></div><div class="summary-item"><span>Average Fibre</span><strong>${formatNumber(average("fibre"))} g</strong></div><div class="summary-item"><span>Average Sodium</span><strong>${formatNumber(average("sodium"))} mg</strong></div></div><div class="history-list">${totals.map(x=>`<div><span>${formatDate(x.date)}</span><strong>${formatNumber(x.nutrients.calories)} Cal · ${recordedEntriesForDate(x.date).length} entries</strong></div>`).join("")}</div>`:`<p class="empty-state">No recorded food days in this period.</p>`;
+  const totalActivity=activities.reduce((sum,x)=>sum+activityRawEnergy(x),0),waterDates=Object.keys(ext.water).filter(within),avgWater=waterDates.length?waterDates.reduce((sum,d)=>sum+n(ext.water[d]),0)/waterDates.length:0;if(by("activity-history-summary"))by("activity-history-summary").innerHTML=`<div class="summary-grid"><div class="summary-item"><span>Activity Recorded</span><strong>${formatNumber(totalActivity)} Cal Raw Energy</strong></div><div class="summary-item"><span>Average Quick-Added Zero-Calorie Drinks</span><strong>${formatNumber(avgWater)} mL</strong></div></div>`;
 }
-q(".history-period")?.addEventListener("click",event=>{const b=event.target.closest("[data-period]");if(!b)return;qa(".history-period button").forEach(x=>x.classList.toggle("active",x===b));renderHistory(b.dataset.period);});
+q(".history-period")?.addEventListener("click",event=>{const button=event.target.closest("[data-period]");if(!button)return;renderHistory(button.dataset.period);});
+q(".progress-view-switch")?.addEventListener("click",event=>{const button=event.target.closest("[data-progress-view]");if(button)setProgressView(button.dataset.progressView);});
+document.addEventListener("click",event=>{const point=event.target.closest?.("[data-weight-point-id]");if(!point)return;ext.ui.selectedWeightPointId=point.dataset.weightPointId;renderHistory(currentPeriod());});
+document.addEventListener("keydown",event=>{const point=event.target.closest?.("[data-weight-point-id]");if(!point||!(event.key==="Enter"||event.key===" "))return;event.preventDefault();ext.ui.selectedWeightPointId=point.dataset.weightPointId;renderHistory(currentPeriod());});
 
 // Printable report
 function initialiseReport(){const to=isoToday(),from=shiftISO(to,-6);by("report-from").value ||= from;by("report-to").value ||= to;}
@@ -1728,7 +1843,7 @@ function reportRows(from,to){return Object.keys(ext.diary).filter(d=>d>=from&&d<
 function buildReport(){
   const from=by("report-from").value,to=by("report-to").value;if(!from||!to||from>to){showActionToast("Choose a valid report date range.",null,5000);return;}
   const main=mainData(),rows=reportRows(from,to),foodOn=by("report-food").checked,weightOn=by("report-weight").checked,activityOn=by("report-activity").checked,waterOn=by("report-water").checked;const weights=(main.weightHistory||[]).filter(x=>x.date>=from&&x.date<=to);const activities=ext.exercise.filter(x=>(x.localDate||x.date.slice(0,10))>=from&&(x.localDate||x.date.slice(0,10))<=to);
-  by("report-preview").innerHTML=`<header class="report-title"><h1>Healthy Eating Companion Progress Report</h1><p>${formatDate(from)} to ${formatDate(to)}</p><p>${esc(main.personal?.preferredName||main.personal?.fullName||"Founder Tester")}</p></header><section><h2>Plain-English Summary</h2><p>${rows.filter(r=>r.entries.some(e=>e.status==="eaten")).length} days contain food records. Unrecorded days are not counted as zero intake. This founder report is for personal review and is not medical advice.</p></section>${foodOn?`<section><h2>Food & Nutrition</h2>${rows.length?rows.map(r=>`<h3>${formatDate(r.date)}</h3><p><strong>${formatNumber(r.summary.nutrients.calories)} Cal</strong> · Protein ${formatNumber(r.summary.nutrients.protein)} g · Fibre ${formatNumber(r.summary.nutrients.fibre)} g · Sodium ${formatNumber(r.summary.nutrients.sodium)} mg</p><table><thead><tr><th>Meal</th><th>Food</th><th>Status</th><th>Amount</th><th>Cal</th></tr></thead><tbody>${r.entries.map(e=>`<tr><td>${esc(e.meal)}</td><td>${esc(e.name)}</td><td>${esc(statusLabel(e.status))}</td><td>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)}</td><td>${formatNumber(e.nutrients.calories)}</td></tr>`).join("")}</tbody></table>`).join(""):`<p>No food records in this period.</p>`}</section>`:""}${weightOn?`<section><h2>Weight</h2>${weights.length?`<table><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${weights.map(w=>`<tr><td>${esc(w.date)}</td><td>${formatNumber(w.weightKg,true)} kg</td><td>${esc(w.note||"")}</td></tr>`).join("")}</tbody></table>`:`<p>No weight entries in this period.</p>`}</section>`:""}${activityOn?`<section><h2>Activity</h2>${activities.length?`<table><thead><tr><th>Date</th><th>Activity</th><th>Minutes</th><th>Burned</th><th>Credited</th></tr></thead><tbody>${activities.map(a=>`<tr><td>${esc(a.localDate||a.date.slice(0,10))}</td><td>${esc(a.name)}</td><td>${formatNumber(a.minutes)}</td><td>${formatNumber(a.calories)} Cal</td><td>${formatNumber(a.credit)} Cal</td></tr>`).join("")}</tbody></table>`:`<p>No activity entries in this period.</p>`}</section>`:""}${waterOn?`<section><h2>Hydration & Steps</h2><table><thead><tr><th>Date</th><th>Total Hydration</th><th>Steps</th></tr></thead><tbody>${Object.keys({...ext.diary,...ext.water,...ext.steps}).filter(d=>d>=from&&d<=to).sort().map(d=>`<tr><td>${esc(d)}</td><td>${formatNumber(dayHydration(d).total)} mL</td><td>${formatNumber(ext.steps[d])}</td></tr>`).join("")}</tbody></table></section>`:""}`;
+  by("report-preview").innerHTML=`<header class="report-title"><h1>Healthy Eating Companion Progress Report</h1><p>${formatDate(from)} to ${formatDate(to)}</p><p>${esc(main.personal?.preferredName||main.personal?.fullName||"Founder Tester")}</p></header><section><h2>Plain-English Summary</h2><p>${rows.filter(r=>r.entries.some(e=>e.status==="eaten")).length} days contain food records. Unrecorded days are not counted as zero intake. This founder report is for personal review and is not medical advice.</p></section>${foodOn?`<section><h2>Food & Nutrition</h2>${rows.length?rows.map(r=>`<h3>${formatDate(r.date)}</h3><p><strong>${formatNumber(r.summary.nutrients.calories)} Cal</strong> · Protein ${formatNumber(r.summary.nutrients.protein)} g · Fibre ${formatNumber(r.summary.nutrients.fibre)} g · Sodium ${formatNumber(r.summary.nutrients.sodium)} mg</p><table><thead><tr><th>Meal</th><th>Food</th><th>Status</th><th>Amount</th><th>Cal</th></tr></thead><tbody>${r.entries.map(e=>`<tr><td>${esc(e.meal)}</td><td>${esc(e.name)}</td><td>${esc(statusLabel(e.status))}</td><td>${formatNumber(e.amount,true)} ${esc(e.unitLabel||e.unit)}</td><td>${formatNumber(e.nutrients.calories)}</td></tr>`).join("")}</tbody></table>`).join(""):`<p>No food records in this period.</p>`}</section>`:""}${weightOn?`<section><h2>Weight</h2>${weights.length?`<table><thead><tr><th>Date</th><th>Weight</th><th>Note</th></tr></thead><tbody>${weights.map(w=>`<tr><td>${esc(w.date)}</td><td>${formatNumber(w.weightKg,true)} kg</td><td>${esc(w.note||"")}</td></tr>`).join("")}</tbody></table>`:`<p>No weight entries in this period.</p>`}</section>`:""}${activityOn?`<section><h2>Activity</h2>${activities.length?`<table><thead><tr><th>Date</th><th>Activity</th><th>Minutes</th><th>Raw Energy</th><th>Allowance Credit</th></tr></thead><tbody>${activities.map(a=>`<tr><td>${esc(ACTIVITY.localDateOf(a))}</td><td>${esc(a.name)}</td><td>${formatNumber(a.durationMinutes??a.minutes)}</td><td>${formatNumber(activityRawEnergy(a))} Cal</td><td>${formatNumber(activityAllowanceCredit(a))} Cal</td></tr>`).join("")}</tbody></table>`:`<p>No activity entries in this period.</p>`}</section>`:""}${waterOn?`<section><h2>Hydration & Steps</h2><table><thead><tr><th>Date</th><th>Total Hydration</th><th>Steps</th></tr></thead><tbody>${Object.keys({...ext.diary,...ext.water,...ext.steps}).filter(d=>d>=from&&d<=to).sort().map(d=>`<tr><td>${esc(d)}</td><td>${formatNumber(dayHydration(d).total)} mL</td><td>${formatNumber(ext.steps[d])}</td></tr>`).join("")}</tbody></table></section>`:""}`;
 }
 by("preview-report")?.addEventListener("click",buildReport);by("print-report")?.addEventListener("click",()=>{buildReport();setTimeout(()=>window.print(),80);});
 by("download-data")?.addEventListener("click",()=>{const blob=new Blob([JSON.stringify({profile:mainData(),functional:ext},null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`healthy-eating-companion-alpha-0-6-13-data-${isoToday()}.json`;a.click();URL.revokeObjectURL(url);});
@@ -1746,7 +1861,7 @@ const HELP={
 document.addEventListener("click",event=>{const b=event.target.closest("[data-help]");if(!b)return;const copy=HELP[b.dataset.help]||"Help is available for this screen.";openModal("Help With This Screen",copy,"Close",()=>{});by("a05-modal-confirm").className="primary";if(mainData().companion?.enabled&&typeof window.speakText==="function")window.speakText(copy);});
 
 // Alpha 0.6.16 migration: keep existing records, enforce the five agreed meal categories, and preserve explicit day targets.
-function refreshDiaryEnergyPreview(target){const slide=by("diary-day-summary")?.querySelector(".summary-slide");if(!slide)return;const date=diaryDate(),recorded=dayNutrition(date,["eaten","planned"]).calories,exercise=(ext.exercise||[]).filter(x=>(x.localDate||x.date?.slice(0,10))===date).reduce((sum,x)=>sum+n(x.credit),0),goal=n(target)?n(target)+exercise:0;slide.innerHTML=`<span>${date===isoToday()?"Today’s Energy":relativeDateLabel(date).split(" · ")[0]+" Energy"}</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${goal?`${formatNumber(goal)} Cal`:"Needs Review"}</strong></div><div><small>Recorded</small><strong>${formatNumber(recorded)} Cal</strong></div><div><small>Remaining</small><strong>${goal?`${formatNumber(Math.max(0,goal-recorded))} Cal`:"—"}</strong></div></div>`;}
+function refreshDiaryEnergyPreview(target){const slide=by("diary-day-summary")?.querySelector(".summary-slide");if(!slide)return;const date=diaryDate(),recorded=dayNutrition(date,["eaten","planned"]).calories,exercise=(ext.exercise||[]).filter(x=>ACTIVITY.localDateOf(x)===date).reduce((sum,x)=>sum+activityAllowanceCredit(x),0),goal=n(target)?n(target)+exercise:0;slide.innerHTML=`<span>${date===isoToday()?"Today’s Energy":relativeDateLabel(date).split(" · ")[0]+" Energy"}</span><div class="diary-kpi-row"><div><small>Goal</small><strong>${goal?`${formatNumber(goal)} Cal`:"Needs Review"}</strong></div><div><small>Recorded</small><strong>${formatNumber(recorded)} Cal</strong></div><div><small>Remaining</small><strong>${goal?`${formatNumber(Math.max(0,goal-recorded))} Cal`:"—"}</strong></div></div>`;}
 ext.version="0.6.16";Object.keys(ext.diary||{}).forEach(date=>{ext.diary[date]=(ext.diary[date]||[]).filter(entry=>entry&&entry.status!=="skipped").map(entry=>({...entry,status:"eaten",meal:(entry.meal==="Morning Tea"||entry.meal==="Afternoon Tea")?"Snacks":(mealNames().includes(entry.meal)?entry.meal:"Other")}));if(!ext.diary[date].length)delete ext.diary[date];});ext.ui.plannerResults={};ext.ui.plannerRejected={};ext.ui.plannerAccepted={};ext.ui.plannerSessionActive=false;ext.dayTypeTargets||={fasting:500};if(!n(ext.dayTypeTargets.fasting))ext.dayTypeTargets.fasting=500;const recoveredNormal=recommendedNormalTarget();if(recoveredNormal){ext.dayTypeTargets.normal=recoveredNormal;ext.dayTypeTargets.normalSource="profile";}else if(ext.dayTypeTargets.normalSource!=="profile"){delete ext.dayTypeTargets.normal;delete ext.dayTypeTargets.normalSource;}Object.values(ext.daySettings||{}).forEach(settings=>{if(!settings)return;if(settings.type==="normal"&&!settings.customTarget){if(recoveredNormal)settings.targetCal=recoveredNormal;else delete settings.targetCal;}if(settings.customTarget===undefined)settings.customTarget=false;});normaliseShoppingCategories();saveExt();
 
 // Initial setup and integration
@@ -1755,16 +1870,15 @@ function init(){
   const postalSame=by("postal-same"),postalFields=by("postal-fields");const togglePostal=()=>postalFields?.classList.toggle("hidden",postalSame?.checked);postalSame?.addEventListener("change",togglePostal);togglePostal();
   const dietaryIds=["food-allergies","food-intolerances","medical-restrictions","eating-pattern","pregnancy-status","cultural-restrictions"];
   by("personal-next")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.personal=Object.assign(d.personal||{},{postalSame:postalSame?.checked,postalCountry:by("postal-country")?.value,postalRegion:by("postal-region")?.value,postalPostcode:by("postal-postcode")?.value,postalSuburb:by("postal-suburb")?.value,postalStreet:by("postal-street")?.value});localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
-  by("calculate-button")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.dietary=Object.assign({},d.dietary||{},Object.fromEntries(dietaryIds.map(id=>[id,by(id)?.value||""])));localStorage.setItem(MAIN_KEY,JSON.stringify(d));},30));
+  by("calculate-button")?.addEventListener("click",()=>setTimeout(()=>{const d=mainData();d.dietary=Object.assign({},d.dietary||{},Object.fromEntries(dietaryIds.map(id=>[id,by(id)?.value||""])));localStorage.setItem(MAIN_KEY,JSON.stringify(d));syncActivityCreditPolicy();},30));
   const d=mainData(),p=d.personal||{};if(postalSame){postalSame.checked=p.postalSame!==false;[["postal-country","postalCountry"],["postal-region","postalRegion"],["postal-postcode","postalPostcode"],["postal-suburb","postalSuburb"],["postal-street","postalStreet"]].forEach(([id,key])=>{if(by(id))by(id).value=p[key]||""});togglePostal();}dietaryIds.forEach(id=>{if(by(id))by(id).value=d.dietary?.[id]||""});
-  initialiseDateControls();loadAfcdFoods();renderRecipeSelectOptions();renderScanSelect();renderHomeSummary();
+  initialiseDateControls();ensureActivityCreditPolicy();resetActivityForm();loadAfcdFoods();renderRecipeSelectOptions();renderScanSelect();renderHomeSummary();
   // Ensure earlier founder profiles can migrate without losing functional data.
   saveExt();
   if(mainData().completed){const profile=mainData();openFeature("home");if(profile.firstHomePending){profile.firstHomePending=false;localStorage.setItem(MAIN_KEY,JSON.stringify(profile));}}
 }
 
 /* ===== Alpha 0.6.16 integrated founder-testing refinements ===== */
-const BUILD='0.6.22';
 const DAY_MS=86400000;
 const el=id=>document.getElementById(id);
 const norm=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
@@ -1773,29 +1887,15 @@ const safe=v=>typeof esc==='function'?esc(v):String(v??'').replace(/[&<>"']/g,m=
 /* ---------- 1. Migration / version ---------- */
 function migrate612(){
   try{
-    ext.version=BUILD;
+    ext.version=ACTIVE_VERSION;
     ext.ui ||= {};
     ext.foodVerification ||= {};
     ext.sharedImports ||= [];
     ext.connections ||= {};
     ext.connections.future ||= {appleHealth:false,healthConnect:false,social:false,cloudAccount:false};
     const main=mainData();
-    main.version=BUILD;
-    main.health ||= {};
-    if(!main.profileStartedDate){
-      const marked=(main.weightHistory||[]).filter(x=>x?.date&&(x.isStartingWeight||/starting weight/i.test(x.note||''))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-      main.profileStartedDate=marked[0]?.date||new Intl.DateTimeFormat('en-CA',{timeZone:main.personal?.activeTimeZone||'Australia/Brisbane'}).format(new Date());
-    }
-    const history=(main.weightHistory||[]).filter(x=>x?.date&&Number(x.weightKg)>0&&(!profileStart||x.date>=profileStart)).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.recordedAt||'').localeCompare(String(b.recordedAt||'')));
-    if(history.length){
-      const startDate=main.profileStartedDate||history[0].date;
-      let start=history.find(x=>x.date===startDate)||history.find(x=>x.date>=startDate)||history[0];
-      main.health.startingWeightDate=start.date;
-      history.forEach(item=>{
-        if(item===start){item.isStartingWeight=true;item.note='Starting Weight';}
-        else if(item.isStartingWeight||/starting weight/i.test(item.note||'')){item.isStartingWeight=false;item.note=item.date<startDate?'Historical Test Entry':'Progress Check-In';}
-      });
-    }
+    main.version=ACTIVE_VERSION;
+    window.HECMigrations.repairLegacyProfileStart(main);
     localStorage.setItem(MAIN_KEY,JSON.stringify(main));
     saveExt();
   }catch(error){console.warn('Alpha 0.6.16 migration',error);}
@@ -1968,36 +2068,6 @@ document.addEventListener('change',event=>{const select=event.target.closest('[d
 const oldRenderDailyProgress=renderDailyProgress;
 renderDailyProgress=function(){oldRenderDailyProgress();document.querySelectorAll('#daily-meal-status .meal-progress-state').forEach(x=>x.remove());const copy=el('daily-meals-copy');if(copy)copy.textContent='Tap any meal to view, add or change its entries.';};
 
-/* ---------- 7. Weight history repair + compact line graph ---------- */
-function earliestWeight(){const profileStart=mainData().profileStartedDate||'';return [...(data.weightHistory||[])].filter(x=>x?.date&&Number(x.weightKg)>0&&(!profileStart||x.date>=profileStart)).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.recordedAt||'').localeCompare(String(b.recordedAt||'')))[0]||null;}
-startingWeightRecord=function(){const start=earliestWeight();if(start){data.health.startingWeightDate=start.date;start.isStartingWeight=true;}return start;};
-renderWeightHistoryOnly=function(){
-  const history=[...(data.weightHistory||[])].filter(x=>x?.date&&Number(x.weightKg)>0).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.recordedAt||'').localeCompare(String(a.recordedAt||'')));
-  const latest=latestApplicableWeightRecord(),start=startingWeightRecord(),change=latest&&start?roundWeight(Number(latest.weightKg)-Number(start.weightKg)):0;
-  const summary=latest?`<div class="weight-history-summary"><div><span>Current Weight</span><strong>${safe(formatWeight(latest.weightKg))} kg</strong></div><div><span>Goal Weight</span><strong>${safe(formatWeight(data.health.selectedGoalWeight))} kg</strong></div><div><span>Change Since Start</span><strong>${change>0?'+':''}${safe(formatWeight(change))} kg</strong></div><div><span>Last Recorded</span><strong>${safe(friendlyWeightRelativeDate(latest.date))}</strong></div></div>`:'';
-  const profileStart=mainData().profileStartedDate||start?.date||'';const rows=items=>items.map(item=>`<button type="button" class="weight-history-row" data-edit-weight-date="${safe(item.date)}"><span><strong>${safe(friendlyWeightRelativeDate(item.date))}</strong><small>${safe(item.date===start?.date?'Starting Weight':(profileStart&&item.date<profileStart?'Historical Test Entry':(item.note||'Progress Check-In')))}</small></span><b>${safe(formatWeight(item.weightKg))} kg</b><em>Edit</em></button>`).join('');
-  el('weight-history').innerHTML=history.length?`${summary}<h4>Recent Weight Entries</h4>${rows(history.slice(0,5))}${history.length>5?`<details class="weight-history-all"><summary>View All Weight History</summary>${rows(history.slice(5))}</details>`:''}`:'<div class="empty-state">No weight check-ins have been recorded yet.</div>';
-  const details=el('weight-history')?.querySelector('.weight-history-all');if(details){const s=details.querySelector('summary');details.addEventListener('toggle',()=>{s.textContent=details.open?'Hide Weight History':'View All Weight History';});}
-};
-function lineWeightChart(weights){
-  if(!weights.length)return '<p class="empty-state">Add Weight Check-Ins to build your weight trend.</p>';
-  const vals=weights.map(x=>Number(x.weightKg)),rawMin=Math.min(...vals),rawMax=Math.max(...vals),spread=Math.max(.6,rawMax-rawMin),pad=Math.max(.3,spread*.18),min=Math.floor((rawMin-pad)*10)/10,max=Math.ceil((rawMax+pad)*10)/10,span=Math.max(.5,max-min);
-  const W=760,H=390,L=72,R=24,T=34,B=70,plotW=W-L-R,plotH=H-T-B;
-  const x=i=>weights.length===1?L+plotW/2:L+i*(plotW/(weights.length-1));const y=v=>T+(max-v)/span*plotH;
-  const points=weights.map((w,i)=>`${x(i).toFixed(1)},${y(Number(w.weightKg)).toFixed(1)}`).join(' ');
-  const ticks=4;let grid='';for(let i=0;i<=ticks;i++){const value=max-(span*i/ticks),yy=T+plotH*i/ticks;grid+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" class="weight-grid-line"/><text x="${L-8}" y="${yy+4}" text-anchor="end" class="weight-axis-label">${value.toFixed(1)}</text>`;}
-  const labelEvery=Math.max(1,Math.ceil(weights.length/6));const dateLabels=weights.map((w,i)=>{if(i%labelEvery&&i!==weights.length-1)return '';const label=new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short'}).format(new Date(`${w.date}T12:00:00`));return `<text x="${x(i)}" y="${H-20}" text-anchor="middle" class="weight-date-label">${safe(label)}</text>`;}).join('');
-  const dots=weights.map((w,i)=>`<g class="weight-dot"><circle cx="${x(i)}" cy="${y(Number(w.weightKg))}" r="6" class="weight-trend-point" tabindex="0"><title>${safe(friendlyWeightRelativeDate(w.date))}: ${Number(w.weightKg).toFixed(1)} kg</title></circle>${(i===0||i===weights.length-1)?`<text x="${x(i)}" y="${Math.max(16,y(Number(w.weightKg))-12)}" text-anchor="middle" class="weight-point-label">${Number(w.weightKg).toFixed(1)}</text>`:''}</g>`).join('');
-  return `<div class="weight-line-chart" role="img" aria-label="Weight trend from ${safe(formatDate(weights[0].date))} to ${safe(formatDate(weights[weights.length-1].date))}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}<polyline points="${points}" class="weight-trend-line"/>${dots}${dateLabels}<text x="15" y="${T+plotH/2}" class="weight-axis-title" transform="rotate(-90 15 ${T+plotH/2})">kg</text></svg></div><div class="weight-chart-summary"><strong>${Number(weights[weights.length-1].weightKg).toFixed(1)} kg</strong><span>${safe(friendlyWeightRelativeDate(weights[weights.length-1].date))}</span>${weights.length>1?`<small>Change in view: ${(Number(weights[weights.length-1].weightKg)-Number(weights[0].weightKg)>0?'+':'')}${(Number(weights[weights.length-1].weightKg)-Number(weights[0].weightKg)).toFixed(1)} kg</small>`:''}</div>`;
-}
-const oldRenderHistory=renderHistory;
-renderHistory=function(period){
-  oldRenderHistory(period);
-  const days=period==='all'?null:Number(period),today=isoToday(),cutoff=days?shiftISO(today,-(days-1)):null;
-  const weights=(mainData().weightHistory||[]).filter(x=>x?.date&&x.date<=today&&(!cutoff||x.date>=cutoff)&&Number(x.weightKg)>0).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  if(el('history-bars'))el('history-bars').innerHTML=lineWeightChart(weights);
-};
-
 /* ---------- 8. Completed food-entry transactions cannot be accidentally re-submitted ---------- */
 const oldPrepareEntry=prepareEntry;
 prepareEntry=function(food,opts={}){oldPrepareEntry(food,opts);if(editorState){editorState.transactionId=`tx-${Date.now()}-${Math.random().toString(36).slice(2)}`;editorState.completed=false;}const b=el('save-food-entry');if(b)b.disabled=false;const b2=el('save-food-entry-and-food');if(b2)b2.disabled=false;};
@@ -2016,20 +2086,13 @@ function compareNutrients(food,parsed){
   const panel=parsed?.perServing||{},online=food?.nutrients||{};const keys=[['calories','Calories','Cal'],['protein','Protein','g'],['carbs','Carbohydrate','g'],['fat','Fat','g'],['satFat','Saturated Fat','g'],['fibre','Fibre','g'],['sugar','Sugars','g'],['sodium','Sodium','mg']];
   return keys.filter(([k])=>Number.isFinite(Number(panel[k]))&&Number(panel[k])>0).map(([k,label,unit])=>{const a=Number(online[k]||0),b=Number(panel[k]||0),diff=b-a,pct=a?Math.abs(diff)/Math.abs(a)*100:Infinity;return {k,label,unit,online:a,panel:b,diff,pct,close:pct<=5||Math.abs(diff)<(k==='sodium'?5:.2)};});
 }
-document.addEventListener('click',event=>{if(!event.target.closest('[data-compare-barcode-panel]'))return;const id=event.target.closest('[data-compare-barcode-panel]').dataset.compareBarcodePanel;ext.ui.compareBarcodeFoodId=id;ext.ui.scanMode='label';saveExt();updateScanModeUI();el('label-tools')?.scrollIntoView({behavior:'smooth',block:'start'});showActionToast('Photograph the package Nutrition Information Panel. The Companion will compare it with the barcode record.',null,5000);});
+document.addEventListener('click',event=>{if(!event.target.closest('[data-compare-barcode-panel]'))return;const id=event.target.closest('[data-compare-barcode-panel]').dataset.compareBarcodePanel,food=scanBarcodeFood?.id===id?scanBarcodeFood:getFood(id);if(food)keepCapturedFoodAvailable(food,{save:false});ext.ui.compareBarcodeFoodId=id;ext.ui.scanMode='label';saveExt();updateScanModeUI();el('label-tools')?.scrollIntoView({behavior:'smooth',block:'start'});showActionToast('Photograph the package Nutrition Information Panel. The Companion will compare it with the barcode record.',null,5000);});
 const oldLookupBarcodeProduct=lookupBarcodeProduct;
 lookupBarcodeProduct=async function(code){const food=await oldLookupBarcodeProduct(code);if(food&&el('scan-food-preview')){el('scan-food-preview').insertAdjacentHTML('beforeend',`<button type="button" class="secondary wide compare-package-button" data-compare-barcode-panel="${safe(food.id)}">Compare With Nutrition Panel</button>`);}return food;};
-const oldFillOcrReview=fillOcrReview;
-fillOcrReview=function(parsed,basis=parsed?.basis||'serving'){
-  oldFillOcrReview(parsed,basis);
-  const id=ext.ui.compareBarcodeFoodId;if(!id||basis!=='serving')return;const food=getFood(id);if(!food)return;const rows=compareNutrients(food,parsed),box=el('ocr-review');if(!box)return;
-  const differences=rows.filter(r=>!r.close);box.querySelector('.barcode-panel-comparison')?.remove();
-  box.insertAdjacentHTML('afterbegin',`<div class="barcode-panel-comparison status-box"><strong>${differences.length?'Package Comparison — Review Differences':'Package Information Matches Closely ✓'}</strong><div class="compare-table">${rows.map(r=>`<div class="${r.close?'match':'difference'}"><span>${safe(r.label)}</span><b>${formatNumber(r.online,true)} ${r.unit}</b><span>→</span><b>${formatNumber(r.panel,true)} ${r.unit}</b></div>`).join('')}</div><div class="quick-action-row"><button type="button" class="secondary" data-keep-barcode-values="${safe(id)}">Keep Barcode Values</button><button type="button" class="primary" data-use-package-values="${safe(id)}">Use Package Values</button></div></div>`);
-};
 document.addEventListener('click',event=>{
   const keep=event.target.closest('[data-keep-barcode-values]'),use=event.target.closest('[data-use-package-values]');if(!keep&&!use)return;const id=(keep||use).dataset.keepBarcodeValues||(keep||use).dataset.usePackageValues;const food=getFood(id);if(!food)return;
-  if(use&&ocrParsedPanel?.perServing){food.nutrients={...food.nutrients,...ocrParsedPanel.perServing};if(ocrParsedPanel.servingAmount){food.serving=`${formatNumber(ocrParsedPanel.servingAmount,true)} ${ocrParsedPanel.servingUnit}`;food.units={serve:1,[ocrParsedPanel.servingUnit]:1/ocrParsedPanel.servingAmount};food.unitLabels={serve:`Serve (${food.serving})`,[ocrParsedPanel.servingUnit]:ocrParsedPanel.servingUnit};enrichNaturalUnits(food);}upsertOnlineFoods([food]);}
-  markFoodVerified(id,use?'nutrition-panel':'barcode-package-check');ext.ui.compareBarcodeFoodId='';saveExt();showActionToast(use?'Package values saved for this food.':'Barcode values kept and verification date recorded.',null,3000);renderScanSelect();
+  if(use){const model=alpha08OcrModel(),packageValues=model?.perServing?.calories!==null?model.perServing:P8?.calculatedServingFrom100?.(model),energy=packageValues?.calories;if(energy===null||energy===undefined||energy===''||!Number.isFinite(Number(energy))){showActionToast('Confirm A Usable Current-Package Energy Value Before Using It.',null,5000);return;}food.nutrients={...food.nutrients,...packageValues};if(model?.servingAmount){food.serving=`${formatNumber(model.servingAmount,true)} ${model.servingUnit}`;food.units={serve:1,[model.servingUnit]:1/model.servingAmount};food.unitLabels={serve:`Serve (${food.serving})`,[model.servingUnit]:model.servingUnit};enrichNaturalUnits(food);}food.source='Current Package Nutrition Panel · User Checked';food.verificationStatus='package-confirmed';upsertOnlineFoods([food]);}
+  markFoodVerified(id,use?'nutrition-panel-confirmed':'barcode-package-check');ext.ui.compareBarcodeFoodId='';saveExt();by('ocr-review')?.querySelector('.barcode-panel-comparison')?.remove();alpha08UpdateOcrReview();showActionToast(use?'Checked current-package values saved for this food.':'Barcode values kept after comparison.',null,3000);renderScanSelect();
 });
 
 /* ---------- 10. Periodic re-verification prompt ---------- */
@@ -2051,21 +2114,22 @@ renderRecipeLibrary=function(query=''){oldRenderRecipeLibrary(query);for(const r
 document.addEventListener('click',event=>{const f=event.target.closest('[data-share-food]'),m=event.target.closest('[data-share-meal]'),r=event.target.closest('[data-share-recipe]');if(f){const p=foodSharePayload(f.dataset.shareFood);if(p)sharePackage(p,p.item.name);return;}if(m){const p=mealSharePayload(m.dataset.shareMeal);if(p)sharePackage(p,p.item.name);return;}if(r){const p=recipeSharePayload(r.dataset.shareRecipe);if(p)sharePackage(p,p.item.name);return;}});
 function installSharingImportUI(){const page=document.querySelector('#family-connections main');if(!page||el('hec-share-import'))return;page.insertAdjacentHTML('beforeend',`<div class="card"><h3>Share Foods, Meals & Recipes</h3><p>Portable Companion share files let another user copy an item into their own private library without sharing your Diary, weight or profile.</p><label class="secondary file-button">Import A Shared Companion Item<input id="hec-share-import" type="file" accept="application/json,.json" hidden></label><p id="hec-share-import-status" class="fine"></p></div><div class="card"><h3>My Devices</h3><p><strong>Automatic iPhone/iPad sync needs the future secure cloud account service.</strong> Until that service is connected, use a full backup file to move a current copy between devices.</p><button id="share-full-device-copy" class="secondary" type="button">Share A Full Device Copy</button><label class="secondary file-button">Restore A Full Device Copy<input id="restore-full-device-copy" type="file" accept="application/json,.json" hidden></label><p class="fine">This is a manual transfer, not live automatic sync. Restoring replaces the data on this device.</p></div>`);
   el('hec-share-import')?.addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const p=JSON.parse(await file.text());if(p.format!=='HEC-SHARE-1')throw new Error('Not a Companion share file');if(p.kind==='food'){const item=p.item;item.id=`shared-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`;item.source=`Shared Copy · ${item.source||''}`;ext.customFoods.push(item);ext.savedFoodIds.push(item.id);if(p.verification)ext.foodVerification[item.id]=p.verification;}else if(p.kind==='recipe'){const item=p.item;item.id=`recipe-${Date.now().toString(36)}`;ext.recipes.push(item);}else if(p.kind==='meal'){const item=p.item;item.id=`meal-${Date.now().toString(36)}`;ext.mealTemplates.push(item);}else throw new Error('Unsupported shared item');ext.sharedImports.unshift({kind:p.kind,name:p.item?.name||'Shared item',importedAt:new Date().toISOString()});saveExt();el('hec-share-import-status').textContent=`${p.item?.name||'Item'} copied into this Companion.`;}catch(err){el('hec-share-import-status').textContent=`Could not import: ${err.message}`;}finally{e.target.value='';}});
-  el('share-full-device-copy')?.addEventListener('click',async()=>{const payload={format:'HEC-BACKUP-1',version:BUILD,exportedAt:new Date().toISOString(),profile:JSON.parse(localStorage.getItem(MAIN_KEY)||'{}'),functional:JSON.parse(localStorage.getItem(EXT_KEY)||'{}')};await sharePackage(payload,'Healthy Eating Companion Device Copy');});
-  el('restore-full-device-copy')?.addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const p=JSON.parse(await file.text());if(!p.profile||!p.functional)throw new Error('Not a complete Companion backup');if(!confirm('Replace the Companion data on this device with this backup?'))return;localStorage.setItem(MAIN_KEY,JSON.stringify(p.profile));localStorage.setItem(EXT_KEY,JSON.stringify(p.functional));location.reload();}catch(err){alert(`Could not restore: ${err.message}`);}finally{e.target.value='';}});
+  el('share-full-device-copy')?.addEventListener('click',async()=>{const payload={format:'HEC-BACKUP-1',version:ACTIVE_VERSION,installationRole:APP.installationRole,exportedAt:new Date().toISOString(),profile:JSON.parse(localStorage.getItem(MAIN_KEY)||'{}'),functional:JSON.parse(localStorage.getItem(EXT_KEY)||'{}')};await sharePackage(payload,`${APP.displayName} Device Copy`);});
+  el('restore-full-device-copy')?.addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const p=JSON.parse(await file.text());if(!p.profile||!p.functional)throw new Error('Not a complete Companion backup');if(APP.installationRole==='my-data'&&p.installationRole==='test')throw new Error('A HEC — TEST backup cannot replace HEC — My Data');if(!confirm(`Replace the data in ${APP.displayName} with this backup?`))return;localStorage.setItem(MAIN_KEY,JSON.stringify(p.profile));localStorage.setItem(EXT_KEY,JSON.stringify(p.functional));location.reload();}catch(err){alert(`Could not restore: ${err.message}`);}finally{e.target.value='';}});
 }
 installSharingImportUI();
 
 /* ---------- 12. Stronger local persistence mirror (normal browsing); warn about Private Browsing ---------- */
-const DB_NAME='HEC-Persistent-Mirror';
+const DB_NAME=APP.mirrorDatabaseName;
 function openMirror(){return new Promise((resolve,reject)=>{if(!indexedDB)return reject(new Error('IndexedDB unavailable'));const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('kv'))req.result.createObjectStore('kv');};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
-async function mirrorWrite(){try{const db=await openMirror(),tx=db.transaction('kv','readwrite'),s=tx.objectStore('kv');s.put(localStorage.getItem(MAIN_KEY)||'',MAIN_KEY);s.put(localStorage.getItem(EXT_KEY)||'',EXT_KEY);s.put(new Date().toISOString(),'savedAt');await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});db.close();}catch{}}
-async function mirrorRestoreIfNeeded(){try{const current=JSON.parse(localStorage.getItem(MAIN_KEY)||'{}');if(current.completed)return false;const db=await openMirror(),tx=db.transaction('kv','readonly'),s=tx.objectStore('kv'),get=k=>new Promise((res,rej)=>{const r=s.get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const mainRaw=await get(MAIN_KEY),extRaw=await get(EXT_KEY);db.close();if(mainRaw){const m=JSON.parse(mainRaw);if(m.completed){localStorage.setItem(MAIN_KEY,mainRaw);if(extRaw)localStorage.setItem(EXT_KEY,extRaw);location.reload();return true;}}}catch{}return false;}
+async function mirrorWrite(){try{if(resetInProgress)return;const db=await openMirror(),tx=db.transaction('kv','readwrite'),s=tx.objectStore('kv');s.put(localStorage.getItem(MAIN_KEY)||'',MAIN_KEY);s.put(localStorage.getItem(EXT_KEY)||'',EXT_KEY);s.put(new Date().toISOString(),'savedAt');await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});db.close();}catch{}}
+async function clearPersistentMirror(){try{const db=await openMirror(),tx=db.transaction('kv','readwrite');tx.objectStore('kv').clear();await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});db.close();}catch{}}
+async function mirrorRestoreIfNeeded(){try{let resetReloadPending=false;try{resetReloadPending=sessionStorage.getItem(RESET_RELOAD_SESSION_KEY)==='1';if(resetReloadPending)sessionStorage.removeItem(RESET_RELOAD_SESSION_KEY);}catch{}if(resetReloadPending)return false;const current=JSON.parse(localStorage.getItem(MAIN_KEY)||'{}');if(current.completed)return false;const db=await openMirror(),tx=db.transaction('kv','readonly'),s=tx.objectStore('kv'),get=k=>new Promise((res,rej)=>{const r=s.get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const mainRaw=await get(MAIN_KEY),extRaw=await get(EXT_KEY);db.close();if(mainRaw){const m=JSON.parse(mainRaw);if(m.completed){localStorage.setItem(MAIN_KEY,mainRaw);if(extRaw)localStorage.setItem(EXT_KEY,extRaw);location.reload();return true;}}}catch{}return false;}
 window.addEventListener('pagehide',mirrorWrite);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')mirrorWrite();});setInterval(mirrorWrite,2500);
 navigator.storage?.persist?.().catch(()=>{});
 mirrorRestoreIfNeeded();mirrorWrite();
 function addPersistenceNotice(){
-  if(el('hec-private-storage-note'))return;const host=document.querySelector('#settings main')||document.querySelector('#welcome .welcome-card');if(!host)return;host.insertAdjacentHTML('afterbegin',`<div id="hec-private-storage-note" class="status-box storage-safety-note"><strong>Saving Your Companion Data</strong><p>Use Healthy Eating Companion in a normal Safari tab or Home Screen app. <strong>Private Browsing can delete website data when private tabs are closed</strong>, which no website can override. Alpha 0.6.16 also keeps a second local IndexedDB mirror when the browser allows it.</p></div>`);
+  if(el('hec-private-storage-note'))return;const host=document.querySelector('#settings main')||document.querySelector('#welcome .welcome-card');if(!host)return;host.insertAdjacentHTML('afterbegin',`<div id="hec-private-storage-note" class="status-box storage-safety-note"><strong>Saving Your Companion Data</strong><p>Use Healthy Eating Companion in a normal Safari tab or Home Screen app. <strong>Private Browsing can delete website data when private tabs are closed</strong>, which no website can override. HEC also keeps a second local IndexedDB mirror when the browser allows it.</p></div>`);
 }
 addPersistenceNotice();
 
@@ -2075,16 +2139,15 @@ try{const main=mainData();main.futureConnections ||= {health:{appleHealth:false,
 /* ---------- 14. Scan/saved-food verification metadata ---------- */
 document.addEventListener('click',event=>{const addSave=event.target.closest('#save-food-entry-and-food');if(!addSave||!editorState?.foodId)return;const f=getFood(editorState.foodId);if(f?.barcode)setTimeout(()=>{ext.foodVerification[f.id]={...(ext.foodVerification[f.id]||{}),savedAt:new Date().toISOString(),method:'barcode-online'};saveExt();},50);});
 
-/* ---------- 15. Simplify Progress History period controls ---------- */
-const period=document.querySelector('.history-period');if(period){period.innerHTML='<button data-period="7">7 Days</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button>';period.addEventListener('click',event=>{const b=event.target.closest('[data-period]');if(!b)return;period.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));renderHistory(b.dataset.period);});}
-
 /* ---------- 16. UI copy / version ---------- */
-document.querySelectorAll('.badge').forEach(b=>{if(/Founder Trial/.test(b.textContent))b.textContent=`Founder Trial · Alpha ${BUILD}`;});
-if(document.title.includes('Founder Trial'))document.title=`Healthy Eating Companion — Founder Trial Alpha ${BUILD}`;
+document.querySelectorAll('.badge').forEach(b=>{if(APP.installationRole==='test')b.textContent=`HEC — TEST · Alpha ${ACTIVE_VERSION}`;else if(/Founder Trial/.test(b.textContent))b.textContent=`Founder Trial · Alpha ${ACTIVE_VERSION}`;else if(/Healthy Eating Companion/.test(b.textContent))b.textContent=`Healthy Eating Companion · Alpha ${ACTIVE_VERSION}`;});
+if(document.title.includes('Founder Trial'))document.title=`${APP.displayName||APP.name} — Founder Trial Alpha ${ACTIVE_VERSION}`;
 setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.querySelector('#weight-history'))renderWeightHistoryOnly();if(document.querySelector('#progress-history.active'))renderHistory(currentPeriod());},300);
 
 /* ---------- Alpha 0.6.16 focused founder-testing refinements ---------- */
-  const LIBRARY_BACKUP_KEY = 'healthyEatingCompanionProtectedLibrary';
+  const LIBRARY_BACKUP_KEY = APP.protectedLibraryKey;
+  const RESET_STORAGE_KEYS = window.HECInstallation.resetStorageKeys(APP,'keep-library');
+  const FULL_RESET_STORAGE_KEYS = window.HECInstallation.resetStorageKeys(APP,'full');
   const $ = id => document.getElementById(id);
   const safeText = value => (typeof esc === 'function' ? esc(String(value ?? '')) : String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
   const finite = value => value !== '' && value !== null && value !== undefined && Number.isFinite(Number(value));
@@ -2099,7 +2162,7 @@ setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.quer
     const saved = new Set(ext.savedFoodIds || []);
     const onlineFoods = (ext.onlineFoods || []).filter(f => saved.has(f.id));
     const payload = {
-      version:'0.6.16', savedAt:new Date().toISOString(),
+      version:ACTIVE_VERSION, savedAt:new Date().toISOString(),
       customFoods: clone(ext.customFoods || []),
       onlineFoods: clone(onlineFoods),
       savedFoodIds: clone(ext.savedFoodIds || []),
@@ -2202,80 +2265,36 @@ setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.quer
   const oldToggleSaved0614=toggleSavedFood;
   toggleSavedFood=function(id){oldToggleSaved0614(id);saveProtectedLibrary();};
 
-  // Better panel parser: prefer manufacturer's per-serving column, retain per-100-g reference, never invent zero for missing data.
-  function nums(line,unit){
-    const out=[]; const re=unit==='energy'?/(\d+(?:[.,]\d+)?)\s*(kcal|cal|kj)\b/gi:new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*${unit}\\b`,'gi'); let m;
-    while((m=re.exec(line))){let v=Number(String(m[1]).replace(',','.'));let u=(m[2]||unit).toLowerCase();if(unit==='energy'&&u==='kj')v=v/4.184;out.push(v);} return out;
-  }
-  function findRow(lines,tests){return lines.find(line=>tests.some(re=>re.test(line)))||'';}
-  function plausible(key,value,amount,basis){
-    if(!finite(value)||Number(value)<0)return false; const v=Number(value),qty=basis==='100'?100:Number(amount||0);
-    if(key==='calories')return v<=Math.max(950,(qty||100)*9.5);
-    if(['protein','carbs','fat','satFat','fibre','sugar'].includes(key))return !qty||v<=qty*1.08;
-    if(key==='sodium')return v<=100000; return true;
-  }
-  parseNutritionPanel=function(text){
-    const clean=String(text||'').replace(/\r/g,'\n').replace(/[|]/g,' '); const lines=clean.split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-    const sm=clean.match(/serv(?:ing|e)?s?\s*(?:size)?[^\d]{0,30}(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i)||clean.match(/serving\s*size\s*[:;]?\s*(\d+(?:[.,]\d+)?)\s*(g|ml)/i);
-    const servingAmount=sm?Number(String(sm[1]).replace(',','.')):null, servingUnit=sm&&/ml/i.test(sm[2])?'mL':'g';
-    const hasServe=/quantity\s*per\s*serv|per\s*serv(?:e|ing)|per\s*portion/i.test(clean), has100=/per\s*100\s*(?:g|ml)|quantity\s*per\s*100/i.test(clean); const twoCols=hasServe&&has100;
-    const defs={calories:[[/energy|calories?/i],'energy'],protein:[[/protein/i],'g'],fat:[[/fat[, ]*total|total\s*fat|^fat\b/i],'g'],satFat:[[/saturat/i],'g'],carbs:[[/carbohydrate|carbs?/i],'g'],sugar:[[/sugars?/i],'g'],fibre:[[/fibre|fiber/i],'g'],sodium:[[/sodium/i],'mg']};
-    const perServing={},per100={};
-    for(const [key,[tests,unit]] of Object.entries(defs)){
-      const line=findRow(lines,tests); const values=nums(line,unit);
-      let sv=null,p100=null;
-      if(values.length>=2){sv=values[0];p100=values[values.length-1];}
-      else if(values.length===1){ if(servingAmount&&hasServe)sv=values[0]; else p100=values[0]; }
-      if(sv!==null&&!plausible(key,sv,servingAmount,'serving'))sv=null;
-      if(p100!==null&&!plausible(key,p100,100,'100'))p100=null;
-      if(sv===null&&p100!==null&&servingAmount)sv=p100*servingAmount/100;
-      if(p100===null&&sv!==null&&servingAmount)p100=sv*100/servingAmount;
-      perServing[key]=sv===null?null:Math.round(sv*10)/10; per100[key]=p100===null?null:Math.round(p100*10)/10;
-    }
-    return {servingAmount,servingUnit,perServing,per100,basis:servingAmount?'serving':'100',text:clean,confidence:{twoColumns:twoCols,hasServing:!!servingAmount}};
-  };
+  // Stage 8 keeps one authoritative parser. Legacy UI integrations delegate to
+  // the capture foundation and must never synthesise a missing printed column.
+  parseNutritionPanel=function(text){return X8?.parseNutritionPanel?X8.parseNutritionPanel(text):{servingAmount:null,servingUnit:'g',perServing:{},per100:{},detected:{},issues:['capture-foundation-unavailable'],questionable:true,text:String(text||'')};};
   function compareRows(food,parsed){
     const panel=parsed?.perServing||{},online=food?.nutrients||{};
     return nutrientKeys.map(([k,label,unit])=>{const a=finite(online[k])?Number(online[k]):null,b=finite(panel[k])?Number(panel[k]):null;if(b===null)return null;const diff=(a===null?null:b-a),pct=(a&&diff!==null?Math.abs(diff)/Math.abs(a)*100:Infinity),close=a!==null&&(pct<=5||Math.abs(diff)<(k==='sodium'?5:.2));return {k,label,unit,online:a,panel:b,diff,pct,close};}).filter(Boolean);
   }
-  fillOcrReview=function(parsed,basis=parsed?.basis||'serving'){
-    if(!parsed)return; ocrParsedPanel=parsed; if(basis==='serving'&&!parsed.servingAmount&&parsed.per100)basis='100';
-    const values=basis==='100'?parsed.per100:parsed.perServing;
-    const map={calories:'ocr-calories',protein:'ocr-protein',carbs:'ocr-carbs',fat:'ocr-fat',satFat:'ocr-sat-fat',fibre:'ocr-fibre',sugar:'ocr-sugar',sodium:'ocr-sodium'};
-    Object.entries(map).forEach(([k,id])=>{const node=$(id);if(node)node.value=finite(values?.[k])?String(Math.round(Number(values[k])*10)/10):'';});
-    if($('ocr-basis'))$('ocr-basis').value=basis;
-    if($('ocr-serving-amount'))$('ocr-serving-amount').value=basis==='serving'?(parsed.servingAmount??''):100;
-    if($('ocr-serving-unit'))$('ocr-serving-unit').value=basis==='serving'?(parsed.servingUnit||'g'):(parsed.servingUnit||'g');
-    $('ocr-review')?.classList.remove('hidden');
-    const id=ext.ui.compareBarcodeFoodId,box=$('ocr-review'); box?.querySelector('.barcode-panel-comparison')?.remove();
-    if(id&&basis==='serving'){
+  fillOcrReview=function(parsed){
+    if(!parsed)return;alpha08FillOcrReview(parsed);
+    const id=ext.ui.compareBarcodeFoodId,box=$('ocr-review');box?.querySelector('.barcode-panel-comparison')?.remove();
+    if(id){
       const food=getFood(id),rows=compareRows(food,parsed); if(food&&box){
         const valid=rows.length,diffs=rows.filter(r=>r.online===null||!r.close),complete=valid>=5;
         const heading=!complete?`Comparison Incomplete — ${valid} Values Read`:diffs.length?'Package Differences Found — Review Before Saving':'Package Information Matches Closely ✓';
         const rowHtml=rows.map(r=>`<div class="${r.close?'match':'difference'}"><span>${safeText(r.label)}</span><b>${r.online===null?'Not Available':`${formatNumber(r.online,true)} ${r.unit}`}</b><span>→</span><b>${formatNumber(r.panel,true)} ${r.unit}</b><em>${r.online===null?'Package only':r.close?'Close':`${r.diff>0?'+':''}${formatNumber(r.diff,true)} ${r.unit}`}</em></div>`).join('');
-        box.insertAdjacentHTML('afterbegin',`<div class="barcode-panel-comparison status-box"><strong>${heading}</strong><div class="compare-column-heads"><span>Nutrient</span><b>Barcode</b><i></i><b>Package</b><em>Difference</em></div><div class="compare-table">${rowHtml||'<p>No reliable package nutrient values were recognised. Please enter them from the label below.</p>'}</div><p class="fine"><strong>Recommended:</strong> use the current package values after checking the photographed panel. The package is the best source; OCR is only an assistant and can be corrected.</p><div class="quick-action-row"><button type="button" class="secondary" data-keep-barcode-values="${safeText(id)}">Keep Barcode Values</button><button type="button" class="primary" data-use-package-values="${safeText(id)}" ${valid?'':'disabled'}>Use Checked Package Values</button></div></div>`);
+        box.insertAdjacentHTML('afterbegin',`<div class="barcode-panel-comparison status-box"><strong>${heading}</strong><div class="compare-column-heads"><span>Nutrient</span><b>Barcode</b><i></i><b>Package</b><em>Difference</em></div><div class="compare-table">${rowHtml||'<p>No reliable package nutrient values were recognised. Please enter them from the label below.</p>'}</div><p class="fine"><strong>Recommended:</strong> use the current package values after checking the photographed panel. The package is the best source; OCR is only an assistant and can be corrected.</p><div class="quick-action-row"><button type="button" class="secondary" data-keep-barcode-values="${safeText(id)}">Keep Barcode Values</button><button type="button" class="primary" data-use-package-values="${safeText(id)}" disabled>Use Checked Package Values</button></div></div>`);alpha08UpdateOcrReview();
       }}
   };
 
-  // A package capture should start in per-serving mode whenever a serving size is present.
-  $('ocr-basis')?.addEventListener('change',()=>ocrParsedPanel&&fillOcrReview(ocrParsedPanel,$('ocr-basis').value));
-
-  // Keep the camera stream alive between successful scans in the Scan Centre so iOS does not need a new getUserMedia request each time.
+  // The active camera owner stops every track after the first accepted code.
+  // Restart is deliberate; an existing browser permission remains reusable.
   const fullStopBarcodeCamera = stopBarcodeCamera;
-  function pauseBarcodeUi(message=''){
-    barcodeDetectionLocked=false; $('barcode-camera-shell')?.classList.add('hidden'); $('stop-barcode-camera')?.classList.add('hidden');
-    const v=$('barcode-video'); if(v){try{v.pause();}catch{}} if(message&&$('barcode-status'))$('barcode-status').textContent=message;
-  }
   handleDetectedBarcode=async function(raw){
     const text=validBarcodeValue(raw);if(!text||barcodeDetectionLocked)return false;barcodeDetectionLocked=true;
-    $('scan-barcode-input').value=text;updateBarcodeLookupState();pauseBarcodeUi();barcodeDetectionLocked=true;$('barcode-status').textContent=`Barcode ${text} Detected. Looking Up Product…`;await lookupBarcodeProduct(text);return true;
+    $('scan-barcode-input').value=text;updateBarcodeLookupState();fullStopBarcodeCamera();barcodeDetectionLocked=true;$('barcode-status').textContent=`Barcode ${text} Detected. Looking Up Product…`;await lookupBarcodeProduct(text);return true;
   };
   startBarcodeCamera=async function(){
     const video=$('barcode-video'),shell=$('barcode-camera-shell');if(!video||!shell)return;
-    ext.ui.scanMode='barcode';saveExt();updateScanModeUI();shell.classList.remove('hidden');$('stop-barcode-camera')?.classList.remove('hidden');shell.scrollIntoView({behavior:'smooth',block:'center'});
+    fullStopBarcodeCamera();captureActionLocked=false;scanBarcodeFood=null;$('scan-review-card')?.classList.add('hidden');ext.ui.scanMode='barcode';saveExt();updateScanModeUI();shell.classList.remove('hidden');$('stop-barcode-camera')?.classList.remove('hidden');shell.scrollIntoView({behavior:'smooth',block:'center'});
     try{
-      const live=scanBarcodeStream?.getVideoTracks?.().some(t=>t.readyState==='live');
-      if(live){video.srcObject=scanBarcodeStream;video.setAttribute('playsinline','');await video.play();barcodeDetectionLocked=false;$('barcode-status').textContent='Camera Ready. Hold A Retail Barcode Steady Inside The Box.';const detector=window.BarcodeDetector?new BarcodeDetector():null;if(detector){const scan=async()=>{if(!scanBarcodeStream||barcodeDetectionLocked)return;try{const codes=await detector.detect(video);if(codes?.length&&await handleDetectedBarcode(codes[0].rawValue))return;}catch{}scanBarcodeTimer=setTimeout(scan,180);};scanBarcodeTimer=setTimeout(scan,120);}return;}
       $('barcode-status').textContent='Opening Camera… Hold The Barcode Steady Inside The Box.';
       if(await startNativeBarcodeCamera(video)){$('barcode-status').textContent='Camera Ready. Hold A Retail Barcode Steady Inside The Box — No Photo Is Needed.';return;}
       const ok=await ensureBarcodeLibrary();if(!ok)throw new Error('Scanner unavailable');const reader=new ZXingBrowser.BrowserMultiFormatReader();scanBarcodeControls=await reader.decodeFromVideoDevice(undefined,video,result=>{const text=result?.getText?.()||result?.text;if(text)handleDetectedBarcode(text);});$('barcode-status').textContent='Camera Ready. Hold A Retail Barcode Steady Inside The Box — No Photo Is Needed.';
@@ -2285,26 +2304,51 @@ setTimeout(()=>{if(mainData().completed)maybePromptFoodReview();if(document.quer
   const oldStart=$('start-barcode-camera');if(oldStart){const b=oldStart.cloneNode(true);oldStart.replaceWith(b);b.addEventListener('click',startBarcodeCamera);}
   const oldStop=$('stop-barcode-camera');if(oldStop){const b=oldStop.cloneNode(true);oldStop.replaceWith(b);b.addEventListener('click',()=>fullStopBarcodeCamera('Barcode Camera Stopped.'));}
 
-  // Weight chart: summary above, full-width graph below, smaller typography.
-  lineWeightChart=function(weights){
-    if(!weights.length)return '<p class="empty-state">Add Weight Check-Ins to build your weight trend.</p>';
-    const vals=weights.map(x=>Number(x.weightKg)),rawMin=Math.min(...vals),rawMax=Math.max(...vals),spread=Math.max(.6,rawMax-rawMin),pad=Math.max(.3,spread*.18),min=Math.floor((rawMin-pad)*10)/10,max=Math.ceil((rawMax+pad)*10)/10,span=Math.max(.5,max-min);
-    const W=760,H=360,L=62,R=20,T=24,B=58,plotW=W-L-R,plotH=H-T-B,x=i=>weights.length===1?L+plotW/2:L+i*(plotW/(weights.length-1)),y=v=>T+(max-v)/span*plotH;
-    const points=weights.map((w,i)=>`${x(i).toFixed(1)},${y(Number(w.weightKg)).toFixed(1)}`).join(' ');let grid='';for(let i=0;i<=4;i++){const value=max-(span*i/4),yy=T+plotH*i/4;grid+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" class="weight-grid-line"/><text x="${L-7}" y="${yy+4}" text-anchor="end" class="weight-axis-label">${value.toFixed(1)}</text>`;}
-    const every=Math.max(1,Math.ceil(weights.length/6)),labels=weights.map((w,i)=>(i%every&&i!==weights.length-1)?'':`<text x="${x(i)}" y="${H-18}" text-anchor="middle" class="weight-date-label">${safeText(new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short'}).format(new Date(`${w.date}T12:00:00`)))}</text>`).join('');
-    const dots=weights.map((w,i)=>`<circle cx="${x(i)}" cy="${y(Number(w.weightKg))}" r="6" class="weight-trend-point"><title>${safeText(friendlyWeightRelativeDate(w.date))}: ${Number(w.weightKg).toFixed(1)} kg</title></circle>`).join('');
-    const last=weights[weights.length-1],change=weights.length>1?Number(last.weightKg)-Number(weights[0].weightKg):0;
-    return `<div class="weight-chart-summary weight-chart-summary-top"><strong>${Number(last.weightKg).toFixed(1)} kg</strong><span>${safeText(friendlyWeightRelativeDate(last.date))}</span>${weights.length>1?`<small>Change in view: ${change>0?'+':''}${change.toFixed(1)} kg</small>`:''}</div><div class="weight-line-chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}<polyline points="${points}" class="weight-trend-line"/>${dots}${labels}<text x="14" y="${T+plotH/2}" class="weight-axis-title" transform="rotate(-90 14 ${T+plotH/2})">kg</text></svg></div>`;
-  };
-
-  // Reset for testing: default path keeps the personal library; full reset stays explicit.
-  const reset=$('reset-trial');if(reset){reset.addEventListener('click',event=>{
+  // Reset for testing: one owner, with an explicit keep-library or full-delete path.
+  function showResettingState(mode){
+    resetInProgress=true;
+    document.body.setAttribute('aria-busy','true');
+    document.querySelectorAll('.danger-button,#reset-trial,#leave-app').forEach(button=>{button.disabled=true;button.setAttribute('aria-busy','true');});
+    const resetButton=$('reset-trial');if(resetButton)resetButton.textContent='Resetting…';
+    const title=$('a05-modal-title'),copy=$('a05-modal-copy'),extra=$('a05-modal-extra'),actions=$('a05-modal-actions'),modal=$('a05-modal');
+    if(title)title.textContent='Resetting…';
+    if(copy)copy.textContent=mode==='keep-library'?'Clearing profile and test-session data while keeping your personal food and meal library.':'Permanently clearing all profile, test-session and library data.';
+    if(extra)extra.innerHTML='<div id="hec-reset-status" class="status-box" role="status"><strong>Resetting…</strong><p>Please wait while Healthy Eating Companion returns to Welcome.</p></div>';
+    actions?.classList.add('hidden');
+    ['a05-modal-cancel','a05-modal-confirm','a05-modal-close'].forEach(id=>{const button=$(id);if(button)button.disabled=true;});
+    modal?.classList.remove('hidden');
+  }
+  function allowResettingStateToPaint(){return new Promise(resolve=>{if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>requestAnimationFrame(resolve));else setTimeout(resolve,0);});}
+  async function runReset(mode){
+    if(resetInProgress)return;
+    try{window.HECInstallation.assertDestructiveOrigin(APP,location.origin);}catch(error){showActionToast(error.message,null,8000);return false;}
+    showResettingState(mode);
+    try{sessionStorage.setItem(RESET_RELOAD_SESSION_KEY,'1');}catch{}
+    await allowResettingStateToPaint();
+    if(mode==='keep-library')saveProtectedLibrary();
+    const keys=mode==='keep-library'?RESET_STORAGE_KEYS:FULL_RESET_STORAGE_KEYS;
+    keys.forEach(key=>localStorage.removeItem(key));
+    await clearPersistentMirror();
+    location.reload();
+  }
+  document.addEventListener('click',event=>{
+    const resetButton=event.target.closest?.('#reset-trial'),fullResetButton=event.target.closest?.('#alpha0614-full-reset'),myDataFullResetButton=event.target.closest?.('#my-data-full-reset');
+    if(!resetButton&&!fullResetButton&&!myDataFullResetButton)return;
     event.preventDefault();event.stopImmediatePropagation();
-    openModal('Reset App for Testing','Restart onboarding and clear profile, Diary, weight, progress and test activity while keeping My Foods and My Meals & Recipes?','Reset & Keep My Library',async()=>{
-      saveProtectedLibrary();localStorage.removeItem(MAIN_KEY);localStorage.removeItem(EXT_KEY);['healthyEatingAlpha05','healthyEatingAlpha04','healthyEatingAlpha05Functional','healthyEatingAlpha04Extensions'].forEach(k=>localStorage.removeItem(k));location.reload();
-    },`<p><strong>Kept:</strong> My Foods, package-verification records, My Meals & Recipes.</p><p><strong>Cleared:</strong> onboarding/profile, Diary, weight history, progress, shopping list and other test-session data.</p><button type="button" id="alpha0614-full-reset" class="danger-button wide">Full Reset — Delete Everything</button>`);
-  },true);}
-  document.addEventListener('click',event=>{if(event.target.id!=='alpha0614-full-reset')return;if(!confirm('Full reset will permanently delete the saved food/meal/recipe library on this device too. Continue?'))return;localStorage.removeItem(LIBRARY_BACKUP_KEY);localStorage.removeItem(MAIN_KEY);localStorage.removeItem(EXT_KEY);location.reload();});
+    if(resetInProgress)return;
+    if(myDataFullResetButton){
+      if(APP.installationRole!=='my-data')return;
+      if($('my-data-reset-confirm-text')?.value.trim()!=='DELETE MY DATA'){alert('Type DELETE MY DATA exactly before using the My Data Full Reset.');return;}
+      if(confirm('FINAL WARNING: permanently delete the historical Profile, Diary, weights, activities, My Foods, My Recipes, Shopping, companion and preferences from HEC — My Data? Confirm only after verifying a downloaded backup.'))runReset('full');
+      return;
+    }
+    if(resetButton){
+      if(APP.installationRole!=='test')return;
+      openModal('Reset HEC — TEST','Restart TEST onboarding and clear its profile, Diary, weight, progress and test activity while keeping its test food and meal library?','Reset TEST & Keep Its Library',()=>runReset('keep-library'),`<p><strong>TEST only.</strong> My Data is outside this installation and is not accessed.</p><p><strong>Kept in TEST:</strong> My Foods, package-verification records, My Meals & Recipes.</p><p><strong>Cleared from TEST:</strong> onboarding/profile, Diary, weight history, progress, shopping list and other test-session data.</p><button type="button" id="alpha0614-full-reset" class="danger-button wide">Full Reset HEC — TEST</button>`);
+      return;
+    }
+    if(APP.installationRole==='test'&&confirm('Full Reset will delete everything stored only inside HEC — TEST. HEC — My Data is not accessed. Continue?'))runReset('full');
+  },true);
 
   // Updated wording after old handlers move users to legacy tabs.
   document.addEventListener('click',()=>setTimeout(()=>{if(['custom','recipes','meals'].includes(ext.ui.libraryTab)){ext.ui.libraryTab=ext.ui.libraryTab==='custom'?'saved':'combined';saveExt();if(document.querySelector('#food-library.active'))renderLibrary();}saveProtectedLibrary();},20));
@@ -2480,18 +2524,6 @@ by('quick-log-cancel')?.addEventListener('click',()=>{try{recognition?.stop();}c
 // Scan methods launched from Quick Food Log return to its method chooser, not to a stale Food Library state.
 document.addEventListener('click',event=>{const back=event.target.closest('#scan-centre-back');if(!back||ext.ui.scanReturn!=='quick-log')return;event.preventDefault();event.stopImmediatePropagation();try{stopBarcodeCamera?.();}catch{}ext.ui.scanReturn='';saveExt();openFeature('quick-log');},true);
 
-/* 8. Wider, Diet-Diary-like weight chart. */
-lineWeightChart=function(weights){
-  if(!weights.length)return '<p class="empty-state">Add Weight Check-Ins to build your weight trend.</p>';
-  const vals=weights.map(x=>Number(x.weightKg)),rawMin=Math.min(...vals),rawMax=Math.max(...vals),spread=Math.max(.8,rawMax-rawMin),pad=Math.max(.4,spread*.15),min=Math.floor((rawMin-pad)*2)/2,max=Math.ceil((rawMax+pad)*2)/2,span=Math.max(1,max-min);
-  const W=700,H=390,L=70,R=24,T=28,B=62,plotW=W-L-R,plotH=H-T-B,x=i=>weights.length===1?L+plotW/2:L+i*(plotW/(weights.length-1)),y=v=>T+(max-v)/span*plotH;
-  let grid='';for(let i=0;i<=5;i++){const value=max-(span*i/5),yy=T+plotH*i/5;grid+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" class="weight-grid-line"/><text x="${L-10}" y="${yy+5}" text-anchor="end" class="weight-axis-label">${value.toFixed(1)}</text>`;}
-  const points=weights.map((w,i)=>`${x(i).toFixed(1)},${y(Number(w.weightKg)).toFixed(1)}`).join(' '),every=Math.max(1,Math.ceil(weights.length/5)),labels=weights.map((w,i)=>(i%every&&i!==weights.length-1)?'':`<text x="${x(i)}" y="${H-18}" text-anchor="middle" class="weight-date-label">${safeText(new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short'}).format(new Date(`${w.date}T12:00:00`)))}</text>`).join(''),dots=weights.map((w,i)=>`<circle cx="${x(i)}" cy="${y(Number(w.weightKg))}" r="5" class="weight-trend-point"><title>${safeText(friendlyWeightRelativeDate(w.date))}: ${Number(w.weightKg).toFixed(1)} kg</title></circle>`).join('');
-  const last=weights[weights.length-1],change=weights.length>1?Number(last.weightKg)-Number(weights[0].weightKg):0;
-  return `<div class="weight-chart-summary weight-chart-summary-top"><strong>${Number(last.weightKg).toFixed(1)} kg</strong><span>${safeText(friendlyWeightRelativeDate(last.date))}</span><small>Change in view: ${change>0?'+':''}${change.toFixed(1)} kg</small></div><div class="weight-line-chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}<polyline points="${points}" class="weight-trend-line"/>${dots}${labels}</svg></div>`;
-};
-
-
 /* 9. Source badges stay visible wherever a saved/user-owned food appears, and
    saving/removing uses an explicit menu rather than a fragile tick target. */
 const alpha0615ResourceFoodRow=resourceFoodRow;
@@ -2500,7 +2532,7 @@ resourceFoodRow=function(food){
   const owned=ext.savedFoodIds?.includes(food.id)||food.source==='User Created'||food.barcode||ext.foodVerification?.[food.id];
   if(owned&&!html.includes('food-source-badge')){
     const meta=ext.foodVerification?.[food.id]||{};let icon='✎',label='Manual',cls='manual';
-    if(meta.method==='nutrition-panel'||food.source==='Nutrition Panel'){icon='▤';label='Nutrition Panel';cls='panel';}
+    if(String(meta.method||'').includes('nutrition-panel')||/nutrition panel/i.test(food.source||'')){icon='▤';label='Nutrition Panel';cls='panel';}
     else if(food.barcode||String(meta.method||'').includes('barcode')){icon='▦';label='Barcode';cls='barcode';}
     html=html.replace('</strong><small>',` <span class="food-source-badge ${cls}" title="${label}"><span aria-hidden="true">${icon}</span> ${label}</span></strong><small>`);
   }
@@ -2589,42 +2621,8 @@ nutritionCards=function(values){
   return html;
 };
 
-/* D. Nutrition-panel OCR: retain native kJ, derive Calories when required,
-   prefer the package serving column when a serving size is detected, and show
-   a dedicated kJ review field beside Calories. */
-function alpha0616EnergyColumns(text){
-  const lines=String(text||'').replace(/\r/g,'\n').split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-  const line=lines.find(x=>/^energy\b/i.test(x))||'';
-  const kj=[...line.matchAll(/(\d+(?:[.,]\d+)?)\s*k[jl]\b/gi)].map(m=>Number(String(m[1]).replace(',','.')));
-  const cal=[...line.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:kcal|cal)\b/gi)].map(m=>Number(String(m[1]).replace(',','.')));
-  return {kj,cal};
-}
-const alpha0616ParseNutritionPanel=parseNutritionPanel;
-parseNutritionPanel=function(text){
-  const p=alpha0616ParseNutritionPanel(text);const e=alpha0616EnergyColumns(text);const both=/per\s*(serv(?:ing|e)|100\s*(g|ml))/i.test(String(text||''))&&/per\s*100\s*(g|ml)/i.test(String(text||''));
-  p.energyKj={perServing:0,per100:0};
-  if(e.kj.length>=2&&both){p.energyKj.perServing=e.kj[0];p.energyKj.per100=e.kj[e.kj.length-1];}
-  else if(e.kj.length){if(p.servingAmount)p.energyKj.perServing=e.kj[0];else p.energyKj.per100=e.kj[e.kj.length-1];}
-  if(p.energyKj.perServing&&!p.perServing.calories)p.perServing.calories=p.energyKj.perServing/4.184;
-  if(p.energyKj.per100&&!p.per100.calories)p.per100.calories=p.energyKj.per100/4.184;
-  if(p.servingAmount&&Object.values(p.perServing||{}).some(v=>Number(v)>0))p.basis='serving';
-  return p;
-};
-function alpha0616EnsureKjField(){
-  const cal=by('ocr-calories');if(!cal||by('ocr-kj'))return;
-  const label=cal.closest('label');if(!label)return;label.insertAdjacentHTML('afterend','<label>Energy (kJ)<input id="ocr-kj" type="number" step="1" inputmode="decimal"><small class="field-hint">Shown on many Australian nutrition panels.</small></label>');
-  by('ocr-kj')?.addEventListener('input',()=>{const kj=n(by('ocr-kj').value);if(kj>0){by('ocr-calories').value=round1(kj/4.184);}});
-  cal.addEventListener('input',()=>{const c=n(cal.value);if(c>0)by('ocr-kj').value=Math.round(c*4.184);});
-}
-const alpha0616FillOcrReview=fillOcrReview;
-fillOcrReview=function(parsed,basis=parsed?.basis||'serving'){
-  alpha0616EnsureKjField();alpha0616FillOcrReview(parsed,basis);
-  const kj=basis==='100'?Number(parsed?.energyKj?.per100||0):Number(parsed?.energyKj?.perServing||0);
-  if(by('ocr-kj'))by('ocr-kj').value=kj?Math.round(kj):(n(by('ocr-calories')?.value)?Math.round(n(by('ocr-calories').value)*4.184):'');
-  if(parsed?.servingAmount&&by('ocr-basis'))by('ocr-basis').value='serving';
-  if(by('ocr-progress')&&parsed?.servingAmount)by('ocr-progress').insertAdjacentHTML?.('beforeend','');
-};
-setTimeout(alpha0616EnsureKjField,0);
+/* D. Stage 8 capture foundation now owns Nutrition Panel parsing. It converts
+   printed kJ to Calories while preserving the two printed column identities. */
 
 /* E. Saved-food integrity. Search hides records explicitly superseded by a
    newer canonical record and collapses exact barcode duplicates. Historical
@@ -2666,7 +2664,7 @@ setTimeout(alpha0616RunFoodIntegrity,300);
 const alpha0616ResourceFoodRow=resourceFoodRow;
 resourceFoodRow=function(food){
   let html=alpha0616ResourceFoodRow(food);const meta=ext.foodVerification?.[food.id];
-  const badge=meta?.packageVerifiedAt?'Package Verified':(meta?.method==='nutrition-panel'?'Nutrition Panel':food.barcode?'Barcode':food.source==='User Created'?'Manual':'');
+  const badge=meta?.packageVerifiedAt?'Package Verified':(String(meta?.method||'').includes('nutrition-panel')||/nutrition panel/i.test(food.source||'')?'Nutrition Panel':food.barcode?'Barcode':food.source==='User Created'?'Manual':'');
   if(badge&&!html.includes(`>${badge}<`))html=html.replace(/<strong>([\s\S]*?)<\/strong>/,`<strong>$1 <span class="food-source-badge alpha0616-source">${esc(badge)}</span></strong>`);
   return html;
 };
@@ -2775,12 +2773,6 @@ renderDiary=function(){alpha0617RenderDiaryBase();const date=ext.ui.diaryDate||i
   const slide=by('diary-day-summary')?.querySelector('.summary-slide');if(slide&&goal){const boxes=slide.querySelectorAll('.diary-kpi-row>div');if(boxes[2])boxes[2].innerHTML=`<small>${diff>=0?'Remaining':'Over'}</small><strong>${formatNumber(Math.abs(diff))} Cal</strong>`;}
 };
 
-/* Progress page: remove the developer-like diary/check-in/activity box and
-   show the overall weight journey near the graph. */
-const alpha0617RenderHistoryBase=renderHistory;
-renderHistory=function(period){alpha0617RenderHistoryBase(period);by('history-summary')?.classList.add('hidden');const weights=[...(ext.weightHistory||ext.weights||[])].filter(w=>Number(w.weightKg??w.weight)>0).sort((a,b)=>String(a.date).localeCompare(String(b.date)));if(weights.length){const first=Number(weights[0].weightKg??weights[0].weight),last=Number(weights[weights.length-1].weightKg??weights[weights.length-1].weight),change=last-first,box=by('weight-chart')||q('.weight-line-chart')?.parentElement;if(box&&!box.querySelector('.alpha0617-overall-weight'))box.insertAdjacentHTML('afterbegin',`<div class="alpha0617-overall-weight"><strong>${last.toFixed(1)} kg</strong><span>${change<0?Math.abs(change).toFixed(1)+' kg lost':change>0?'+'+change.toFixed(1)+' kg since starting':'No change'} since ${esc(new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short',year:'numeric'}).format(new Date(weights[0].date+'T12:00:00')))}</span><small>Started at ${first.toFixed(1)} kg</small></div>`);}
-};
-
 /* Missing energy is unknown, not zero, for obviously caloric foods. */
 const alpha0617ResourceFoodRowBase=resourceFoodRow;
 resourceFoodRow=function(food){let html=alpha0617ResourceFoodRowBase(food);const cal=Number(food?.nutrients?.calories);const caloric=/cake|bavarian|pie|sausage|bread|biscuit|cracker|chocolate|bar|cereal|spread|margarine|cheese|meat|chicken|beef|pork/i.test(`${food?.name||''} ${food?.category||''}`);if(cal===0&&caloric)html=html.replace(/0\s*Cal/g,'Nutrition incomplete').replace('resource-row ','resource-row food-warning ');return html;};
@@ -2792,19 +2784,6 @@ ext.version='0.6.17';saveExt();
    Alpha 0.6.18 founder workflow, recent-food and Australian-menu patch
    ================================================================ */
 const ALPHA0618_BUILD='0.6.18';
-
-/* A. Progress periods exactly as agreed: 7d, 2w, 30d, 3m, 6m, 1y, All.
-   The old developer-style Food Diary Days summary is removed, not merely
-   visually de-emphasised. */
-(function alpha0618Periods(){
-  const period=q('.history-period'); if(!period)return;
-  period.innerHTML='<button data-period="7">7 Days</button><button data-period="14">14 Days</button><button data-period="30" class="active">30 Days</button><button data-period="90">3 Months</button><button data-period="180">6 Months</button><button data-period="365">1 Year</button><button data-period="all">All</button>';
-})();
-const alpha0618RenderHistoryBase=renderHistory;
-renderHistory=function(period){
-  alpha0618RenderHistoryBase(period);
-  const summary=by('history-summary'); if(summary){summary.innerHTML='';summary.style.display='none';summary.closest('.card')?.classList.add('alpha0618-history-controls-only');}
-};
 
 /* B. Natural piece units. Online/community databases often expose only 100 g;
    HEC can still let a person say “4 fish fingers”. The conversion is explicitly
@@ -2831,7 +2810,7 @@ requestCopyEntry=function(id){
   const meals=['Breakfast','Lunch','Dinner','Snacks','Other'];
   openModal(`Copy ${found.entry.name}`,'Choose where the independent copy should go.','Copy',()=>{
     const date=by('modal-copy-date')?.value||found.date,meal=by('modal-copy-meal')?.value||found.entry.meal;
-    const copy={...clone(found.entry),id:uid('entry'),date,localDate:date,meal,status:'eaten',timeZone:activeTimeZone(),createdAt:new Date().toISOString()};
+    const copy={...clone(found.entry),id:uid('entry'),date,localDate:date,meal,status:'eaten',timeZone:activeTimeZone(),...recordTimestamps()};
     ext.diary[date]||=[];ext.diary[date].push(copy);saveExt();
     if(date===ext.ui.diaryDate)renderDiary();
     showActionToast(`${copy.name} copied to ${meal} on ${relativeDateLabel(date)}.`,()=>{ext.diary[date]=(ext.diary[date]||[]).filter(e=>e.id!==copy.id);saveExt();if(date===ext.ui.diaryDate)renderDiary();},8000);
@@ -2853,8 +2832,8 @@ function alpha0618RenderRecent(){
   const filter=ext.ui.recentMealFilter||'All',filtered=filter==='All'?all:all.filter(e=>e.meal===filter);
   const groups=[];for(const e of filtered){let g=groups.find(x=>x.date===e.date&&x.meal===e.meal);if(!g){g={date:e.date,meal:e.meal,items:[]};groups.push(g);}g.items.push(e);}
   const chips=['All','Breakfast','Lunch','Dinner','Snacks','Other'].map(m=>`<button type="button" data-alpha0618-recent-filter="${m}" class="${m===filter?'active':''}">${m}</button>`).join('');
-  const html=groups.map(g=>`<section class="recent-meal-group"><header><div><strong>${esc(g.meal)} · Recent Meal</strong><small>${esc(relativeDateLabel(g.date))}</small></div>${g.items.length>1?`<button data-recent-meal-add="${esc(g.date)}|${esc(g.meal)}">Add To ${esc(g.meal)}</button>`:''}</header>${g.items.map(e=>`<div class="recent-entry-row alpha0618-recent-row" data-alpha0618-recent-edit="${esc(e.id)}"><span><strong>${esc(e.name)}</strong><small>${esc(entryNaturalQuantity(e))} · ${energyText(e.nutrients?.calories)}</small></span><button data-recent-entry-add="${esc(e.id)}" aria-label="Quick add ${esc(e.name)}">＋ Add Food</button></div>`).join('')}</section>`).join('');
-  by('food-results').innerHTML=`<div class="recent-meal-filter"><span>Recent 14 Days</span><div>${chips}</div><small>Tap a food to change its amount or unit. Use + Add Food for a quick repeat.</small></div>${html||'<div class="resource-empty"><strong>No Recent Foods Yet.</strong><p>Foods used in the last 14 days will appear here.</p></div>'}`;
+  const html=groups.map(g=>`<section class="recent-meal-group" aria-label="${esc(relativeDateLabel(g.date))}, ${esc(g.meal)}"><header class="recent-group-header"><div class="recent-group-title"><small class="recent-day-label">${esc(relativeDateLabel(g.date))}</small><strong>${esc(g.meal)}</strong><span>${g.items.length} ${g.items.length===1?'food':'foods'}</span></div>${g.items.length>1?`<button type="button" data-recent-meal-add="${esc(g.date)}|${esc(g.meal)}">Add To ${esc(g.meal)}</button>`:''}</header><div class="recent-group-foods">${g.items.map(e=>`<div class="recent-entry-row alpha0618-recent-row" data-alpha0618-recent-edit="${esc(e.id)}"><span><strong>${esc(e.name)}</strong><small>${esc(entryNaturalQuantity(e))} · ${energyText(e.nutrients?.calories)}</small></span><button type="button" data-recent-entry-add="${esc(e.id)}" aria-label="Quick add ${esc(e.name)}">＋ Add Food</button></div>`).join('')}</div></section>`).join('');
+  by('food-results').innerHTML=`<div class="recent-meal-filter"><span>Recent 14 Days</span><div>${chips}</div><small>Tap a food to change its amount or unit. Use + Add Food for a quick repeat.</small></div>${html?`<div class="recent-group-list">${html}</div>`:'<div class="resource-empty"><strong>No Recent Foods Yet.</strong><p>Foods used in the last 14 days will appear here.</p></div>'}`;
 }
 const alpha0618RenderLibraryBase=renderLibrary;
 renderLibrary=function(){alpha0618RenderLibraryBase();if((ext.ui.libraryTab||'all')==='recent')alpha0618RenderRecent();};
@@ -2988,10 +2967,12 @@ ext.version='0.6.18';saveExt();
      database concept exists; otherwise HEC offers safe search/scan/create fallbacks.
    - Extra query words may only preserve or increase specificity.
 */
-const ALPHA0623_BUILD='0.6.32';
+const ALPHA0623_BUILD=ACTIVE_VERSION;
 const REG29=window.HECAustralianEntityRegistry;
 const S23=window.HECSearchFoundation;
 const B25=window.HECGuidedBranching;
+const C8=window.HECFoodCatalogue;
+const P8=window.HECPackagedFoods;
 let alpha0623ShowRaw=false;
 let alpha0623Wizard=null;
 
@@ -3016,20 +2997,17 @@ function alpha0629ResidualTokens(raw){return alpha0630QueryContext(raw).residual
 function alpha0629EntityMatch(entity,food){return REG29?.entityMatchesHay?REG29.entityMatchesHay(entity,`${food?.brand||''} ${food?.name||''} ${(food?.aliases||[]).join(' ')}`):false;}
 searchRank=function(food,query){
   const ctx=alpha0630QueryContext(query),p=ctx.parsed,nq=p.food;if(!nq)return 100;
-  const name=s23Singular(food?.name||''),brand=s23Singular(food?.brand||''),aliases=(food?.aliases||[]).map(s23Singular),combined=s23Singular(`${food?.brand||''} ${food?.name||''}`);
-  const fields=[name,brand,combined,...aliases].filter(Boolean),fieldTokens=[...new Set(fields.flatMap(x=>x.split(' ').filter(Boolean)))];
   const identityEntities=ctx.entities.filter(x=>['brand','retailer','restaurant'].includes(x.entity.type));
   let entityBonus=0;
   for(const m of identityEntities){if(alpha0629EntityMatch(m.entity,food))entityBonus+=950;else if(m.entity.type==='brand'||m.entity.type==='retailer')return 0;}
   const qt=ctx.residualTokens;
   let base=0;
-  if(!qt.length)base=identityEntities.length?900:0;
-  else if(name===nq||combined===nq)base=1300;
-  else if(aliases.includes(nq))base=1250;
-  else if(name.startsWith(nq+' ')||combined.startsWith(nq+' '))base=1050;
-  else if(qt.every(t=>fieldTokens.includes(t)))base=900+qt.length*10;
-  else if(qt.every(t=>fieldTokens.some(f=>f.startsWith(t)&&t.length>=3)))base=790+qt.length*8;
-  else if(qt.every(t=>t.length>=4&&fieldTokens.some(f=>fuzzyTokenMatch(t,f))))base=680+qt.length*5;
+  if(C8?.rank){
+    const options={saved:ext.savedFoodIds?.includes(food.id),locallyVerified:!!ext.foodVerification?.[food.id]?.packageVerifiedAt};
+    base=C8.rank(food,nq,options).score;
+    if(!base&&identityEntities.length&&qt.length)base=C8.rank(food,qt.join(' '),options).score;
+    if(!qt.length&&identityEntities.length)base=Math.max(base,900);
+  }else base=alpha0623LegacyRank(food,nq);
   return base?base+entityBonus:0;
 };
 function s23Head(food){return s23Singular(String(food?.name||'').split(',')[0]);}
@@ -3082,13 +3060,15 @@ function s23LikelyProduct(raw,concept=null){
 function s23ProductMatches(raw,limit=16){
   const ctx=alpha0630QueryContext(raw),q=ctx.parsed.food,residual=ctx.residualTokens,entities=ctx.entities.filter(x=>['brand','retailer'].includes(x.entity.type));if(!q)return[];
   const cacheKey=`${alpha0630FoodSearchRevision}|${s23Norm(raw)}`;let ranked=alpha0630ProductMatchCache.get(cacheKey);
-  if(!ranked){ranked=allFoods().filter(s23ProductLike).map(food=>{
+  if(!ranked){let scored=allFoods().filter(s23ProductLike).map(food=>{
     const hay=s23Norm(`${food.brand||''} ${food.name||''} ${(food.aliases||[]).join(' ')}`),hayTokens=hay.split(' ');
     let score=searchRank(food,raw),entityMatched=true;
     for(const m of entities){if(alpha0629EntityMatch(m.entity,food))score+=850;else entityMatched=false;}
     const missing=residual.filter(t=>!hayTokens.some(f=>f===t||f.startsWith(t)||(t.length>=4&&fuzzyTokenMatch(t,f)))).length;
     if(!residual.length&&entities.length&&entityMatched)score+=600;else if(residual.length&&missing===0)score+=500+residual.length*35;score-=missing*350;return{food,score,missing,entityMatched};
-  }).filter(x=>x.score>0&&x.entityMatched&&x.missing===0).sort((a,b)=>b.score-a.score||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name)).map(x=>x.food).filter((f,i,a)=>a.findIndex(x=>s23Norm(`${x.brand}|${x.name}`)===s23Norm(`${f.brand}|${f.name}`))===i);
+  }).filter(x=>x.score>0&&x.entityMatched&&x.missing===0).sort((a,b)=>b.score-a.score||Number(b.food.country==='Australia')-Number(a.food.country==='Australia')||a.food.name.localeCompare(b.food.name));
+    if(C8?.dedupeRanked)scored=C8.dedupeRanked(scored.map(x=>({food:x.food,rank:x.score}))).map(x=>({food:x.food,score:x.rank}));
+    ranked=scored.map(x=>x.food);
     alpha0630ProductMatchCache.set(cacheKey,ranked);if(alpha0630ProductMatchCache.size>120)alpha0630ProductMatchCache.delete(alpha0630ProductMatchCache.keys().next().value);
   }
   return ranked.slice(0,limit);
@@ -3348,7 +3328,7 @@ function s23RenderLive(raw){
   const box=by('food-live-results'),term=String(raw||'').trim();if(!box)return;
   if(!term||document.activeElement!==by('food-search')){box.classList.add('hidden');box.innerHTML='';return;}
   const q=s23Norm(term);
-  if(/\bburger king\b/.test(q)){box.innerHTML='<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha 0.6.32</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>';box.classList.remove('hidden');return;}
+  if(/\bburger king\b/.test(q)){box.innerHTML=`<div class="live-match-heading"><strong>Top Match</strong><small>Australian search · Alpha ${ACTIVE_VERSION}</small></div><button type="button" class="live-match-row" data-alpha0623-chain-redirect="Hungry Jacks"><span><strong>Hungry Jack’s</strong><small>Australian equivalent</small></span><b>›</b></button>`;box.classList.remove('hidden');return;}
   const chain=alpha0618ChainFor(term);if(chain){const alias=(chain.aliases||[]).find(a=>q.includes(s23Norm(a)))||'',tail=q.replace(s23Norm(alias),'').trim(),items=(chain.items||[]).filter(x=>!tail||s23Norm(x).includes(tail)).slice(0,6);box.innerHTML=`<button type="button" class="live-match-heading alpha0626-chain-heading" data-alpha0626-chain-menu="${esc(chain.label)}"><span><strong>${esc(chain.label)}</strong><small>Australian menu · tap here to browse the full menu</small></span><b>›</b></button>${items.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(chain.label)}|${esc(x)}"><span><strong>${esc(x)}</strong><small>${esc(chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
   const concept=s23Concept(term),product=s23LikelyProduct(term,concept);
   // A recognised menu item can find its Australian chain without requiring the
@@ -3356,7 +3336,7 @@ function s23RenderLive(raw){
   // Zinger → KFC. An exact generic food concept still wins (e.g. Sausage must
   // remain Sausage rather than becoming Sausage McMuffin).
   const menuItems=!concept?alpha0627ChainItemSuggestions(term,8):[];if(menuItems.length){box.innerHTML=`<div class="live-match-heading"><strong>Top Matches</strong><small>Recognised Australian menu items</small></div>${menuItems.map(x=>`<button type="button" class="live-match-row" data-alpha0618-chain-item="${esc(x.chain.label)}|${esc(x.name)}"><span><strong>${esc(x.name)}</strong><small>${esc(x.chain.label)}</small></span><b>＋</b></button>`).join('')}`;box.classList.remove('hidden');return;}
-  if(concept&&!product){const source=alpha0627SourceRows(term,concept);box.innerHTML=`<div class="live-match-heading"><strong>${esc(s23GuideLabel(term,concept))}</strong><small>HEC Food Intelligence · Alpha 0.6.32</small></div>${source||s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
+  if(concept&&!product){const source=alpha0627SourceRows(term,concept);box.innerHTML=`<div class="live-match-heading"><strong>${esc(s23GuideLabel(term,concept))}</strong><small>HEC Food Intelligence · Alpha ${ACTIVE_VERSION}</small></div>${source||s23GuideButton(term,true)}`;box.classList.remove('hidden');return;}
   // Predict likely complete foods from partial text before creating a generic
   // "App", "Banan" or "Che" food. Product matches remain secondary.
   const predictions=alpha0627ConceptSuggestions(term,7);if(predictions.length&&!REG29?.primary?.(term,['brand','retailer'])){const products=alpha0627StableProductMatches(term,4);box.innerHTML=`<div class="live-match-heading"><strong>HEC Thinks You May Mean</strong><small>Suggestions narrow as you type</small></div>${predictions.map(x=>`<button type="button" class="live-match-row" data-alpha0627-prediction="${esc(x.query)}"><span><strong>${esc(x.label)}</strong><small>${esc(x.meta||'Food suggestion')}</small></span><b>›</b></button>`).join('')}${products.length?`<div class="live-match-heading alpha0627-secondary-heading"><strong>Product Matches</strong><small>Secondary while HEC is predicting the food</small></div>${products.map(s23ProductRow).join('')}`:''}`;box.classList.remove('hidden');return;}
@@ -3426,7 +3406,7 @@ window.HEC_ALPHA0623_SEARCH_TEST={
   candidates:q=>{const c=s23Concept(q);return c?s23ConceptCandidates(q,c).slice(0,10).map(f=>f.name):[];},
   facets:q=>{const c=s23Concept(q);if(!c)return {};const cs=s23ConceptCandidates(q,c),out={};for(const f of s23FacetOrder(c))out[f]=s23ChoiceValues(f,cs,c);return out;}
 };
-ext.version='0.6.32';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='food-intelligence-v629';ext.ui.guidedMatchValidation='strict-compatible-source-v629';saveExt();
+ext.version=ACTIVE_VERSION;ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchitecture='food-intelligence-v629';ext.ui.guidedMatchValidation='strict-compatible-source-v629';saveExt();
 
 /* ================================================================
    Alpha 0.6.32 — UNIVERSAL SERVING & MEASURE FOUNDATION
@@ -3436,7 +3416,7 @@ ext.version='0.6.32';ext.ui.universalGuidedSearch=true;ext.ui.guidedSearchArchit
    then Australian Dietary Guidelines standard serves, and otherwise retains
    grams/mL rather than inventing a household conversion.
 */
-const ALPHA0624_BUILD='0.6.32';
+const ALPHA0624_BUILD=ACTIVE_VERSION;
 const S24=window.HECServingFoundation;
 
 function s24ContextForFood(food,extra={}){
@@ -3497,9 +3477,11 @@ makeOpenFoodFactsFood=function(product){
   else if(basis==='package-serving-no-mass')calories=s24OffEnergy(nu,'serving');
   else calories=s24OffEnergy(nu,'100g');
   const sodium=pick('sodium');
-  const nutrients={calories:Number(calories)||0,protein:pick('proteins'),carbs:pick('carbohydrates'),fat:pick('fat'),satFat:pick('saturated-fat'),fibre:pick('fiber'),sugar:pick('sugars'),sodium:sodium===null?null:Number(sodium)*1000};
+  const nutrients={calories:calories===null?null:Number(calories),protein:pick('proteins'),carbs:pick('carbohydrates'),fat:pick('fat'),satFat:pick('saturated-fat'),fibre:pick('fiber'),sugar:pick('sugars'),sodium:sodium===null?null:Number(sodium)*1000};
   const countryText=[product.countries,...(product.countries_tags||[])].filter(Boolean).join(' ');
-  const food={id:`off-${product.code}`,barcode:String(product.code||''),name:product.product_name||product.generic_name||`Barcode ${product.code}`,brand:product.brands||'',category:'Online Product',country:/australia/i.test(countryText)?'Australia':'International',aliases:[product.product_name,product.generic_name,product.brands].filter(Boolean),defaultAmount,defaultUnit,units,unitLabels,serving:servingLabel,nutrients,foodGroups:{},waterMl:measureUnit==='mL'&&explicitMass?servingQty*.9:0,hydrationType:measureUnit==='mL'?'drink':'food',score:6,source:'Open Food Facts · Community Supplied · Verify Package',verified:false,ingredients:product.ingredients_text||'',allergens:product.allergens||[],imageUrl:product.image_front_small_url||product.image_front_url||'',packageQuantity:product.quantity||'',packagingText:product.packaging_text||'',packageServingText:servingText,packageServingExplicit:basis==='package-explicit',servingBasis:basis,servingBasisCheck:basisWarnings.length?`Corrected ${basisWarnings.length} inconsistent serving field${basisWarnings.length===1?'':'s'} from per-100 data`:'Serving fields coherent',servingBasisWarnings:basisWarnings};
+  const food={id:`off-${product.code}`,sourceId:String(product.code||''),recordType:'online-candidate',verificationStatus:calories===null?'recognised-only':'unverified',recognisedOnly:calories===null,market:/australia/i.test(countryText)?'AU':'international',barcode:String(product.code||''),name:product.product_name||product.generic_name||`Barcode ${product.code}`,brand:product.brands||'',category:'Online Product',country:/australia/i.test(countryText)?'Australia':'International',aliases:[product.product_name,product.generic_name,product.brands].filter(Boolean),defaultAmount,defaultUnit,units,unitLabels,serving:servingLabel,nutrients,foodGroups:{},waterMl:measureUnit==='mL'&&explicitMass?servingQty*.9:0,hydrationType:measureUnit==='mL'?'drink':'food',score:6,source:'Open Food Facts · Community Supplied · Verify Package',verified:false,ingredients:product.ingredients_text||'',allergens:product.allergens||[],imageUrl:product.image_front_small_url||product.image_front_url||'',packageQuantity:product.quantity||'',packagingText:product.packaging_text||'',packageServingText:servingText,packageServingExplicit:basis==='package-explicit',servingBasis:basis,servingBasisCheck:basisWarnings.length?`Corrected ${basisWarnings.length} inconsistent serving field${basisWarnings.length===1?'':'s'} from per-100 data`:'Serving fields coherent',servingBasisWarnings:basisWarnings};
+  const bundle=suffix=>({calories:s24OffEnergy(nu,suffix),protein:s24OffNu(nu,'proteins',suffix),carbs:s24OffNu(nu,'carbohydrates',suffix),fat:s24OffNu(nu,'fat',suffix),satFat:s24OffNu(nu,'saturated-fat',suffix),fibre:s24OffNu(nu,'fiber',suffix),sugar:s24OffNu(nu,'sugars',suffix),sodium:(x=>x===null?null:x*1000)(s24OffNu(nu,'sodium',suffix))});
+  P8?.attachBasis?.(food,{perServing:bundle('serving'),per100:bundle('100g'),servingAmount:explicitMass?servingQty:null,servingUnit:measureUnit,servingText,manufacturerServing:explicitMass});
   if(basis==='per100-reference'&&!hasPer100&&hasDirectServing){food.serving='Package serving supplied without a usable mass/volume basis';food.units={serve:1};food.unitLabels={serve:'Package Serve (weight/volume unavailable)'};food.defaultUnit='serve';food.defaultAmount=1;food.servingBasis='package-serving-no-mass';}
   return s24Apply(food);
 };
@@ -3534,15 +3516,15 @@ window.HEC_ALPHA0624_SERVING_TEST={
   byQuery:(q)=>{const c=s23Concept(q),source=c?s23BestSource({query:q,parsed:s23Parsed(q),concept:c,candidates:s23ConceptCandidates(q,c),state:s23QuerySeeds(q,c)}):null;if(!source)return null;return S24?.diagnostic?S24.diagnostic(clone(source),{conceptCategory:c.category,conceptKey:c.key,query:q}):null;},
   productFromOFF:(product)=>{const f=makeOpenFoodFactsFood(product);return {name:f.name,basis:f.servingBasis,serving:f.serving,defaultUnit:defaultUnit(f),units:clone(f.units),labels:clone(f.unitLabels),nutrients:clone(f.nutrients),basisCheck:f.servingBasisCheck,warnings:clone(f.servingBasisWarnings||[])};}
 };
-ext.version='0.6.32';
+ext.version=ACTIVE_VERSION;
 ext.ui.universalGuidedSearch=true;
 ext.ui.guidedSearchArchitecture='food-intelligence-v629-entity-registry+predictive-source-routing+stable-ranking';
 ext.ui.guidedMatchValidation='strict-compatible-source-v629';
 ext.ui.servingMeasureFoundation='contextual-measures-v629-identity-sanitised';
-ext.ui.entityRegistryVersion=REG29?.version||'0.6.32';
+ext.ui.entityRegistryVersion=REG29?.version||ACTIVE_VERSION;
 
 window.HEC_ALPHA0629_ENTITY_TEST={
-  build:'0.6.32',
+  build:ACTIVE_VERSION,
   identify:q=>(REG29?.identify?.(q)||[]).map(x=>({id:x.entity.id,type:x.entity.type,name:x.entity.name,concept:x.entity.foodConcept||'',source:x.entity.sourceMode||''})),
   residual:q=>REG29?.stripRecognisedEntities?.(q)||'',
   concept:q=>s23Concept(q)?.key||'',
@@ -3568,7 +3550,7 @@ by('run-front-ocr')?.addEventListener('click',async()=>{if(!alpha0631FrontFile)r
 function alpha0631ViewportHarden(){document.documentElement.style.setProperty('--hec-vv-width',`${Math.round(window.visualViewport?.width||window.innerWidth)}px`);}
 window.visualViewport?.addEventListener('resize',alpha0631ViewportHarden,{passive:true});window.visualViewport?.addEventListener('scroll',alpha0631ViewportHarden,{passive:true});window.addEventListener('orientationchange',()=>setTimeout(alpha0631ViewportHarden,120),{passive:true});alpha0631ViewportHarden();
 
-window.HEC_ALPHA0631_TEST={build:'0.6.32',externalQuery:alpha0631ExternalSearchQuery,conceptCandidates:q=>{const c=s23Concept(q);return c?s23ConceptCandidates(q,c).map(f=>f.name):[];},displayIdentity:alpha0631DisplayIdentity,frontName:alpha0631FrontNameFromText};
-ext.version='0.6.32';ext.ui.searchPolish='incremental-online-v631';ext.ui.nutritionPanelScaling='basis-aware-v631';ext.ui.productFrontAssist='optional-front-ocr-v631';saveExt();
+window.HEC_ALPHA0631_TEST={build:ACTIVE_VERSION,externalQuery:alpha0631ExternalSearchQuery,conceptCandidates:q=>{const c=s23Concept(q);return c?s23ConceptCandidates(q,c).map(f=>f.name):[];},displayIdentity:alpha0631DisplayIdentity,frontName:alpha0631FrontNameFromText};
+ext.version=ACTIVE_VERSION;ext.ui.searchPolish='incremental-online-v631';ext.ui.nutritionPanelScaling='basis-aware-v631';ext.ui.productFrontAssist='optional-front-ocr-v631';saveExt();
 
 })();

@@ -5,7 +5,7 @@
 (function(global){
   'use strict';
 
-  const VERSION='0.6.32';
+  const VERSION='0.6.33';
   const S=global.HECSearchFoundation;
   const IGNORE=/not sure|typical|other/i;
   const WORD_EQUIV={

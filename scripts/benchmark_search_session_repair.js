@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+'use strict';
+
+const fs=require('node:fs');
+const path=require('node:path');
+const {performance}=require('node:perf_hooks');
+const catalogue=require('../food-catalogue.js');
+const sources=require('../food-sources.js');
+require('../mcdonalds-au-catalogue.js');
+require('../kfc-au-catalogue.js');
+const largeAudit=require('./audit_open_food_facts_au.js');
+const progressiveAudit=require('./audit_progressive_food_resolution.js');
+const ROOT=path.resolve(__dirname,'..'),modules=process.env.HEC_WORKSPACE_NODE_MODULES;
+
+function percentile(values,fraction){const sorted=[...values].sort((a,b)=>a-b);return sorted[Math.min(sorted.length-1,Math.floor(sorted.length*fraction))]||0;}
+function stats(values){return{iterations:values.length,medianMs:Number(percentile(values,.5).toFixed(3)),p95Ms:Number(percentile(values,.95).toFixed(3)),maxMs:Number(Math.max(...values).toFixed(3))};}
+async function genericSearch(){const queries=['chips','margarine','milk','bread'],values=[];for(let index=0;index<100;index++){const start=performance.now();await largeAudit.api.search(queries[index%queries.length],{limit:24});values.push(performance.now()-start);}return stats(values);}
+function kfcRanking(){const records=sources.foodRecords({sourceId:'kfc-au'}),queries=['KFC','KFC Zinger Burger','KFC Wicked Wings','KFC Popcorn Chicken','KFC chips','banana'],values=[];for(let run=0;run<25;run++)for(const query of queries){const start=performance.now();for(const food of records)catalogue.rank(food,query);values.push(performance.now()-start);}return stats(values);}
+async function characterRecognition(){const qa=require('./audit_physical_form_measures_edge.js'),{chromium,edge}=qa.browserTools(),browser=await chromium.launch({headless:true,executablePath:edge}),routing=qa.evidence();try{const context=await qa.contextFor(browser,{width:390,height:844},routing),page=await context.newPage();await qa.openLibrary(page);const result=await page.evaluate(()=>{const phrases=['KFC','KFC 6 Wicked Wings',"McDonald's Big Mac",'Flora ProActiv Light'],values=[];for(let run=0;run<100;run++)for(const phrase of phrases){let prefix='';for(const character of phrase){prefix+=character;const start=performance.now();window.HEC_SEARCH_SESSION_TEST.intent(prefix);values.push(performance.now()-start);}}values.sort((a,b)=>a-b);const at=fraction=>values[Math.min(values.length-1,Math.floor(values.length*fraction))]||0;return{available:true,iterations:values.length,medianMs:Number(at(.5).toFixed(3)),p95Ms:Number(at(.95).toFixed(3)),maxMs:Number(Math.max(...values).toFixed(3))};});qa.requireEvidence(routing);return {...result,routing};}finally{await browser.close();}}
+
+async function run(){const products=largeAudit.allProducts(largeAudit.read('manifest.json')),report={genericSearch:await genericSearch(),largeCatalogueSearch:await largeAudit.performanceAudit(products,500),kfcRanking:kfcRanking(),progressiveResolution:progressiveAudit.resolutionPerformance(500),portionProfile:progressiveAudit.portionPerformance(500),characterRecognition:await characterRecognition()};const limits={genericSearch:250,largeCatalogueSearch:250,kfcRanking:250,progressiveResolution:250,portionProfile:100,characterRecognition:20},failures=Object.entries(limits).filter(([key,limit])=>report[key]?.available!==false&&report[key].p95Ms>=limit).map(([key,limit])=>`${key} p95 ${report[key].p95Ms} ms >= ${limit} ms`);report.thresholdsMs=limits;report.failures=failures;process.stdout.write(`${JSON.stringify(report,null,2)}\n`);if(failures.length)process.exitCode=1;}
+if(require.main===module)run().catch(error=>{console.error(error);process.exit(1);});
+module.exports={run};

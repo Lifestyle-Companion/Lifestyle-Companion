@@ -6,6 +6,7 @@
     displayName: "HEC — My Data",
     shortName: "HEC My Data",
     manifestId: "/Lifestyle-Companion/index.html",
+    iconApple: "assets/app-icons/hec-my-data-180.png",
     icon192: "assets/app-icons/hec-my-data-192.png",
     icon512: "assets/app-icons/hec-my-data-512.png",
     themeColor: "#2e6d4d",

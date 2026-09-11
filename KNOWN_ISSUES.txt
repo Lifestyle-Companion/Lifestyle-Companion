@@ -1,8 +1,0 @@
-KNOWN LIMITATIONS — ALPHA 1.4
-
-1. Browser voice availability varies by device and browser.
-2. Phonetic spelling helps but cannot guarantee every device voice pronounces every name correctly.
-3. Address autocomplete needs a connected external address service.
-4. Data is local to the current browser and device.
-5. Coming Soon Rooms are placeholders.
-6. This browser prototype is not an App Store build.

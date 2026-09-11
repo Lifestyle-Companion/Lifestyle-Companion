@@ -1,3 +1,0 @@
-New decision — Circle within every Room
-
-The main Circle of Life is the permanent Home navigation. Each major Room opens to its own themed circle, with Hymie in the centre and the Room's sub-rooms arranged around him. Hymie changes clothing, props and activity to suit the Room. This establishes a consistent, distinctive navigation language across the entire application.

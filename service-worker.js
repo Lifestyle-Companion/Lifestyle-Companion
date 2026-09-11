@@ -1,7 +1,7 @@
 const WORKER_URL = new URL(self.location.href);
 const INSTALLATION_ROLE = WORKER_URL.searchParams.get("role") === "test" ? "test" : "my-data";
 const CACHE_PREFIX = INSTALLATION_ROLE === "test" ? "healthy-eating-companion-test" : "healthy-eating-companion-my-data";
-const CACHE_NAME = `${CACHE_PREFIX}-alpha-0-6-33-v1`;
+const CACHE_NAME = `${CACHE_PREFIX}-alpha-0-6-33-v2`;
 const VERSION = "0.6.33";
 const CORE_FILES = [
   `./index.html`,
@@ -16,23 +16,38 @@ const CORE_FILES = [
   `./companion-voices.js?v=${VERSION}`,
   `./stage4-foundation.js?v=${VERSION}`,
   `./weight-progress-foundation.js?v=${VERSION}`,
+  `./nutrition-trends-foundation.js?v=${VERSION}`,
   `./app.js?v=${VERSION}`,
   `./entity-registry.js?v=${VERSION}`,
   `./search-foundation.js?v=${VERSION}`,
+  `./product-serving-semantics.js?v=${VERSION}`,
+  `./food-sources.js?v=${VERSION}`,
+  `./australian-catalogue-data.js?v=${VERSION}`,
+  `./mcdonalds-au-catalogue-data.js?v=${VERSION}`,
+  `./mcdonalds-au-catalogue.js?v=${VERSION}`,
+  `./kfc-au-catalogue-data.js?v=${VERSION}`,
+  `./kfc-au-catalogue.js?v=${VERSION}`,
   `./food-catalogue.js?v=${VERSION}`,
+  `./off-catalogue.js?v=${VERSION}`,
   `./guided-branching.js?v=${VERSION}`,
   `./packaged-foods.js?v=${VERSION}`,
   `./capture-foundation.js?v=${VERSION}`,
   `./serving-foundation.js?v=${VERSION}`,
+  `./guided-product-resolution.js?v=${VERSION}`,
   `./activity-foundation.js?v=${VERSION}`,
+  `./food-groups-foundation.js?v=${VERSION}`,
+  `./conversation-foundation.js?v=${VERSION}`,
   `./alpha06.js?v=${VERSION}`,
   `./alpha064.js?v=${VERSION}`,
   `./manifest.webmanifest?v=${VERSION}`,
+  "./data/open-food-facts-au/manifest.json",
   "./afcd-release-3.json"
 ];
 const STATIC_FILES = [
+  "./assets/app-icons/hec-my-data-180.png",
   "./assets/app-icons/hec-my-data-192.png",
   "./assets/app-icons/hec-my-data-512.png",
+  "./assets/app-icons/hec-test-180.png",
   "./assets/app-icons/hec-test-192.png",
   "./assets/app-icons/hec-test-512.png",
   "./assets/companions/runtime/picker/percy-pelican.webp",
@@ -54,6 +69,7 @@ const STATIC_FILES = [
 ];
 const CORE_PATHS = new Set(CORE_FILES.map(x=>new URL(x,self.location.href).pathname));
 const COMPANION_HERO_PATH="/assets/companions/runtime/hero/";
+const OFF_CATALOGUE_PATH="/data/open-food-facts-au/";
 const timeout = ms => new Promise((_,reject)=>setTimeout(()=>reject(new Error("network timeout")),ms));
 
 self.addEventListener("install",event=>{
@@ -103,5 +119,6 @@ self.addEventListener("fetch",event=>{
   if(event.request.mode==="navigate"||event.request.destination==="document"){event.respondWith(navigationResponse(event.request));return;}
   if(CORE_PATHS.has(url.pathname)||["script","style","manifest"].includes(event.request.destination)){event.respondWith(staleWhileRevalidate(event.request));return;}
   if(url.pathname.includes(COMPANION_HERO_PATH)){event.respondWith(cacheFirst(event.request));return;}
+  if(url.pathname.includes(OFF_CATALOGUE_PATH)){event.respondWith(cacheFirst(event.request));return;}
   event.respondWith(cacheFirst(event.request));
 });

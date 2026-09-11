@@ -67,7 +67,7 @@
     if(theme&&app.themeColor)theme.setAttribute("content",app.themeColor);
     let touchIcon=document.querySelector('link[rel="apple-touch-icon"]');
     if(!touchIcon){touchIcon=document.createElement("link");touchIcon.setAttribute("rel","apple-touch-icon");document.head?.append(touchIcon);}
-    if(app.icon192)touchIcon.setAttribute("href",app.icon192);
+    if(app.iconApple||app.icon192)touchIcon.setAttribute("href",app.iconApple||app.icon192);
     document.body?.classList.toggle("hec-test-installation",role===ROLES.TEST);
     if(role===ROLES.TEST && !document.getElementById("hec-test-installation-banner")){
       const banner=document.createElement("div");
@@ -78,6 +78,20 @@
       banner.innerHTML="<strong>HEC — TEST</strong><span>Disposable isolated testing data</span>";
       document.body?.prepend(banner);
     }
+    const testBanner=document.getElementById("hec-test-installation-banner");
+    if(role===ROLES.TEST&&testBanner){
+      const updateInset=()=>{
+        const height=Math.ceil(testBanner.getBoundingClientRect?.().height||testBanner.offsetHeight||54);
+        document.documentElement.style.setProperty("--hec-installation-banner-inset",`${Math.max(42,height)}px`);
+      };
+      updateInset();
+      const view=document.defaultView;
+      view?.requestAnimationFrame?.(updateInset);
+      if(view?.ResizeObserver&&!testBanner.__hecInsetObserver){
+        testBanner.__hecInsetObserver=new view.ResizeObserver(updateInset);
+        testBanner.__hecInsetObserver.observe(testBanner);
+      }
+    }else document.documentElement.style.removeProperty("--hec-installation-banner-inset");
     const identity=document.getElementById("installation-identity");
     if(identity){
       identity.classList.toggle("test-installation-identity",role===ROLES.TEST);

@@ -25,6 +25,7 @@
   // These are explicit Australian food-language equivalences, not general fuzzy
   // guesses. A bare "scallop" or "chips" is intentionally never rewritten.
   const AUSTRALIAN_ALIASES=Object.freeze([
+    ...['potato jewel','potato jewels','potato gem','potato gems'].map(phrase=>({phrase,alternates:['potato jewel','potato jewels','potato gem','potato gems'].filter(a=>a!==phrase)})),
     {phrase:'potato scallop',alternates:['potato cake','potato fritter']},
     {phrase:'sausage sizzle',alternates:['bunnings sausage','bunnings snag']},
     {phrase:'bunnings sausage',alternates:['sausage sizzle','bunnings snag']},
@@ -40,6 +41,7 @@
   const normCache=new Map();
   function norm(value){const text=String(value||'');if(normCache.has(text))return normCache.get(text);const result=text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();if(text.length<=512){normCache.set(text,result);if(normCache.size>8192)normCache.delete(normCache.keys().next().value);}return result;}
   function tokens(value){return norm(value).split(' ').filter(Boolean);}
+  function potatoBiteAliases(name){return /\bpotato (?:jewels?|gems?)\b/.test(norm(name))?['potato jewel','potato jewels','potato gem','potato gems']:[];}
   function corrected(value){const normal=SEARCH?.normaliseIntent?SEARCH.normaliseIntent(value):norm(value);return tokens(normal).map(token=>CONTROLLED_TYPOS[token]||token).join(' ');}
   function phrasePresent(hay,phrase){return !!phrase&&` ${norm(hay)} `.includes(` ${norm(phrase)} `);}
   function hasEnergy(food){const value=food?.nutrients?.calories;return value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));}
@@ -94,13 +96,21 @@
     });
   }
   // A reviewed community brand collection is not evidence of a retailer listing.
-  // Only an exact retailer-name consumer brand is supported here; other private
-  // label families still need independent relationship evidence.
+  // Exact retailer-name community brands and independently evidenced house-brand
+  // families are supported without asserting a current retailer listing.
   function privateLabelCollectionMembership(food,retailerId){
     if(!food?.privateLabelCollections?.length)return [];
     const entity=REG.entries.find(item=>item.id===retailerId&&item.type==='retailer');
-    if(!entity||marketFor(food)!=='AU'||brandKey(food.brand)!==brandKey(entity.name))return [];
+    if(!entity||marketFor(food)!=='AU')return [];
     return (food.privateLabelCollections||[]).filter(item=>{
+      if(item.basis==='official-house-brand-relationship'){
+        const e=item.evidence||{},r=e.houseBrandRelationship||{};
+        // This proves a private-label family relationship, not a current listing.
+        // Bind both identities and the pinned AU product evidence; never infer
+        // retailer membership from a similar name or a foreign store token.
+        return item.retailerId===retailerId&&item.market==='AU'&&item.scope==='food'&&item.verified===true&&brandKey(item.consumerBrand)===brandKey(food.brand)&&verifiedRetailEvidence(e)&&/^[a-f0-9]{64}$/i.test(e.sha256||'')&&r.retailerId===retailerId&&r.brandKey===brandKey(food.brand)&&r.relationshipVerified===true&&['current','legacy','uncertain'].includes(r.status)&&e.productEvidence?.recordId==='off:'+food.barcode&&/^[a-f0-9]{64}$/i.test(e.productEvidence.sha256||'')&&e.productEvidence.countriesTags?.length===1&&e.productEvidence.countriesTags[0]==='en:australia';
+      }
+      if(brandKey(food.brand)!==brandKey(entity.name))return false;
       const e=item.evidence||{};let url;try{url=new URL(e.url);}catch{return false;}
       return item.retailerId===retailerId&&item.market==='AU'&&item.scope==='food'&&item.basis==='source-declared-brand'&&item.verified===false&&brandKey(item.consumerBrand)===brandKey(food.brand)&&e.trustClass==='open-food-facts-au'&&e.sourceId==='open-food-facts-au'&&/^off:\d{8,14}$/.test(e.recordId||'')&&e.recordId==='off:'+food.barcode&&['http:','https:'].includes(url.protocol)&&/^(?:[a-z-]+\.)?openfoodfacts\.org$/.test(url.hostname)&&url.pathname.split('/')[1]==='product'&&url.pathname.split('/')[2]===String(food.barcode)&&/^[a-f0-9]{64}$/i.test(e.snapshotSha256||'')&&/^[a-f0-9]{64}$/i.test(e.sha256||'')&&Number.isFinite(Date.parse(e.snapshotDate||''));
     });
@@ -783,6 +793,12 @@
     // stored brand/name, not an alias or a partial phrase, for that exception.
     const exactNameCollision=intent.reason==='indexed-brand-plus-product'&&(SEARCH.conceptNorm(food.name)===SEARCH.conceptNorm(query)||!!food.brand&&REG.brandSearchText(`${food.brand} ${food.name}`)===REG.brandSearchText(query));
     if(intent.entity?.type==='brand'&&!consumerBrandMembership(intent.entity,food).matches&&!exactNameCollision)return false;
+    const houseBrandScope=intent.entity?.type==='retailer'&&privateLabelCollectionMembership(food,intent.entity.id).some(m=>m.basis==='official-house-brand-relationship');
+    if(houseBrandScope){
+      if(!productEligibility(food).addability.normalLoggingAllowed)return false;
+      const product=SEARCH.conceptNorm(intent.productQuery),hay=SEARCH.conceptNorm([food.brand,food.name,...(food.aliases||[])].join(' ')).split(' ');
+      return !!product&&product.split(' ').every(token=>hay.includes(token));
+    }
     const communityStoreScope=intent.entity?.type==='retailer'&&(global.HECRetailerCatalogue?.entity(intent.entity.id)?.collectionMode==='source-declared-store'||intent.entity.id==='aldi'&&global.HECRetailerCatalogue?.entity(intent.entity.id)?.collectionMode==='private-testing-evidence');
     if(communityStoreScope){
       if(!sourceDeclaredRetailerMembership(food,intent.entity.id).length||!productEligibility(food).addability.normalLoggingAllowed)return false;
@@ -858,7 +874,7 @@
     const label=food?.unitLabels?.[natural]||natural||'servings';return {level:'implausible',requiresConfirmation:true,message:`${quantity} ${label} is much larger than a usual logging amount. Check whether you meant the natural serving, grams or millilitres before continuing.`};
   }
 
-  const api={version:VERSION,recordTypes:RECORD_TYPES,sourceTiers:SOURCE_TIERS,productQualityTypes:PRODUCT_QUALITY,controlledTypos:CONTROLLED_TYPOS,australianAliases:AUSTRALIAN_ALIASES,norm,tokens,corrected,queryIntent,brandProductQuality,sourceTier,meaningfulProductName,productIdentityQuality,exactProductQuality,consumerDisplayName,fieldSpecificRank,consumerBrandMembership,consumerProductSpecificity,brandFamilyResults,australianAlternates,recordType,marketFor,sourceIdFor,canonicalKey,normaliseRecord,friesIntent,genericFriesCandidates,displayQuantity,rank,dedupe,dedupeRanked,duplicateIdentityEvidence,duplicateIdentity,duplicateAudit,resolve,partitionSearchRecords,provenance,provenanceParts,hasEnergy,addability,canLog,quickAddPolicy,fullReviewPolicy,commercialSourceClass,conceptShortlist,isExplicitProductRequest,explicitIdentityMatch,submittedResultModel,appendSubmittedOnline,newUniversalSearchSession,previewUniversalSearch,commitUniversalSearch,ownsUniversalAsync,newSearchState,beginSearch,rememberSearch,restoreSearch,transitionSearch,newFederatedSearchState,beginQueryRevision,revisionMatches,commitLocalSnapshot,appendLocalSnapshot,appendOnlineSnapshot,naturalQuantityWarning};
+  const api={potatoBiteAliases,version:VERSION,recordTypes:RECORD_TYPES,sourceTiers:SOURCE_TIERS,productQualityTypes:PRODUCT_QUALITY,controlledTypos:CONTROLLED_TYPOS,australianAliases:AUSTRALIAN_ALIASES,norm,tokens,corrected,queryIntent,brandProductQuality,sourceTier,meaningfulProductName,productIdentityQuality,exactProductQuality,consumerDisplayName,fieldSpecificRank,consumerBrandMembership,consumerProductSpecificity,brandFamilyResults,australianAlternates,recordType,marketFor,sourceIdFor,canonicalKey,normaliseRecord,friesIntent,genericFriesCandidates,displayQuantity,rank,dedupe,dedupeRanked,duplicateIdentityEvidence,duplicateIdentity,duplicateAudit,resolve,partitionSearchRecords,provenance,provenanceParts,hasEnergy,addability,canLog,quickAddPolicy,fullReviewPolicy,commercialSourceClass,conceptShortlist,isExplicitProductRequest,explicitIdentityMatch,submittedResultModel,appendSubmittedOnline,newUniversalSearchSession,previewUniversalSearch,commitUniversalSearch,ownsUniversalAsync,newSearchState,beginSearch,rememberSearch,restoreSearch,transitionSearch,newFederatedSearchState,beginQueryRevision,revisionMatches,commitLocalSnapshot,appendLocalSnapshot,appendOnlineSnapshot,naturalQuantityWarning};
   Object.assign(api,{TRUST_CLASSES,brandKey,registerBrandDirectory,brandIdentity,brandPrefix,sourceEvidence,metricEvidence,sourceConflicts,productEligibility,canonicalProduct,canonicalName,strongDuplicateEvidence,canonicaliseRecords,sameGtinIdentityConflicts,sourceQuality,compareAustralianProducts,sortedAustralianProducts,identityCandidateIndex,brandResultModel,prepareBrandResultModel,forEachSearchChunk,verifiedRetailEvidence,retailerMemberships,retailerMembership,sourceDeclaredRetailerMembership,privateLabelCollectionMembership,commercialIdentityMembership});
   registerBrandDirectory(global.HECAustralianCatalogueData?.brands||[]);
   global.HECFoodCatalogue=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;

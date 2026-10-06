@@ -57,7 +57,9 @@ function installNavigation(){
     const header=screen.querySelector("header.topbar");if(!header)return;
     [...header.children].filter(x=>x.matches?.(".back,.home-nav-button,.hec-nav-pair")).forEach(x=>x.remove());
     const group=document.createElement("div");group.className="hec-nav-pair";group.innerHTML='<button type="button" class="back" data-hec-back>← Back</button><button type="button" class="home-nav-button" data-go="home">🏠 Home</button>';
+    if(['food-library','food-entry-editor'].includes(screen.id))group.insertAdjacentHTML('beforeend','<button type="button" class="secondary" data-discovery-top-cancel>Cancel</button>');
     header.prepend(group);
+    if(["food-library","food-entry-editor"].includes(screen.id)&&typeof ResizeObserver!=="undefined"&&!header.hecNavSizeObserver){header.hecNavSizeObserver=new ResizeObserver(()=>screen.style.setProperty("--hec-food-nav-height",`${header.getBoundingClientRect().height}px`));header.hecNavSizeObserver.observe(header);}
   });
 }
 installNavigation();
@@ -65,6 +67,16 @@ function openScreen(id){
   if(functionalScreens.has(id)&&typeof window.openAlpha05Feature==="function")window.openAlpha05Feature(id);
   else if(typeof window.show==="function")window.show(id,{speak:false});
 }
+// Return from a transient editor without keeping its abandoned screen in Back history.
+window.HECNavigation={returnTo(id){
+  const current=activeScreen(),index=navStack.map(entry=>entry.id).lastIndexOf(id);
+  if(index>=0)navStack.splice(index);
+  navStack=navStack.filter(entry=>entry.id!==current);
+  goingBack=true;openScreen(id);
+  setTimeout(()=>{goingBack=false;},50);
+  return true;
+}};
+
 document.addEventListener("click",event=>{
   const navigation=event.target.closest("[data-go],[data-open-feature],.room,#home-companion");if(navigation){const current=activeScreen();if(current)scrollByScreen[current]=window.scrollY;}
   const back=event.target.closest("[data-hec-back]");if(!back)return;event.preventDefault();event.stopImmediatePropagation();
@@ -72,7 +84,8 @@ document.addEventListener("click",event=>{
 },true);
 const navObserver=new MutationObserver(()=>{
   const current=activeScreen();if(!current||current===lastActive)return;
-  if(!goingBack&&lastActive)navStack.push({id:lastActive,scroll:scrollByScreen[lastActive]||0});
+  // Review is transient: after any exit, an old item must never reopen through Back.
+  if(!goingBack&&lastActive&&lastActive!=="food-entry-editor")navStack.push({id:lastActive,scroll:scrollByScreen[lastActive]||0});
   lastActive=current;track(`screen:${current}`);installNavigation();
 });
 qa(".screen").forEach(s=>navObserver.observe(s,{attributes:true,attributeFilter:["class"]}));
